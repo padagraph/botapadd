@@ -21,7 +21,7 @@ app = Flask(__name__)
 app.config['DEBUG'] = True
 
 HOST = "http://localhost:5000"
-KEY  = codecs.open("../../../key.local", 'r', encoding='utf8').read()
+KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
 PATH = "./static/images" # images storage
 
 DELETE = True # delete graph before importation
