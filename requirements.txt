@@ -3,3 +3,4 @@ flask-runner
 Flask-Markdown
 
 # padagraph screenshot
+selenium
