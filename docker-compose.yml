@@ -6,8 +6,8 @@ services:
     restart: unless-stopped
     env_file: environment.sh
     volumes:
-      - ./log:log
-      - ./src:src
+      - ./log:/var/padagraph-botapadd/log
+      # - ./src:src
 # volumes:
 #   botapadd-data:
 # ignore named volumes for now
