@@ -7,3 +7,4 @@ https://github.com/padagraph/botapi/archive/master.zip
 
 # padagraph screenshot
 selenium
+reliure
