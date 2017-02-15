@@ -1,0 +1,13 @@
+version: "2"
+services:
+  botapadd:
+    image: padagraph/botapadd:latest
+    build: .
+    restart: unless-stopped
+    env_file: environment.sh
+    volumes:
+      - ./log:log
+      - ./src:src
+# volumes:
+#   botapadd-data:
+# ignore named volumes for now
