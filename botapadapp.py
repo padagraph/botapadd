@@ -5,14 +5,15 @@ import os
 import sys
 import logging
 import codecs
+from functools import wraps
 
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
-from functools import wraps
 
 from botapad import Botapad
-from screenshot import getScreenShot
-from selenium import webdriver
+
+#from screenshot import getScreenShot
+#from selenium import webdriver
 
 
 # app
@@ -27,9 +28,6 @@ DELETE = True # delete graph before importation
 
 #driver = webdriver.Chrome("chromedriver")
 #driver.quit()
-
-import botapad
-botapad.VERBOSE = True
 
 
 def img_url(gid):
