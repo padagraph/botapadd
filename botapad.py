@@ -31,7 +31,7 @@ def debug(*args):
         pprint( args)
 
 def norm_key(key):
-    return re.sub('\W' , '', key)
+    return re.sub('\s' , '', key)
    
 def csv_rows(lines, start_col=None, end_col=None, separator=";"):
     
@@ -227,8 +227,9 @@ class Botapad(object):
             else:
                 if current and current[2]:
                     for i, v in enumerate(row):
+                        if i >= len(props): break
                         if props[i].ismulti :
-                            row[i] = re.split("[_,;]", v.strip())
+                            row[i] = [  e.strip() for e in re.split("[_,;]", v.strip()) ] 
                             
                 rows.append(row)
 
@@ -330,8 +331,6 @@ class Botapad(object):
         for iprop, prop in enumerate(props) :
 
             if not prop.isproj : continue
-
-            
             
             #  @ Label: %prop0 , ...
             tgt = prop.name
@@ -343,7 +342,7 @@ class Botapad(object):
             else :
                 for r in rows:
                     if iprop < len(r):
-                        values.extend(r[iprop])
+                        values.extend( [ k.strip() for k in r[iprop]] )
             values = list(set(values))
             
             log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) %s" %( src , len(rows), tgt, len(values), iprop, values ) )
@@ -373,12 +372,10 @@ class Botapad(object):
 
                 log( "* [Projector] posting @ %s %s " % (len(payload), tgt ))
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
-                    #tgtid = '%s_%s' % (tgt, node['properties']['label'])
                     tgtid = '%s' % (node['properties']['label'])
                     self.idx[ tgtid ] = uuid
                     log(node)
 
-                
                 
             etname = "%s_%s" % (src, tgt)
             if etname not in self.edgetypes:
