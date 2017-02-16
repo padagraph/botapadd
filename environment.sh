@@ -3,6 +3,9 @@
 # Values can be changed here or in docker-compose.yml
 # To override for development, specify inside docker-compose.override.yml
 
+BOTAPAD_HOST=http://localhost:5000
+BOTAPAD_DELETE=True
+
 APP_DEBUG=false
 PRODUCTION=TRUE
 

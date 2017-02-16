@@ -34,6 +34,7 @@ else
 	# Runs with Flask on port :5000
 	echo "Running development instance: ${BIND_ADDRESS}:${BIND_PORT}"
 	echo "=> ${BIND_ADDRESS}:${BIND_PORT}"
+	ll;
 	python botapadapp.py --host $BIND_ADDRESS --port $BIND_PORT
 fi
 
