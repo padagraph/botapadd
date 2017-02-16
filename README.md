@@ -154,11 +154,15 @@ Accessible service for botapad
 ### Run
 
 * export host
+
     $ export BOTAPAD_HOST=http://www.padagraph.io  
-* copy your token(http://padagraph.io/account/me/generate_auth_token) into key.txt
+
+* copy your token(http://padagraph.io/account/me/generate_auth_token) into key.txt  
 * run  
 
     $ python botapadapp.py
+
+* import http://localhost:5000
 
 
 [DEPRECATED] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
