@@ -39,10 +39,10 @@ Some special characters are used at a begin line:
 * '&' is an import directive to load external data
 
 
-Headers refers to `nodetypes` or `edgetypes` in the padagraph database.
+Headers refers to `nodetypes` or `edgetypes` in the padagraph database.  
 syntax is ```char name: prop; other``` with `char` in ( `@`,`_` )   
 `:` after  Nodetype name and `;` between properties  
-Properties are defined with a `Text` definition.
+Properties are defined with a `Text` definition.  
 
 ### Node header
 
@@ -63,7 +63,7 @@ Indexed columns can be specified with an extra '#'.
 
 you will next use `num` values  to create `Relations` for shorthand and pad maintenance and uniqness.  
 
-Next row is expecting data from this table.
+Next row is expecting data from this table.  
 Begining and ending space will be removed in each cell.    
 
     *0; François Fillon; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/0.png; candidat, premier ministre
@@ -72,12 +72,12 @@ Begining and ending space will be removed in each cell.
     5; Delphine Peyrat-Stricker; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/5.png
     15; Anne Méaux; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/15.png
 
-Mind the node 0 , starting with `*` is `starred` .
+Mind the node 0 , starting with `*` is `starred` .  
 
 
 ### Edge header
 
-As a `nodetype`, an `edgetype` is described by properties.
+As a `nodetype`, an `edgetype` is described by properties.  
 `_` is the marker used to start a set of relation of a certain type.
 
     _ Knows: 
