@@ -155,16 +155,16 @@ Accessible service for botapad
 
 * install deps
 
-    $ pip install -r requirements.txt
+    ```$ pip install -r requirements.txt```
 
 * export host
 
-    $ export BOTAPAD_HOST=http://www.padagraph.io  
+    ```$ export BOTAPAD_HOST=http://www.padagraph.io```
 
 * copy your token(http://padagraph.io/account/me/generate_auth_token) into key.txt  
 * run  
 
-    $ python botapadapp.py
+    ```$ python botapadapp.py```
 
 * import http://localhost:5000
 
