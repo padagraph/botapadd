@@ -18,9 +18,10 @@ from botapad import Botapad
 
 # app
 app = Flask(__name__)
+app.config['DEBUG'] = True
 
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5000")
-DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"""
+DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
 PATH = "./static/images" # images storage
@@ -47,11 +48,14 @@ def more():
     
 
 def _import(gid, url):
-    description = "botapadapp"
+    description = "imported from %s" % url
     bot = Botapad(HOST, KEY, gid, description, delete=DELETE)
     return bot.parse(url, separator='auto')
 
 def snapshot(gid, **kwargs):
+    """
+    requires screenshot & selenium driver
+    """
     path = '%s/%s.png' % ( PATH, gid )
     getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
 
