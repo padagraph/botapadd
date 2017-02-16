@@ -1,12 +1,14 @@
 
 # botapad
+
+Import data in padagraph.io
+
     * command line
     * flask app
 
 ## Installation
 
     $ pip install -r requirements.txt
-
 
 # Command Line
 
@@ -21,6 +23,9 @@ Some special characters are used at a begin line:
 
 [Comments]
 * '!' is used to comment a line, usefull for discussion and help, it will be ignored by the program
+
+[Separator]
+* is defined in the first line "!," a commented comma  can also use "!;"
 
 [Headers]
 * '@' Header for nodes :
@@ -54,14 +59,14 @@ We just defined a `Person` nodetype with `properties`.
 
 Indexed columns can be specified with an extra '#'.  
 
-    @ Person: #num; label; image 
+    @ Person: #num; label; image ; +roles
 
 you will next use `num` values  to create `Relations` for shorthand and pad maintenance and uniqness. 
 
 Next row is expecting data from this table.
 Begining and ending space will be removed in each cell.    
 
-    *0; François Fillon; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/0.png
+    *0; François Fillon; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/0.png; candidat, premier ministre
     3; Myriam Lévy; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/3.png
     4; Delphine Burgaud; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/4.png
     5; Delphine Peyrat-Stricker; https://infographics.mediapart.fr/2017/nodes-fillon/img/nodes/5.png
@@ -102,8 +107,34 @@ and 8 edges.
     Politic -- Chamber  (2) 
     Politic -- State   (2)
     Politic -- Party   (2)
-    Politic -- Stance  (2) 
+    Politic -- Stance  (2)
 
+Note :
+    * mixing '%' and '+' in a prop will project row on each value of the cell
+        @ Test: #id ; %+ prop ; another
+        1; a, b, c ; another
+        this will create 3 links
+        1 -- a
+        1 -- b
+        1 -- c
+    * mixing '%', '+' and '='
+      '=' create a clique of the nodes means create a link between each values
+        
+        @ Test: #id ; %+= prop ; another
+        1; a, b, c ; another
+        this will create 3 links row -- prop
+        1 -- a
+        1 -- b
+        1 -- c
+
+     and also 3 links
+
+        a -- b
+        a -- c
+        b -- c
+
+
+        
 ### Import
 
 As the data can be collected from differents tiers,
