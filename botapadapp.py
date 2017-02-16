@@ -20,10 +20,14 @@ from botapad import Botapad
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
+# padagraph host to connect
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5000")
-DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
+# padagraph host valid token
 KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
+
+# delete before import
+DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 PATH = "./static/images" # images storage
 
 
@@ -123,15 +127,17 @@ def botimport():
             'show_text'  : 0 if args.get("no_text"  , None ) else 1,     # removes vertex text 
             'show_nodes' : 0 if args.get("no_nodes" , None ) else 1,   # removes vertex only 
             'show_edges' : 0 if args.get("no_edges" , None ) else 1,   # removes edges 
-            'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images 
+            'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
+            
+            'auto_rotate': 1,
+                
         }
 
         _import(gid, url)
-        complete = True
 
-        
         querystr = "&".join(["%s=%s" % (k,v) for k,v in params.items()])
         iframe = "%s/iframe/%s?%s#graph" % ( HOST, gid, querystr )
+        complete = True
 
         #snapshot(gid, **params)
 

@@ -51,7 +51,7 @@ def convert_url(url):
 
      """
      
-    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([a-zA-Z\-]+)/?([export\/txt]+)?"
+    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([a-zA-Z\-_]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
         frama = [r for r in frama[0] if len(r)]
@@ -60,7 +60,7 @@ def convert_url(url):
             return url
             
     #https://framacalc.org/uspaties
-    re_framacalc = "https?:\/\/framacalc.org/([a-zA-Z\-]+)([\.csv]+)?"
+    re_framacalc = "https?:\/\/framacalc.org/([a-zA-Z\-_]+)([\.csv]+)?"
     frama = re.findall(re_framacalc, url)
     debug( "convert_url", url , frama )
     if  len(frama) :
@@ -73,9 +73,7 @@ def convert_url(url):
     return url
 
 
-def Prop(name, ptype ,isref, isindex,  isproj):
-    P = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex',  'isproj'])
-    return P(name, ptype ,isref, isindex,  isproj)
+Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj', 'iscliq'])
     
 class Botapad(object):
     
@@ -199,8 +197,8 @@ class Botapad(object):
                 cols = [e for e in re.split("[:;,]" , "%s" % cols) if len(e)]
                 label = cols[0] # @Something
                 
-                # ( name, indexed, projection )
-                props = [ Prop( norm_key(e), Text(), "@" in e, "#" in e, "%" in e ) for e in  cols[1:]]
+                # ( name, type indexed, projection )
+                props = [ Prop( norm_key(e), Text(multi="+" in e), "@" in e, "#" in e, "+" in e,  "%" in e, "+" in e and "=" in e ) for e in  cols[1:]]
                 start = 0
                 end   = None
                 props = props[start: end]
@@ -227,7 +225,12 @@ class Botapad(object):
                         log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
                         self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops)
             else:
-               rows.append(row)
+                if current and current[2]:
+                    for i, v in enumerate(row):
+                        if props[i].ismulti :
+                            row[i] = re.split("[_,;]", v.strip())
+                            
+                rows.append(row)
 
         self.post( current, rows)
 
@@ -252,7 +255,6 @@ class Botapad(object):
             edges = []
             for row in rows:
                 row = [r.strip() for r in row]
-                print row
                 src, direction, tgt = [ e.strip() for e in re.split("\s+", row[0])]
                 if direction not in DIRECTIONS :
                     raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
@@ -286,7 +288,6 @@ class Botapad(object):
 
             payload = []
             index_props = [ e for e,k in enumerate(props) if k.isindex ]
-            print index_props
             
             if len(index_props) == 0 : index_props = [0]
             
@@ -294,7 +295,7 @@ class Botapad(object):
                 if values[0][:1] == "*":
                     values[0] = values[0][1:]
                     self.starred.add(values[0])
-
+                    
                 postdata = {
                     'nodetype': self.nodetypes[label]['uuid'],
                     'properties': dict(zip(names, values))
@@ -325,24 +326,32 @@ class Botapad(object):
         props = self.node_headers[src]
         projs = [p for p in props if p.isproj]
         names = [ k[0] for k in props ]
-        log( "    [projectors]", projs )
 
         for iprop, prop in enumerate(props) :
 
             if not prop.isproj : continue
+
+            
             
             #  @ Label: %prop0 , ...
             tgt = prop.name
 
             # Distinct column values 
-            values = list( set( [ r[iprop] for r in rows ]) )
+            values = []
+            if prop.ismulti == False:
+                values =  [ r[iprop] for r in rows ]
+            else :
+                for r in rows:
+                    if iprop < len(r):
+                        values.extend(r[iprop])
+            values = list(set(values))
             
             log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) %s" %( src , len(rows), tgt, len(values), iprop, values ) )
 
             nodeprops = { "label": Text() }
 
             if tgt not  in self.node_headers:
-                self.node_headers[tgt] = [ Prop('label', Text(), False, False, False )]
+                self.node_headers[tgt] = [ Prop('label', Text(), False, False, False, False, False )]
                 self.nodetypes[tgt] = self.bot.post_nodetype(self.gid, tgt, tgt, nodeprops)
 
                 payload = []
@@ -378,19 +387,43 @@ class Botapad(object):
             # label -- property edge
             edges = []
             indexes = [ e for e, k in enumerate(props) if k.isindex ]
+            cliqset = set()
             
-            for r in rows:
-                st = self.node_headers[label]
-                srcid = "".join([ r[i] for i in indexes  ])
-                tgtid = '%s' % (r[iprop])
+            for r in rows:                
+                if iprop < len(r):
+                    targets = r[iprop] if prop.ismulti else [r[iprop]]
+                    
+                    if prop.iscliq :
+                        cliqname = "%s_clique" % (prop.name)
+                        if cliqname not in self.edgetypes:
+                            self.edgetypes[cliqname] = self.bot.post_edgetype(self.gid, cliqname, cliqname, nodeprops)
+                        
+                        for e, t in enumerate(targets):
+                            for t2 in targets[e+1:]:
+                                
+                                cliqe = '%s%s' % (t,t2) if t > t2 else (t2,t)
+                                if cliqe not in cliqset:
+                                    edges.append( {
+                                        'edgetype': self.edgetypes[cliqname]['uuid'],
+                                        'source': self.idx['%s' % (t)],
+                                        'target': self.idx['%s' % (t2)],
+                                        'properties': {"label" : cliqname}
+                                    } )
+                                    cliqset.add(cliqe)
+                                    
+                    for t in targets:
+                        st = self.node_headers[label]
+                        srcid = "".join([ r[i] for i in indexes  ])
+                        tgtid = '%s' % (t)
 
-                edges.append( {
-                    'edgetype': self.edgetypes[etname]['uuid'],
-                    'source': self.idx[srcid],
-                    'target': self.idx[tgtid],
-                    'properties': {"label" : etname}
-                } )
+                        edges.append( {
+                            'edgetype': self.edgetypes[etname]['uuid'],
+                            'source': self.idx[srcid],
+                            'target': self.idx[tgtid],
+                            'properties': {"label" : etname}
+                        } )
 
+                            
             log( "posting _ %s %s " % (len(edges), etname ) )
             #print edges
             for e in self.bot.post_edges(self.gid, iter(edges)) : 

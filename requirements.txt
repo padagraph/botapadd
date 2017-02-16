@@ -2,6 +2,7 @@ flask
 flask-runner
 Flask-Markdown
 
+reliure
 
 https://github.com/padagraph/botapi/archive/master.zip
 
