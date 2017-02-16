@@ -18,7 +18,6 @@ from botapad import Botapad
 
 # app
 app = Flask(__name__)
-app.config['DEBUG'] = True
 
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5000")
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"""
