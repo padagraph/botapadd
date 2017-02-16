@@ -3,15 +3,15 @@
     * command line
     * flask app
 
+## Installation
+
+    $ pip install -r requirements.txt
+
+
 # Command Line
 
 * import from file or URL
 * csv like import format
-
-
-## Installation
-
-    $ pip install -r requirements.txt
 
 ## Format
 
@@ -150,12 +150,16 @@ they can also be used in a different dataset.
 # flask app / Botapadapp
 
 Accessible service for botapad  
-requires ../../screenshot/screenshot.py in `$PYTHONPATH`
 
 ### Run
 
-Edit variables & run  
+* export host
+    $ export BOTAPAD_HOST=http://www.padagraph.io  
+* copy your token(http://padagraph.io/account/me/generate_auth_token) into key.txt
+* run  
 
     $ python botapadapp.py
 
+
+[DEPRECATED] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
     
