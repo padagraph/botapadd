@@ -153,6 +153,10 @@ Accessible service for botapad
 
 ### Run
 
+* install deps
+
+    $ pip install -r requirements.txt
+
 * export host
 
     $ export BOTAPAD_HOST=http://www.padagraph.io  
