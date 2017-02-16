@@ -6,4 +6,4 @@
 PROJECT="botapadd-dev"
 
 docker-compose -p $PROJECT up --build --force-recreate -d
-docker-compose -p $PROJECT logs -f
+docker-compose -p $PROJECT logs -ft

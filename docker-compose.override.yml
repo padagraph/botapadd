@@ -11,5 +11,6 @@ services:
     restart: "no"
     volumes:
       - ./:/var/padagraph-botapadd/
+      # static
 
 # TODO/consider: possibility of using nodemon in dev only, for automatic reloading within container when we change a source file

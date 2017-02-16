@@ -8,8 +8,8 @@ WORKDIR /var/padagraph-botapadd
 ENV PYTHONPATH=${APP_HOME}/screenshot/:/usr/lib/python2.7/dist-packages/
 
 COPY . ${APP_HOME}/
-#COPY ./static/master.zip ${APP_HOME}/static/master.zip
-RUN make install
+COPY ./static/ ${APP_HOME}/static
+RUN pip install -r requirements.txt
 
 VOLUME {APP_HOME}/ 
 #${APP_HOME}/src ${APP_HOME}/log
