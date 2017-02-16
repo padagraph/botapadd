@@ -31,7 +31,7 @@ def debug(*args):
         pprint( args)
 
 def norm_key(key):
-    return re.sub('\s' , '', key)
+    return re.sub('\W' , '', key, flags=re.UNICODE)
    
 def csv_rows(lines, start_col=None, end_col=None, separator=";"):
     
@@ -149,7 +149,7 @@ class Botapad(object):
         rows = [ r for r in reader]
         #start_col = 0 if start_col is None else start_col
         #rows = [ r[start_col:end_col] for r in rows]
-        rows = [ r for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
+        rows = [ [ e.decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
         
         return rows
                     
@@ -194,7 +194,7 @@ class Botapad(object):
                 line = ";".join(row)
                 cols = re.sub(' ', '', line[1:]) # no space
                 # @Politic: %Chamber; #First Name; #Last Name;%Party;%State;%Stance;Statement;
-                cols = [e for e in re.split("[:;,]" , "%s" % cols) if len(e)]
+                cols = [e for e in re.split("[:;,]" , "%s" % cols, flags=re.UNICODE) if len(e)]
                 label = cols[0] # @Something
                 
                 # ( name, type indexed, projection )
@@ -229,7 +229,7 @@ class Botapad(object):
                     for i, v in enumerate(row):
                         if i >= len(props): break
                         if props[i].ismulti :
-                            row[i] = [  e.strip() for e in re.split("[_,;]", v.strip()) ] 
+                            row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ] 
                             
                 rows.append(row)
 
@@ -256,7 +256,7 @@ class Botapad(object):
             edges = []
             for row in rows:
                 row = [r.strip() for r in row]
-                src, direction, tgt = [ e.strip() for e in re.split("\s+", row[0])]
+                src, direction, tgt = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
                 if direction not in DIRECTIONS :
                     raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
                 
