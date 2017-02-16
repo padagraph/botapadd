@@ -40,28 +40,28 @@ Some special characters are used at a begin line:
 
 
 Headers refers to `nodetypes` or `edgetypes` in the padagraph database.
-syntax is ```char name: prop; other``` with `char` in ( `@`,`_` )
-`:` after  Nodetype name and `;` between properties
+syntax is ```char name: prop; other``` with `char` in ( `@`,`_` )   
+`:` after  Nodetype name and `;` between properties  
 Properties are defined with a `Text` definition.
 
 ### Node header
 
-(we may extends to control over property types if needed or PR proposed)
+(we may extends to control over property types if needed or PR proposed)  
 
-Creating a table for a nodetype
+Creating a table for a nodetype  
 
     @ Person:  label ; image 
 
 We just defined a `Person` nodetype with `properties`.
 
-`label` is required and is the property used by padagraph to render in graphs and find nodes in the searchbox.
-`image` is used by padagraph to render nodes in graph.
+`label` is required and is the property used by padagraph to render in graphs and find nodes in the searchbox.  
+`image` is used by padagraph to render nodes in graph.  
 
 Indexed columns can be specified with an extra '#'.  
 
     @ Person: #num; label; image ; +roles
 
-you will next use `num` values  to create `Relations` for shorthand and pad maintenance and uniqness. 
+you will next use `num` values  to create `Relations` for shorthand and pad maintenance and uniqness.  
 
 Next row is expecting data from this table.
 Begining and ending space will be removed in each cell.    
@@ -109,31 +109,33 @@ and 8 edges.
     Politic -- Party   (2)
     Politic -- Stance  (2)
 
-Note :
-    * mixing '%' and '+' in a prop will project row on each value of the cell
-        @ Test: #id ; %+ prop ; another
-        1; a, b, c ; another
-        this will create 3 links
-        1 -- a
-        1 -- b
-        1 -- c
-    * mixing '%', '+' and '='
-      '=' create a clique of the nodes means create a link between each values
-        
-        @ Test: #id ; %+= prop ; another
-        1; a, b, c ; another
-        this will create 3 links row -- prop
-        1 -- a
-        1 -- b
-        1 -- c
+#### Note :  
+* mixing '%' and '+' in a prop will project row on each value of the cell  
 
-     and also 3 links
+     @ Test: #id ; %+ prop ; another
+     1; a, b, c ; another
+     this will create 3 links
+     1 -- a
+     1 -- b
+     1 -- c
+     
+* mixing '%', '+' and '='  
+'=' create a clique of the nodes means create a link between each values  
 
-        a -- b
-        a -- c
-        b -- c
+     @ Test: #id ; %+= prop ; another
+     1; a, b, c ; another
+     this will create 3 links row -- prop
+     1 -- a
+     1 -- b
+     1 -- c
 
-    maybe it s weird now ?
+and also 3 links  
+
+     a -- b
+     a -- c
+     b -- c
+ 
+maybe it s weird now ?
         
 ### Import
 
