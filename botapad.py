@@ -19,7 +19,6 @@ VERTEX = 1
 DEBUG = False
 VERBOSE = True
 
-
 def log(*args):
     if len(args) == 1 and type(args) in (tuple,list):
         args = args[0]
@@ -52,7 +51,7 @@ def convert_url(url):
 
      """
      
-    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([a-z]+)/?([export\/txt]+)?"
+    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([a-zA-Z\-]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
         frama = [r for r in frama[0] if len(r)]
@@ -61,7 +60,7 @@ def convert_url(url):
             return url
             
     #https://framacalc.org/uspaties
-    re_framacalc = "https?:\/\/framacalc.org/([a-z]+)([\.csv]+)?"
+    re_framacalc = "https?:\/\/framacalc.org/([a-zA-Z\-]+)([\.csv]+)?"
     frama = re.findall(re_framacalc, url)
     debug( "convert_url", url , frama )
     if  len(frama) :
