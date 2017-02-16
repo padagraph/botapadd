@@ -7,7 +7,7 @@ services:
     env_file: environment.sh
     volumes:
       - ./log:/var/padagraph-botapadd/log
-      # - ./src:src
+      # - ./src:src # do that in dev with gunicorn as well? (only in dev right now)
 # volumes:
 #   botapadd-data:
 # ignore named volumes for now
