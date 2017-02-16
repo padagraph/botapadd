@@ -19,12 +19,20 @@ We are using a csv like file format for data.
 One header is required to describe the content of the data.
 Some special characters are used at a begin line:
 
+[Comments]
 * '!' is used to comment a line, usefull for discussion and help, it will be ignored by the program
+
+[Headers]
 * '@' Header for nodes :
 * '_' Header for edges :
+
+[Properties]
 * '*' marker for starred nodes :
+* '+' marker for multiple values in column
 * '%' marker for projection :
+* '=' used with '%' create a clique with all cell elements :
 * '&' is an import directive to load external data
+
 
 Headers refers to `nodetypes` or `edgetypes` in the padagraph database.
 syntax is ```char name: prop; other``` with `char` in ( `@`,`_` )
