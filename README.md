@@ -89,21 +89,22 @@ and the data we use the indexed culumn `num` to identify the nodes and create li
     15 -- 4
     15 -- 3
     
-!!!! Warning you have to keep your uniq ids for the whole data !!!! 
+!!!! Warning you have to keep your uniq ids for the whole data !!!!   
 
 ### Projection
 
 Sometimes you want to use a property of the row as a Node with a link to the row  
-Considere a list of politicians
+Considere a list of politicians  
 
     @ Politic: %Chamber; #FirstName; #LastName; %Party; %State; %Stance; Statement;
 
     Senator,Lisa,Murkowski,R,AK,Neutral,"All weekend long my staff and I have been monitoring ..."
     Senator,Dan,Sullivan,R,AK,Support,"Excerpt -  The temporary restrictions, which I support,  ..."
 
-we ll get a graph with 7 nodes from 5 types
-2 'Politics', 1 'Chamber' (Senator), 1 'State' (AK) , 1 'Party' (R) , 2 'Stance' ...
-and 8 edges.
+we ll get a graph with 7 nodes from 5 types  
+2 'Politics', 1 'Chamber' (Senator), 1 'State' (AK) , 1 'Party' (R) , 2 'Stance' ...  
+and 8 edges.  
+
     Politic -- Chamber  (2) 
     Politic -- State   (2)
     Politic -- Party   (2)
@@ -114,17 +115,18 @@ and 8 edges.
 
      @ Test: #id ; %+ prop ; another
      1; a, b, c ; another
-     this will create 3 links
+     ! this will create 3 links
      1 -- a
      1 -- b
      1 -- c
      
-* mixing '%', '+' and '='  
+* mixing '%', '+' and '=' :
+
 '=' create a clique of the nodes means create a link between each values  
 
      @ Test: #id ; %+= prop ; another
      1; a, b, c ; another
-     this will create 3 links row -- prop
+     ! this will create 3 links like row -- prop
      1 -- a
      1 -- b
      1 -- c
@@ -155,6 +157,7 @@ they can also be used in a different dataset.
 
 
 ## Usage
+
     # see help :
     $ python botapad.py --help
 
