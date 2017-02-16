@@ -4,14 +4,12 @@ LABEL maintainer "Christopher Burroughs <chris.burroughs@protonmail.ch>, ynnk"
 # Setup application home
 ENV APP_HOME /var/padagraph-botapadd
 RUN mkdir -p ${APP_HOME} ${APP_home}/log
-WORKDIR ${APP_HOME}
+WORKDIR /var/padagraph-botapadd
 ENV PYTHONPATH=${APP_HOME}/screenshot/:/usr/lib/python2.7/dist-packages/
 
-# Install pip requirements
-COPY requirements.txt ${APP_HOME}/requirements.txt
-RUN pip install -r requirements.txt
-
 COPY . ${APP_HOME}/
+#COPY ./static/master.zip ${APP_HOME}/static/master.zip
+RUN make install
 
 VOLUME {APP_HOME}/ 
 #${APP_HOME}/src ${APP_HOME}/log

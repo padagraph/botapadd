@@ -7,7 +7,7 @@ services:
       - APP_DEBUG=true
       - PRODUCTION=false
       - BIND_PORT=5000
-      - BOTAPAD_HOST=http://padagraph.io
+      - BOTAPAD_HOST=http://www.padagraph.io
     restart: "no"
     volumes:
       - ./:/var/padagraph-botapadd/
