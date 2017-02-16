@@ -9,6 +9,7 @@ services:
       - BIND_PORT=5000
     restart: "no"
     volumes:
-      - ./secret:/var/padagraph-botapadd/
+      # - ./secret:/var/padagraph-botapadd/
+      - ./:/var/padagraph-botapadd/
 
 # TODO/consider: possibility of using nodemon in dev only, for automatic reloading within container when we change a source file

@@ -12,12 +12,10 @@ COPY requirements.txt ${APP_HOME}/requirements.txt
 RUN pip install -r requirements.txt
 
 COPY . ${APP_HOME}/
-#COPY docker-entry.sh ${APP_HOME}/docker-entry.sh
-#COPY src ?
 
-VOLUME ${APP_HOME}/src ${APP_HOME}/log
+VOLUME {APP_HOME}/ 
+#${APP_HOME}/src ${APP_HOME}/log
 EXPOSE 5000 80
 
-RUN chmod +x docker-entry.sh
 ENTRYPOINT ["/var/padagraph-botapadd/docker-entry.sh"]
 CMD ["/bin/bash"]
