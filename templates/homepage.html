@@ -101,6 +101,8 @@
       }
     }
 
+    a.inverted { color:white;}
+
     iframe {
         border: none;
         }
@@ -160,15 +162,17 @@
 
       {% if complete %}
     <div class="ui text container">
+      
       <h1 class="ui inverted header">
         padagraph.io
       </h1>
       <h2>Open a pad and a graph will follow </h2>
 
 
-      <h4 class="ui horizontal header divider">
-        <a href="#">Import complete</a>
+      <h4 class="ui inverted  horizontal divider">
+        Import complete
       </h4>
+      
       <p>  
 <!--
       <a class="" href="{{url}}"><img src='{{img}}'/></a>
@@ -176,8 +180,9 @@
 -->
       <iframe src="{{iframe}}" width=100% height=600 ></iframe>
       <br/>  
-
-      <a class="" href="{{url}}">Visit {{url}}</a>
+        <div class="ui inverted link list">
+            <a class="active item" href="{{url}}">Visit {{url}}</a>
+        </div>
       </p>
 
     </div>
@@ -192,6 +197,7 @@
 
 
   <div class="ui inverted vertical footer segment">
+      <h4 class="ui inverted  horizontal divider"> &nbsp;  </h4>
     <div class="ui container">
       <div class="ui stackable inverted equal height grid">
 
@@ -214,7 +220,7 @@
         <div class="three wide column">
           <h4 class="ui inverted header">Next </h4>
           <div class="ui inverted link list">
-          <a class="active item"  href="https://github.com/padagraph/community/blob/master/bots/botapad/botapad.md">Github</a>
+          <a class="active item"  href="https://github.com/padagraph/botapadd">Github</a>
           <a class="item" href="" >donate</a>
           </div>
         </div>

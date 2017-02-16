@@ -18,13 +18,13 @@ from botapad import Botapad
 
 # app
 app = Flask(__name__)
-app.config['DEBUG'] = True
 
-HOST = "http://localhost:5000"
+HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5000")
+DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"""
+
 KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
 PATH = "./static/images" # images storage
 
-DELETE = True # delete graph before importation
 
 #driver = webdriver.Chrome("chromedriver")
 #driver.quit()
@@ -65,13 +65,16 @@ def image(gid):
 
 @app.route('/test', methods=['GET'])
 def test():
-    gid = "dd"
+    gid = "atsiohrel"
     params = {
             #template
             'color' : "12AAAA",
             'zoom'  : 1200,
-            'buttons': 0, # removes play/vote buttons
-            'labels' : 1,  # removes graph name/attributes 
+            
+            'auto_rotate': 1,
+                
+            'buttons': 1, # removes play/vote buttons
+            'labels' : 0,  # removes graph name/attributes 
             # gviz
             'vtx_size' : 0,
             'show_text'  : 1 ,     # removes vertex text 
@@ -128,7 +131,7 @@ def botimport():
 
         #snapshot(gid, **params)
 
-    return render_template('homepage.html', iframe= iframe, url=graph_url(gid) , img=img_url(gid), complete=True)
+    return render_template('homepage.html', iframe= iframe, url=graph_url(gid) , img=img_url(gid), complete=complete)
     
 def main():
     ## run the app
