@@ -209,7 +209,7 @@ class Botapad(object):
 
                 typeprops = { p.name : p.type for p in props }
                     
-                if cell[:1] == "@":
+                if cell[:1] == "@": # nodetype def
                     rows = []
                     
                     current = (VERTEX, label, props)
@@ -218,13 +218,13 @@ class Botapad(object):
                         self.nodetypes[label] = self.bot.post_nodetype(self.gid, label, label, typeprops)
                         self.node_headers[label] = props
                         
-                elif cell[:1] == "_":
+                elif cell[:1] == "_": # edgetype def
                     rows = []
                     current = (EDGE, label, props)
                     if not label in self.edgetypes:                        
                         log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
                         self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops)
-            else:
+            else: # table data
                 if current and current[2]:
                     for i, v in enumerate(row):
                         if i >= len(props): break

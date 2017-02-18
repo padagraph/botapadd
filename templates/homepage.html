@@ -106,6 +106,12 @@
     iframe {
         border: none;
         }
+
+    pre {
+        background: darkcyan;
+        padding: 6px;
+        margin: 0px 30px 10px 0px;
+    }
   </style>
 
 </head>
@@ -119,14 +125,30 @@
     
   <div class="ui inverted vertical masthead center aligned segment">
 
-
-      {% if not complete %}
     <div class="ui text container">
       <h1 class="ui inverted header">
         padagraph.io
       </h1>
       <h2>Open a pad and a graph will follow </h2>
+    </div>
 
+
+
+    
+      {% if readme %}
+    <div class="ui  left aligned text container">
+      <h4 class="ui inverted  horizontal divider">
+        readme
+      </h4>
+      {% filter markdown %}
+            {{readme}}
+      {% endfilter %}
+    </div>
+      {% endif%}
+
+
+      {% if not complete %}
+    <div class="ui text container">
       <h4 class="ui inverted  horizontal divider">
         Usage
       </h4>
@@ -145,7 +167,7 @@
           </div>
         </div>
         <div class="field center aligned">
-          <a class="ui large button" href="/more">readme</a>
+          <a class="ui large button" href="/readme">readme</a>
           <button type="submit" value="Subscribe" class="ui huge primary submit button">
             Import this pad
           </button>
@@ -162,10 +184,7 @@
       {% if complete %}
     <div class="ui container">
       
-      <h1 class="ui inverted header">
-        padagraph.io
-      </h1>
-      <h2>Open a pad and a graph will follow </h2>
+      
 
 
       <h4 class="ui inverted  horizontal divider">

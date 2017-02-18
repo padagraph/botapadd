@@ -10,6 +10,7 @@ from functools import wraps
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
+
 from botapad import Botapad
 
 #from screenshot import getScreenShot
@@ -30,10 +31,11 @@ KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 PATH = "./static/images" # images storage
 
-
+# browser webdriver
 #driver = webdriver.Chrome("chromedriver")
-#driver.quit()
 
+from flaskext.markdown import Markdown
+Markdown(app)
 
 def img_url(gid):
     return '%s/%s.png' % ( PATH, gid )
@@ -43,15 +45,7 @@ def graph_url(gid):
     
 
 
-@app.route('/more', methods=['GET', 'POST'])
-def more():
-    md = codecs.open('README.md', 'r', encoding='utf8').read()
-    response = make_response(render_template_string(md))
-    response.headers['Content-Type'] = "text/plain; charset=utf-8"
-    return response
-    
-
-def _import(gid, url):
+def import_pad(gid, url):
     description = "imported from %s" % url
     bot = Botapad(HOST, KEY, gid, description, delete=DELETE)
     return bot.parse(url, separator='auto')
@@ -61,19 +55,19 @@ def snapshot(gid, **kwargs):
     requires screenshot & selenium driver
     """
     path = '%s/%s.png' % ( PATH, gid )
+    #driver, HOST, gid, path, width, height, {iframe params}
     getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
 
 
 @app.route('/image/<string:gid>', methods=['GET', 'POST'])
 def image(gid):
     return redirect( img_url(gid) )
-    
 
 
 
-@app.route('/test', methods=['GET'])
+#@app.route('/test', methods=['GET'])
 def test():
-    gid = "atsiohrel"
+    gid = "fillon"
     params = {
             #template
             'color' : "12AAAA",
@@ -94,6 +88,12 @@ def test():
     querystr = "&".join(["%s=%s" % (k,v) for k,v in params.items()])
     iframe = "%s/iframe/%s?%s#graph" % ( HOST, gid, querystr )
     return render_template('homepage.html', iframe= iframe, url=graph_url(gid) , img=img_url(gid), complete=True)
+
+@app.route('/readme', methods=['GET', 'POST'])
+def readme():
+    md = codecs.open('README.md', 'r', encoding='utf8').read()
+    return render_template('homepage.html', readme=md )
+    
     
 @app.route('/import', methods=['GET'])
 def home():
@@ -133,7 +133,7 @@ def botimport():
                 
         }
 
-        _import(gid, url)
+        import_pad(gid, url)
 
         querystr = "&".join(["%s=%s" % (k,v) for k,v in params.items()])
         iframe = "%s/iframe/%s?%s#graph" % ( HOST, gid, querystr )
