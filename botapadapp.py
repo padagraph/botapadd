@@ -19,7 +19,7 @@ from botapad import Botapad
 
 # app
 app = Flask(__name__)
-app.config['DEBUG'] = os.environ.get('APP_DEBUG', None).lower() == "true"
+app.config['DEBUG'] = os.environ.get('APP_DEBUG', "").lower() == "true"
 
 # padagraph host to connect
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
