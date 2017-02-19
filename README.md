@@ -110,7 +110,8 @@ and 8 edges.
     Politic -- Party   (2)
     Politic -- Stance  (2)
 
-#### Note :  
+#### Note :
+
 * mixing '%' and '+' in a prop will project row on each value of the cell  
 
      @ Test: #id ; %+ prop ; another

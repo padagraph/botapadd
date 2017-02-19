@@ -19,17 +19,21 @@ from botapad import Botapad
 
 # app
 app = Flask(__name__)
-app.config['DEBUG'] = True
+app.config['DEBUG'] = os.environ.get('APP_DEBUG', None).lower() == "true"
 
 # padagraph host to connect
-HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5000")
+HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
 
 # padagraph host valid token
 KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
+KEY  = codecs.open("key.local", 'r', encoding='utf8').read()
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 PATH = "./static/images" # images storage
+
+print "== running Botapad =="
+print "== %s ==" % HOST
 
 # browser webdriver
 #driver = webdriver.Chrome("chromedriver")
@@ -48,7 +52,7 @@ def graph_url(gid):
 def import_pad(gid, url):
     description = "imported from %s" % url
     bot = Botapad(HOST, KEY, gid, description, delete=DELETE)
-    return bot.parse(url, separator='auto')
+    return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
 
 def snapshot(gid, **kwargs):
     """

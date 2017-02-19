@@ -51,7 +51,7 @@ def convert_url(url):
 
      """
      
-    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([a-zA-Z\-_]+)/?([export\/txt]+)?"
+    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
         frama = [r for r in frama[0] if len(r)]
@@ -60,7 +60,7 @@ def convert_url(url):
             return url
             
     #https://framacalc.org/uspaties
-    re_framacalc = "https?:\/\/framacalc.org/([a-zA-Z\-_]+)([\.csv]+)?"
+    re_framacalc = "https?:\/\/framacalc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
     frama = re.findall(re_framacalc, url)
     debug( "convert_url", url , frama )
     if  len(frama) :
@@ -153,13 +153,15 @@ class Botapad(object):
         
         return rows
                     
-    def parse(self, path, **kwargs):
+    def parse(self, path, debug=False, **kwargs):
         """ :param path : txt file path
 
         handles special lines starting with [# @ _]
         for comments, node type, property names
         
         """
+        DEBUG = debug
+
 
         csv = self.read(path, **kwargs)
         
@@ -256,7 +258,8 @@ class Botapad(object):
             edges = []
             for row in rows:
                 row = [r.strip() for r in row]
-                src, direction, tgt = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
+                edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
+                src, direction, tgt = edge
                 if direction not in DIRECTIONS :
                     raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
                 
