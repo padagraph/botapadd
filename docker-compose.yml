@@ -1,7 +1,7 @@
 version: "2"
 services:
   botapadd:
-    image: padagraph/botapadd:latest
+    image: 193.70.90.12:5000/padagraph/botapadd:latest
     build: .
     restart: unless-stopped
     env_file: environment.sh
