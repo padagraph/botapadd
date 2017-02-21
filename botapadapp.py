@@ -125,6 +125,7 @@ def promote():
     cursor.execute("""
     select imported_on, gid, padurl from imports as i
     where i.status = 1 and i.help = 1
+    group by  gid, padurl
     order by imported_on desc
     limit 0,20;     
     """)
@@ -138,7 +139,7 @@ def promote():
         r['time'] = row[0].strftime(' %H: %M')
         rows.append(r)
         
-    rows.reverse()
+    #rows = rows.reverse()
     promote = { 'rows' : rows }
 
 
