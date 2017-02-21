@@ -12,8 +12,8 @@ COPY . ${APP_HOME}/
 RUN pip install -r requirements.txt
 
 # Temp: volumize whole app dir. Should only volumize /log/
-VOLUME ${APP_HOME}/ 
-#${APP_HOME}/src ${APP_HOME}/log
+VOLUME ${APP_HOME}
+#VOLUME ${APP_HOME}/log
 EXPOSE 5000 80
 
 ENTRYPOINT ["/var/padagraph-botapadd/docker-entry.sh"]
