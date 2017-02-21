@@ -1,0 +1,13 @@
+version: "2"
+services:
+  botapadd:
+    restart: unless-stopped
+    environment:
+      - VIRTUAL_HOST=import.padagraph.io
+      # On port 80 by default, set VIRTUAL_PORT to change.
+    networks:
+      - "service-tier"
+networks:
+  service-tier:
+    external:
+      name: pdg_service-tier

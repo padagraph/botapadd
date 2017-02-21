@@ -1,6 +1,9 @@
 version: "2"
 services:
   botapadd:
+    # TODO: a port should be defined, but not "80" if on production server
+    ports:
+      - "81:80"
     image: 193.70.90.12:5000/padagraph/botapadd:latest
     build: .
     restart: unless-stopped

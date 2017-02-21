@@ -17,7 +17,7 @@ docker-build:
 	mkdir -p  ./static/images/
 	wget https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip -O static/master.zip
 	cd ./static && unzip master.zip
-	docker-compose -f docker-compose.yml build --pull
+	docker-compose -f docker-compose.yml build --pull --no-cache
 
 
 docker-push:
