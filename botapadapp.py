@@ -115,6 +115,42 @@ def snapshot(gid, **kwargs):
 def image(gid):
     return redirect( img_url(gid) )
 
+@app.route('/promote', methods=['GET'])
+def promote():
+    
+    query = """
+    SELECT * FROM IMPORTS
+    """
+    cursor = get_db().cursor()
+    cursor.execute("""
+    select imported_on, gid, padurl from imports as i
+    where i.status = 1 and i.help = 1
+    order by imported_on desc
+    limit 0,20;     
+    """)
+    rows = []
+    for row in cursor.fetchall():
+        print row
+        #imported_on,  gid, padurl, status, needhelp = row
+        r = dict(zip( "imported_on,gid,padurl".split(','), row ))
+        r['graph_url'] = graph_url(row[1])
+        r['date'] = row[0].strftime(' %d %m %Y')
+        r['time'] = row[0].strftime(' %H: %M')
+        rows.append(r)
+        
+    rows.reverse()
+    promote = { 'rows' : rows }
+
+
+    cursor.execute("""
+    select count(distinct padurl) from imports  where status = 1 and help=1;
+    """)
+    promote['count'] = cursor.fetchone()[0]
+    
+    return render_template('homepage.html', promote=promote)
+    
+
+    
 @app.route('/stats', methods=['GET', 'POST'])
 def stats():
     query = """
@@ -151,6 +187,7 @@ def stats():
         rows.append(r)
         
     stats['rows'] = rows
+    cursor.close()
     return render_template('homepage.html', stats=stats)
 
     
@@ -203,7 +240,7 @@ def botimport():
 
     gid = request.form.get('gid', None)
     url = request.form.get('url', None)
-    promote = request.form.get('promote', 0)
+    promote = 1 if request.form.get('promote', 0)  else 0
         
 
     if gid and url:

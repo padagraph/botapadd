@@ -170,7 +170,7 @@ class Botapad(object):
             rows = [ r for r in reader]
             #start_col = 0 if start_col is None else start_col
             #rows = [ r[start_col:end_col] for r in rows]
-            rows = [ [ e.decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
+            rows = [ [ e.strip().decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
         except :
             raise BotapadCsvError(path, separator, "Error while parsing data %s lines with separator %s" % (len(lines), separator )  )
 

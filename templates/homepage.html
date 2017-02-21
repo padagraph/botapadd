@@ -166,12 +166,43 @@
 
     
     
+      {% elif promote %}
+    <h4 class="ui hidden divider"></h4>
+
+    <div class="ui  left aligned text container">
+    
+      <h5 class="ui inverted  horizontal divider">
+        <i class="icon announcement"></i>    Call for participation ! ({{ promote.count }})
+      </h5>
+
+      <table class="ui compact single line table">
+      <thead>
+        <tr>
+          <th>date</th>
+          <th>pad url</th>
+          <th>graph</th>
+        </tr>
+      </thead>
+      <tbody>
+         {% for item in promote.rows %}
+        <tr>
+          <td>{{ item.date }}{{ item.time }}</td>
+          <td><a href="{{ item.padurl}}" target="_blank">{{ item.padurl }}</a></td>
+          <td><a href="{{ item.graph_url}}" target="_blank">{{ item.gid }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </div>
+
+    
+    
       {% elif stats %}
     <div class="ui  left aligned text container">
       <h4 class="ui inverted  horizontal divider">
         stats
       </h4>
-      <div class="ui inverted statistics">
+      <div class="ui inverted three statistics">
           <div class="statistic">
             <div class="value"> {{stats.success }} </div>
             <div class="label"> imported </div>
@@ -188,6 +219,8 @@
 
     </div>
 
+    <h4 class="ui hidden divider"></h4>
+
     <div class="ui  left aligned container">
       <h5 class="ui inverted  horizontal divider">
         rows
@@ -199,8 +232,8 @@
           <th>date</th>
           <th>pad url</th>
           <th>graph</th>
-          <th>help</th>
-          <th>status</th>
+          <th class="center aligned">promote</th>
+          <th class="center aligned">status</th>
         </tr>
       </thead>
       <tbody>
@@ -209,8 +242,8 @@
           <td>{{ item.date }}{{ item.time }}</td>
           <td><a href="{{ item.padurl}}" target="_blank">{{ item.padurl }}</a></td>
           <td><a href="{{ item.graph_url}}" target="_blank">{{ item.gid }}</a></td>
-          <td>{% if item.help %}<i class="icon announcement"></i>{% endif %}</td>
-          <td  >{% if item.status %}<i class="icon checkmark"></i>{%else%}<i class="icon close">{% endif %}</td>
+          <td class="center aligned">{% if item.help %}<i class="icon announcement"></i>{% endif %}</td>
+          <td class="center aligned" >{% if item.status %}<i class="icon checkmark"></i>{%else%}<i class="icon close">{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -230,12 +263,12 @@
       <br/>  
 -->
       <div class="ui inverted link list">
-        <a class="active item" href="{{url}}">Imported from {{padurl}}</a>
+        <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
       </div>
       <iframe src="{{iframe}}" width=100% height=600 ></iframe>
       <br/>  
       <div class="ui inverted link list">
-        <a class="active item" href="{{url}}">Visit {{graphurl}}</a>
+        <a class="active item" href="{{graphurl}}">Visit {{graphurl}}</a>
       </div>
       </p>
 
@@ -253,7 +286,7 @@
 
             {% if error.class == "BotapadURLError" %}
             <ul class="list">
-              <li>Can't download document at<a href='{{error.url}}'>{{error.url}}</a></li>
+              <li>Can't download document at <a href='{{error.url}}'>{{error.url}}</a></li>
             </ul>
             <h4>URL is malformed or website may not respond ... </h4>
             
@@ -333,11 +366,12 @@
           </div>
         </div>
         
-        <div class="three wide column">
+        <div class="four wide column">
           <h4 class="ui inverted header">Services</h4>
           <div class="ui inverted link list">
-            <a class="active item">Open a pad</a>
-            <a href="#" class="item">to be delivered</a>
+            <a href="import" class="active item">Import a pad</a>
+            <a href="promote" class="active item">Call for participation</a>
+            <a href="stats" class="active item">Service statistiqs</a>
           </div>
         </div>
         
