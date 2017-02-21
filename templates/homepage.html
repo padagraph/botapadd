@@ -15,7 +15,6 @@
 -->
 
     <link rel="stylesheet" href="static/Semantic-UI-CSS-master/semantic.min.css">
-    <script src="static/Semantic-UI-CSS-master/semantic.min.js"></script>
 
   <style type="text/css">
     
@@ -112,6 +111,26 @@
         padding: 6px;
         margin: 0px 30px 10px 0px;
     }
+
+    form .ui.checkbox label {
+        font-size: 24px;
+        padding-left: 24px;
+        color: white;
+    }
+
+    form h3 {
+        margin-top: 2px
+    }
+
+    input[type=checkbox]
+    {
+      /* Double-sized Checkboxes */
+      -ms-transform: scale(2); /* IE */
+      -moz-transform: scale(2); /* FF */
+      -webkit-transform: scale(2); /* Safari and Chrome */
+      -o-transform: scale(2); /* Opera */
+      padding: 10px;
+    }
   </style>
 
 </head>
@@ -144,10 +163,120 @@
             {{readme}}
       {% endfilter %}
     </div>
-      {% endif%}
 
+    
+    
+      {% elif stats %}
+    <div class="ui  left aligned text container">
+      <h4 class="ui inverted  horizontal divider">
+        stats
+      </h4>
+      <div class="ui inverted statistics">
+          <div class="statistic">
+            <div class="value"> {{stats.success }} </div>
+            <div class="label"> imported </div>
+          </div>   
+          <div class="statistic">
+            <div class="value"> {{ stats.fails }} </div>
+            <div class="label"> fails </div>
+          </div>   
+          <div class="statistic">
+            <div class="value">{{ stats.tries  }} </div>
+            <div class="label"> tries </div>
+          </div>   
+      </div>   
 
-      {% if not complete %}
+    </div>
+
+    <div class="ui  left aligned container">
+      <h5 class="ui inverted  horizontal divider">
+        rows
+      </h5>
+
+      <table class="ui compact single line table">
+      <thead>
+        <tr>
+          <th>date</th>
+          <th>pad url</th>
+          <th>graph</th>
+          <th>help</th>
+          <th>status</th>
+        </tr>
+      </thead>
+      <tbody>
+         {% for item in stats.rows %}
+        <tr class="{% if not item.status %}error{% endif %}">
+          <td>{{ item.date }}{{ item.time }}</td>
+          <td><a href="{{ item.padurl}}" target="_blank">{{ item.padurl }}</a></td>
+          <td><a href="{{ item.graph_url}}" target="_blank">{{ item.gid }}</a></td>
+          <td>{% if item.help %}<i class="icon announcement"></i>{% endif %}</td>
+          <td  >{% if item.status %}<i class="icon checkmark"></i>{%else%}<i class="icon close">{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </div>
+
+    
+ 
+      {% elif complete and not fail  %}
+    <div class="ui container">
+      <h4 class="ui inverted  horizontal divider">
+        Import complete
+      </h4>
+      <p>  
+<!--
+      <a class="" href="{{url}}"><img src='{{img}}'/></a>
+      <br/>  
+-->
+      <div class="ui inverted link list">
+        <a class="active item" href="{{url}}">Imported from {{padurl}}</a>
+      </div>
+      <iframe src="{{iframe}}" width=100% height=600 ></iframe>
+      <br/>  
+      <div class="ui inverted link list">
+        <a class="active item" href="{{url}}">Visit {{graphurl}}</a>
+      </div>
+      </p>
+
+    </div>
+
+    
+      {% elif error %}
+    <div class="ui text container">
+      <div class="ui icon  message">
+          <i class="cloud download icon"></i>
+          <div class="content">
+            <div class="header">
+                Import error
+            </div>
+
+            {% if error.class == "BotapadURLError" %}
+            <ul class="list">
+              <li>Can't download document at<a href='{{error.url}}'>{{error.url}}</a></li>
+            </ul>
+            <h4>URL is malformed or website may not respond ... </h4>
+            
+            {% elif error.class == "BotapadCsvError" %}
+            <ul class="list">
+              <Li>Parsing data failed in {{error.path}}</Li>
+              <Li>we used the character <code>{{error.separator}}</code> as a separator</Li>
+            </ul>
+
+            {% elif error.class == "BotapadError" %}
+            <ul class="list">
+              <li>{{error.message}}</li>l
+              <Li>{{error.class}} </Li>
+            </ul>
+            {%endif%}
+            <a href="/" class="item">Back </a></Li>
+        </div>
+      </div>
+      
+    </div>
+
+    
+      {% else %}
     <div class="ui text container">
       <h4 class="ui inverted  horizontal divider">
         Usage
@@ -167,6 +296,10 @@
           </div>
         </div>
         <div class="field center aligned">
+              <input type="checkbox" tabindex="0" name="promote">
+              <h3>Promote this pad, call for participants </h3>
+        </div>
+        <div class="field center aligned">
           <a class="ui large button" href="/readme">readme</a>
           <button type="submit" value="Subscribe" class="ui huge primary submit button">
             Import this pad
@@ -177,34 +310,7 @@
 
     </div>
      
-      {% endif%}
-
-
-
-      {% if complete %}
-    <div class="ui container">
-      
-      
-
-
-      <h4 class="ui inverted  horizontal divider">
-        Import complete
-      </h4>
-      
-      <p>  
-<!--
-      <a class="" href="{{url}}"><img src='{{img}}'/></a>
-      <br/>  
--->
-      <iframe src="{{iframe}}" width=100% height=600 ></iframe>
-      <br/>  
-        <div class="ui inverted link list">
-            <a class="active item" href="{{url}}">Visit {{url}}</a>
-        </div>
-      </p>
-
-    </div>
-      {% endif%}
+     {% endif%}
 
   </div>
 
@@ -222,7 +328,7 @@
         <div class="three wide column">
           <h4 class="ui inverted header">About</h4>
           <div class="ui inverted link list">
-                        <a href="#" class="item">You are here</a>
+            <a href="#" class="item">You are here</a>
             <a href="#" class="item">Contact Us</a>
           </div>
         </div>

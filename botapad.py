@@ -74,7 +74,22 @@ def convert_url(url):
 
 
 Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj', 'iscliq'])
+
+
+class BotapadError(Exception):
+    pass
+
+class BotapadCsvError(Exception):
+    def __init__(self, path, separator, message):
+        self.path = path
+        self.separator = separator
+        self.message = message
     
+class BotapadURLError(Exception):
+    def __init__(self, message, url):
+        self.message = message
+        self.url = url
+
 class Botapad(object):
     
     def __init__(self, host, key, gid, description, delete=False):
@@ -124,15 +139,20 @@ class Botapad(object):
     def read(self, path, separator='auto'):
 
         if path[0:4] == 'http':
-            url = convert_url(path)
-            log( " * Downloading %s \n" % url)
-            content = requests.get(url).text
-            lines = content.split('\n')
-            
+            try : 
+                url = convert_url(path)
+                log( " * Downloading %s \n" % url)
+                content = requests.get(url).text
+                lines = content.split('\n')
+            except :
+                raise BotapadURLError("Can't download %s" % url, url)
         else:
             log( " * Opening %s \n" % path)
-            with codecs.open(path, 'r', encoding='utf8' ) as fin:
-                lines = [ line for line in fin]
+            try : 
+                with codecs.open(path, 'r', encoding='utf8' ) as fin:
+                    lines = [ line for line in fin]
+            except :
+                raise BotapadError("Can't read file %s" % path)
 
         lines = [ line.strip() for line in lines ]
         lines = [ line.encode('utf8') for line in lines if len(line)]
@@ -144,13 +164,16 @@ class Botapad(object):
             else: separator = ','
 
         log(" * Reading %s (%s) lines with delimiter '%s'" % (path, len(lines), separator))
-        
-        reader = csv.reader(lines, delimiter=separator)
-        rows = [ r for r in reader]
-        #start_col = 0 if start_col is None else start_col
-        #rows = [ r[start_col:end_col] for r in rows]
-        rows = [ [ e.decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
-        
+
+        try : 
+            reader = csv.reader(lines, delimiter=separator)
+            rows = [ r for r in reader]
+            #start_col = 0 if start_col is None else start_col
+            #rows = [ r[start_col:end_col] for r in rows]
+            rows = [ [ e.decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
+        except :
+            raise BotapadCsvError(path, separator, "Error while parsing data %s lines with separator %s" % (len(lines), separator )  )
+
         return rows
                     
     def parse(self, path, debug=False, **kwargs):
@@ -333,7 +356,7 @@ class Botapad(object):
 
         for iprop, prop in enumerate(props) :
 
-            if not prop.isproj : continue
+            if not ( prop.isproj or prop.iscliq ) : continue
             
             #  @ Label: %prop0 , ...
             tgt = prop.name
@@ -367,7 +390,7 @@ class Botapad(object):
                         # if values[0][:1] == "*":
                             #values[0] = values[0][1:]
                             #starred.add(values[0])
-
+ 
                         payload.append( {
                             'nodetype': self.nodetypes[tgt]['uuid'],
                             'properties': dict(zip(['label'], [v] ))
@@ -388,6 +411,7 @@ class Botapad(object):
             edges = []
             indexes = [ e for e, k in enumerate(props) if k.isindex ]
             cliqset = set()
+            cliqedges = [] 
             
             for r in rows:                
                 if iprop < len(r):
@@ -403,7 +427,7 @@ class Botapad(object):
                                 
                                 cliqe = '%s%s' % (t,t2) if t > t2 else (t2,t)
                                 if cliqe not in cliqset:
-                                    edges.append( {
+                                    cliqedges.append( {
                                         'edgetype': self.edgetypes[cliqname]['uuid'],
                                         'source': self.idx['%s' % (t)],
                                         'target': self.idx['%s' % (t2)],
@@ -411,19 +435,25 @@ class Botapad(object):
                                     } )
                                     cliqset.add(cliqe)
                                     
-                    for t in targets:
-                        st = self.node_headers[label]
-                        srcid = "".join([ r[i] for i in indexes  ])
-                        tgtid = '%s' % (t)
+                    if prop.isproj :
+                        for t in targets:
+                            st = self.node_headers[label]
+                            srcid = "".join([ r[i] for i in indexes  ])
+                            tgtid = '%s' % (t)
 
-                        edges.append( {
-                            'edgetype': self.edgetypes[etname]['uuid'],
-                            'source': self.idx[srcid],
-                            'target': self.idx[tgtid],
-                            'properties': {"label" : etname}
-                        } )
+                            edges.append( {
+                                'edgetype': self.edgetypes[etname]['uuid'],
+                                'source': self.idx[srcid],
+                                'target': self.idx[tgtid],
+                                'properties': {"label" : etname}
+                            } )
 
                             
+            log( "posting _ %s %s " % (len(cliqedges), cliqname ) )
+            #print edges
+            for e in self.bot.post_edges(self.gid, iter(cliqedges)) : 
+                debug(e)
+                
             log( "posting _ %s %s " % (len(edges), etname ) )
             #print edges
             for e in self.bot.post_edges(self.gid, iter(edges)) : 
