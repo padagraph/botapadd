@@ -37,4 +37,3 @@ else
 	ll;
 	python botapadapp.py --host $BIND_ADDRESS --port $BIND_PORT
 fi
-
