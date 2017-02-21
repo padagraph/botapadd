@@ -5,5 +5,6 @@
 
 PROJECT="botapadd-prod"
 
-docker-compose -p $PROJECT -f docker-compose.yml  up --build -d
+docker-compose -f docker-compose.yml pull
+docker-compose -p $PROJECT -f docker-compose.yml up --no-build -d
 docker-compose -p $PROJECT logs -ft
