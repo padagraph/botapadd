@@ -25,9 +25,6 @@ PATH = "./static/images" # images storage
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
 # padagraph host valid token
 KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
-if DEBUG:
-    KEY = codecs.open("key.local", 'r', encoding='utf8').read()
-
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
