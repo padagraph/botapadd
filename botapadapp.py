@@ -31,11 +31,16 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 
 # app
+
+print( "== running Botapad %s==" % ("DEBUG" if DEBUG else "")  )
+print( "== %s ==" % HOST)
+
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
 
 
 
+# === sqlite database ===
 
 import os.path
 import sqlite3
@@ -77,22 +82,23 @@ if not os.path.exists(DATABASE):
     init_db()
 
 
-print "== running Botapad =="
-print "== %s ==" % HOST
-
 # browser webdriver
 #driver = webdriver.Chrome("chromedriver")
 
 from flaskext.markdown import Markdown
 Markdown(app)
 
+
+
+
+# == app functions ===
+
+
 def img_url(gid):
     return '%s/%s.png' % ( PATH, gid )
 
 def graph_url(gid):
     return '%s/graph/%s' % ( HOST, gid )
-    
-
 
 def import_pad(gid, url):
     description = "imported from %s" % url
@@ -107,6 +113,9 @@ def snapshot(gid, **kwargs):
     #driver, HOST, gid, path, width, height, {iframe params}
     getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
 
+
+
+# === app routes ===
 
 @app.route('/image/<string:gid>', methods=['GET', 'POST'])
 def image(gid):
@@ -291,10 +300,12 @@ def botimport():
             """ , ( today, gid, url, 1 if complete else 0 , promote ) )
             db.commit()
         
-
         #snapshot(gid, **params)
 
     return render_template('homepage.html', iframe= iframe, padurl=url, graphurl=graph_url(gid) , img=img_url(gid), complete=complete, error=error)
+
+
+# === main ===
     
 def main():
     ## run the app
