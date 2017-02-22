@@ -5,7 +5,7 @@ LABEL maintainer "Christopher Burroughs <chris.burroughs@protonmail.ch>, ynnk"
 ENV APP_HOME /var/padagraph/botapadd
 RUN mkdir -p $APP_HOME $APP_HOME/log $APP_HOME/static $APP_HOME/static/images
 WORKDIR $APP_HOME
-ENV PYTHONPATH=/var/padagraph/botapadd/screenshot/:/usr/lib/python2.7/dist-packages/
+ENV PYTHONPATH=$APP_HOME/screenshot/:/usr/lib/python2.7/dist-packages/
 
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
@@ -17,7 +17,7 @@ ADD https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip static/
 COPY templates/ templates/
 
 # Temp: volumize whole app dir. Should only volumize /log/
-VOLUME /var/padagraph/botapadd
+VOLUME $APP_HOME/log $APP_HOME/secret
 EXPOSE 5000 80
 
 COPY docker-entry.sh /var/padagraph/botapadd/docker-entry.sh

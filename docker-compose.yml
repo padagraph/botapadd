@@ -10,7 +10,7 @@ services:
     env_file: environment.env
     volumes:
       - ./log:/var/padagraph/botapadd/log
-      - ./secret/key.txt:/var/padagraph/botapadd/key.txt
+      - ./secret:/var/padagraph/botapadd/secret
       # - ./src:src # do that in dev with gunicorn as well? (only in dev right now)
 # volumes:
 #   botapadd-data:
