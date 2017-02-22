@@ -29,7 +29,7 @@ then
 		--log-level=${LOGLEVEL} \
 		--log-file=${LOGFILE} \
 		--error-logfile=${ERRFILE} \
-		botapadapp:botapadapp
+		botapadapp:app
 else
 	# Runs with Flask on port :5000
 	echo "Running development instance: ${BIND_ADDRESS}:${BIND_PORT}"
