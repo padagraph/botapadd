@@ -1,6 +1,11 @@
 FROM python:2.7
 LABEL maintainer "Christopher Burroughs <chris.burroughs@protonmail.ch>, ynnk"
 
+RUN apt-get update && apt-get -y install \
+		unzip \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
+
 # Setup application home
 ENV APP_HOME /var/padagraph/botapadd
 RUN mkdir -p $APP_HOME $APP_HOME/log $APP_HOME/static $APP_HOME/static/images
@@ -13,7 +18,10 @@ RUN pip install -r requirements.txt
 # Copy those after pip install to avoid rebuilding layers
 COPY botapad.py botapadapp.py ./
 #COPY static/ static/
-ADD https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip static/
+#ADD https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip static/
+
+RUN wget https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip -O static/master.zip \
+	&& cd static && unzip master.zip
 COPY templates/ templates/
 
 # Temp: volumize whole app dir. Should only volumize /log/
