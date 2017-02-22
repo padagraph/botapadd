@@ -4,7 +4,7 @@ flask
 flask-runner
 Flask-Markdown
 
-sqlite3
+sqlite
 
 https://github.com/padagraph/botapi/archive/master.zip
 
