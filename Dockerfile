@@ -5,10 +5,10 @@ LABEL maintainer "Christopher Burroughs <chris.burroughs@protonmail.ch>, ynnk"
 ENV APP_HOME /var/padagraph/botapadd
 RUN mkdir -p /var/padagraph/botapadd/log
 WORKDIR /var/padagraph/botapadd
-ENV PYTHONPATH=$APP_HOME/screenshot/:/usr/lib/python2.7/dist-packages/
+ENV PYTHONPATH=/var/padagraph/botapadd/screenshot/:/usr/lib/python2.7/dist-packages/
 
 COPY . /var/padagraph/botapadd/
-#COPY ./static/ ${APP_HOME}/static
+#COPY ./static/ /var/padagraph/botapadd/static
 RUN pip install -r requirements.txt
 
 # Temp: volumize whole app dir. Should only volumize /log/
