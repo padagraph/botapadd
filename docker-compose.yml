@@ -2,15 +2,15 @@ version: "2"
 services:
   botapadd:
     # TODO: a port should be defined, but not "80" if on production server
-    ports:
-      - "81:80"
     image: 193.70.90.12:5000/padagraph/botapadd:latest
     build: .
+    ports:
+      - "81:80"
     restart: unless-stopped
-    env_file: environment.sh
+    env_file: environment.env
     volumes:
       - ./log:/var/padagraph/botapadd/log
-      - ./secret:/var/padagraph/botapadd/
+      - ./secret/key.txt:/var/padagraph/botapadd/key.txt
       # - ./src:src # do that in dev with gunicorn as well? (only in dev right now)
 # volumes:
 #   botapadd-data:

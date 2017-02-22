@@ -14,11 +14,10 @@ docker-build:
 	@echo "\n --------------------"
 	@echo " * Building Docker images"
 	@echo " --------------------\n"
-	mkdir -p  ./static/images/
-	wget https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip -O static/master.zip
-	cd ./static && unzip -o master.zip
-	docker-compose -f docker-compose.yml build --pull --no-cache
-
+	# mkdir -p  ./static/images/
+	# wget https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip -O static/master.zip
+	# cd ./static && unzip -o master.zip
+	docker-compose -f docker-compose.yml build
 
 docker-push:
 	@echo "\n --------------------"
