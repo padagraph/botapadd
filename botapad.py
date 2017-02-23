@@ -412,6 +412,7 @@ class Botapad(object):
             indexes = [ e for e, k in enumerate(props) if k.isindex ]
             cliqset = set()
             cliqedges = [] 
+            cliqname = ""
             
             for r in rows:                
                 if iprop < len(r):

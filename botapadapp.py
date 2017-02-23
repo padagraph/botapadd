@@ -24,7 +24,7 @@ PATH = "./static/images" # images storage
 # padagraph host t o connect
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
 # padagraph host valid token
-KEY  = codecs.open("key.txt", 'r', encoding='utf8').read()
+KEY  = codecs.open("key.txt", 'r', encoding='utf8').read().strip()
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
@@ -32,12 +32,11 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 # app
 
-print( "== running Botapad %s==" % ("DEBUG" if DEBUG else "")  )
+print( "== running Botapad %s==" % ("DEBUG" if DEBUG else "") )
 print( "== %s ==" % HOST)
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
-
 
 
 # === sqlite database ===
@@ -71,19 +70,16 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-
 def init_db():
     with app.app_context():
         db = get_db()
         db.cursor().executescript(DB_SCHEMA)
         db.commit()
 
+
 if not os.path.exists(DATABASE):
     init_db()
 
-
-# browser webdriver
-#driver = webdriver.Chrome("chromedriver")
 
 from flaskext.markdown import Markdown
 Markdown(app)
@@ -93,6 +89,17 @@ Markdown(app)
 
 # == app functions ===
 
+# browser webdriver
+#driver = webdriver.Chrome("chromedriver")
+
+
+def snapshot(gid, **kwargs):
+    """
+    requires screenshot & selenium driver
+    """
+    path = '%s/%s.png' % ( PATH, gid )
+    #driver, HOST, gid, path, width, height, {iframe params}
+    getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
 
 def img_url(gid):
     return '%s/%s.png' % ( PATH, gid )
@@ -104,15 +111,6 @@ def import_pad(gid, url):
     description = "imported from %s" % url
     bot = Botapad(HOST, KEY, gid, description, delete=DELETE)
     return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
-
-def snapshot(gid, **kwargs):
-    """
-    requires screenshot & selenium driver
-    """
-    path = '%s/%s.png' % ( PATH, gid )
-    #driver, HOST, gid, path, width, height, {iframe params}
-    getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
-
 
 
 # === app routes ===
@@ -147,7 +145,6 @@ def promote():
         
     #rows = rows.reverse()
     promote = { 'rows' : rows }
-
 
     cursor.execute("""
     select count(distinct padurl) from imports  where status = 1 and help=1;
