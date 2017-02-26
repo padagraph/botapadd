@@ -85,13 +85,11 @@ from flaskext.markdown import Markdown
 Markdown(app)
 
 
-
-
 # == app functions ===
+
 
 # browser webdriver
 #driver = webdriver.Chrome("chromedriver")
-
 
 def snapshot(gid, **kwargs):
     """
