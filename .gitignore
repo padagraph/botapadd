@@ -2,3 +2,4 @@ secret/
 static/
 log/
 db.sqlite
+*.pyc
