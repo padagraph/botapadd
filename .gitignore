@@ -1,4 +1,4 @@
 secret/
 static/
 log/
-
+db.sqlite
