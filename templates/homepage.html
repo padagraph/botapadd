@@ -282,32 +282,45 @@
     
       {% elif error %}
     <div class="ui text container">
-      <div class="ui icon  message">
+      <h4 class="ui inverted  horizontal divider" >Import error </h4>
+      <div class="ui icon message">
           <i class="cloud download icon"></i>
           <div class="content">
-            <div class="header">
-                Import error
-            </div>
 
-            {% if error.class == "BotapadURLError" %}
+            <h4>{{error.class}} </h4>
+            
+            {% if error.class == "BotLoginError" %}
             <ul class="list">
+              <li>The server could not verify that you are authorized to access the URL requested. You either supplied the wrong credentials malformed or expired token. Try logging in and generate a new token</li>
+              <li><a href='{{error.url}}' target='_blank'>{{error.url}}</a></li>
+              <li>{{error.message}}</li>
+            </ul>
+            
+            {% elif error.class == "BotapadURLError" %}
+            <ul class="list">
+              <li>URL is malformed or website may not respond ... </li>
               <li>Can't download document at <a href='{{error.url}}'>{{error.url}}</a></li>
             </ul>
-            <h4>URL is malformed or website may not respond ... </h4>
             
             {% elif error.class == "BotapadCsvError" %}
             <ul class="list">
-              <Li>Parsing data failed in {{error.path}}</Li>
+              <li>Error while parsing <a href='{{error.url}}' target='_blank'>{{error.url}}</a></li>
+              <Li>Parsing data failed in {{error.url}}</Li>
               <Li>we used the character <code>{{error.separator}}</code> as a separator</Li>
             </ul>
 
             {% elif error.class == "BotapadError" %}
             <ul class="list">
-              <li>{{error.message}}</li>l
-              <Li>{{error.class}} </Li>
+              <li><a href='{{error.url}}' target='_blank'>{{error.url}}</a></li>
+              <li>{{error.message}}</li>
             </ul>
+
             {%endif%}
-            <a href="/" class="item">Back </a></Li>
+
+            <div class="ui horizontal divider">
+                <i class="teal cloud icon"></i>
+            </div>
+            <a href="/" class="ui primary button">Back </a></Li>
         </div>
       </div>
       
@@ -359,7 +372,7 @@
 
 
   <div class="ui inverted vertical footer segment">
-      <h4 class="ui inverted  horizontal divider"> &nbsp;  </h4>
+      <h4 class="ui inverted  horizontal divider"> the bottom  </h4>
     <div class="ui container">
       <div class="ui stackable inverted equal height grid">
 

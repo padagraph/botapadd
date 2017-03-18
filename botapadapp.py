@@ -13,6 +13,8 @@ from flask import render_template, render_template_string, abort, redirect, url_
 
 
 from botapad import Botapad, BotapadError, BotapadURLError, BotapadCsvError
+from botapi import BotApiError
+from botapi.botapi import BotLoginError
 
 #from screenshot import getScreenShot
 #from selenium import webdriver
@@ -32,20 +34,18 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 # app
 
-print( "== running Botapad %s==" % ("DEBUG" if DEBUG else "") )
+print( "== Botapad %s==" % ("DEBUG" if DEBUG else "") )
 print( "== %s ==" % HOST)
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
 
 
-# === sqlite database ===
-
 import os.path
-import sqlite3
 from flask import g
-DATABASE = os.environ.get('BOTAPAD_DB', "./db.sqlite")
+import sqlite3
 
+DATABASE = os.environ.get('BOTAPAD_DB', "./db.sqlite")
 #    status: success 1, fail 0
 #    help  : 0 | 1  
 DB_SCHEMA = """
@@ -69,6 +69,7 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
 
 def init_db():
     with app.app_context():
@@ -286,6 +287,13 @@ def botimport():
                 'message' : err.message,
                 'url' : err.url, 
             }
+        except BotLoginError as err:
+            error = {
+                'class' : err.__class__.__name__,
+                'message' : err.message,
+                'host' : err.host, 
+                'url' : url, 
+            }
         finally:
             today = datetime.datetime.now()
             db = get_db()
@@ -295,7 +303,7 @@ def botimport():
             """ , ( today, gid, url, 1 if complete else 0 , promote ) )
             db.commit()
         
-        #snapshot(gid, **params)
+        #snapshot(gid, **params)D
 
     return render_template('homepage.html', iframe= iframe, padurl=url, graphurl=graph_url(gid) , img=img_url(gid), complete=complete, error=error)
 
