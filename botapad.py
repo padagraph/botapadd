@@ -249,13 +249,16 @@ class Botapad(object):
                     if not label in self.edgetypes:                        
                         log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
                         self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops)
+                        self.edge_headers[label] = props
+                        
             else: # table data
                 if self.current and self.current[2]:
                     props = self.current[2]
                     for i, v in enumerate(row[1:]):
                         if i >= len(props): break
+                        #print props[i] , row[i+1]
                         if props[i].ismulti :
-                            row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ] 
+                            row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
                             
                 rows.append(row)
 
@@ -281,7 +284,7 @@ class Botapad(object):
 
             edges = []
             for row in rows:
-                row = [r.strip() for r in row]
+                #row = [r.strip() for r in row]
                 edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
                 src, direction, tgt = edge
                 if direction not in DIRECTIONS :
