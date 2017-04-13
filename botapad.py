@@ -252,10 +252,10 @@ class Botapad(object):
             else: # table data
                 if self.current and self.current[2]:
                     props = self.current[2]
-                    for i, v in enumerate(row):
+                    for i, v in enumerate(row[1:]):
                         if i >= len(props): break
                         if props[i].ismulti :
-                            row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ] 
+                            row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ] 
                             
                 rows.append(row)
 
