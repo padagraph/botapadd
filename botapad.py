@@ -27,7 +27,7 @@ def log(*args):
 
 def debug(*args):
     if DEBUG:
-        print "DEBUG:"
+        print( "DEBUG:")
         pprint( args)
 
 def norm_key(key):
@@ -104,6 +104,8 @@ class Botapad(object):
 
         self.imports = set()
         
+        self.current = () # (VERTEX | EDGE, label, names, index_prop)
+        
         self.idx = {}
         self.edgetypes = {}
         self.nodetypes = {}
@@ -137,7 +139,7 @@ class Botapad(object):
 
 
     def read(self, path, separator='auto'):
-
+        path = path.strip()
         if path[0:4] == 'http':
             try : 
                 url = convert_url(path)
@@ -189,8 +191,6 @@ class Botapad(object):
         csv = self.read(path, **kwargs)
         
         rows = []
-        current = () # (VERTEX | EDGE, label, names, index_prop)
-        
         
         for row in csv:
             cell = row[0]
@@ -213,7 +213,7 @@ class Botapad(object):
             # @ Nodetypes, _ Edgetypes
             elif cell[:1] in ("@", "_"):
 
-                self.post(current, rows)
+                self.post(self.current, rows)
                 
                 # processing directiv
                 line = ";".join(row)
@@ -237,7 +237,7 @@ class Botapad(object):
                 if cell[:1] == "@": # nodetype def
                     rows = []
                     
-                    current = (VERTEX, label, props)
+                    self.current = (VERTEX, label, props)
                     if not label in self.nodetypes:
                         log( "* posting @ %s [%s]" % (label, ", ".join(names)) , indexes, projs)
                         self.nodetypes[label] = self.bot.post_nodetype(self.gid, label, label, typeprops)
@@ -245,12 +245,13 @@ class Botapad(object):
                         
                 elif cell[:1] == "_": # edgetype def
                     rows = []
-                    current = (EDGE, label, props)
+                    self.current = (EDGE, label, props)
                     if not label in self.edgetypes:                        
                         log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
                         self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops)
             else: # table data
-                if current and current[2]:
+                if self.current and self.current[2]:
+                    props = self.current[2]
                     for i, v in enumerate(row):
                         if i >= len(props): break
                         if props[i].ismulti :
@@ -258,7 +259,7 @@ class Botapad(object):
                             
                 rows.append(row)
 
-        self.post( current, rows)
+        self.post( self.current, rows)
 
         log( " * Starring %s nodes" % len(list(self.starred)) )
         self.bot.star_nodes(self.gid, [ self.idx[e] for e in self.starred ])

@@ -24,9 +24,11 @@ DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 PATH = "./static/images" # images storage
 
 # padagraph host t o connect
+HOST = "http://padagraph.io"
 HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
 # padagraph host valid token
 KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
+KEY  = codecs.open("../pierre.local", 'r', encoding='utf8').read().strip()
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
