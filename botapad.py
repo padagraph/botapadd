@@ -254,11 +254,16 @@ class Botapad(object):
             else: # table data
                 if self.current and self.current[2]:
                     props = self.current[2]
-                    for i, v in enumerate(row[1:]):
-                        if i >= len(props): break
-                        #print props[i] , row[i+1]
-                        if props[i].ismulti :
-                            row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
+                    if self.current[0] == EDGE:
+                        for i, v in enumerate(row[1:]):
+                            if i >= len(props): break
+                            if props[i].ismulti :
+                                row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
+                    elif self.current[0] == VERTEX:
+                        for i, v in enumerate(row):
+                            if i >= len(props): break
+                            if props[i].ismulti :
+                                row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
                             
                 rows.append(row)
 
