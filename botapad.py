@@ -51,7 +51,7 @@ def convert_url(url):
 
      """
      
-    re_framapad = "https?:\/\/([a-z]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
+    re_framapad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
         frama = [r for r in frama[0] if len(r)]
@@ -90,15 +90,12 @@ class BotapadURLError(Exception):
         self.message = message
         self.url = url
 
+
 class Botapad(object):
     
-    def __init__(self, host, key, gid, description, delete=False):
-        """ Function doc
-        :param : 
-        """
-        
+    def __init__(self, bot, gid, description, delete=False):
         # Bot creation & login 
-        log( "\n * Locating graph %s @ padagraph %s \n  " % (gid, host) )
+        log( "\n * Locating graph %s @ padagraph \n  " % (gid) )
         
         self.gid = gid
 
@@ -116,19 +113,17 @@ class Botapad(object):
         
         self.projectors = []
 
-        bot = Botagraph(host, key)
-
         if bot.has_graph(gid) and delete:
             log( " * deleting graph %s" % gid )
             bot.delete_graph(gid)
              
-        if not bot.has_graph(gid) :
-            log( " * Create graph %s" % gid)
-            bot.create_graph(gid, { 'description':description,
-                                    'image': "",
-                                    'tags': ["Botapad"]
-                                  }
-                            )
+        log( " * Create graph %s" % gid)
+        bot.create_graph(gid, { 'name': gid,
+                                'description':description,
+                                'image': "",
+                                'tags': ["Botapad"]
+                              }
+                        )
 
         schema = bot.get_schema(self.gid)['schema']
         
@@ -139,11 +134,12 @@ class Botapad(object):
 
 
     def read(self, path, separator='auto'):
+        
         path = path.strip()
         if path[0:4] == 'http':
             try : 
                 url = convert_url(path)
-                log( " * Downloading %s \n" % url)
+                log( " * Downloading %s %s\n" % (url,separator))
                 content = requests.get(url).text
                 lines = content.split('\n')
             except :
@@ -159,13 +155,13 @@ class Botapad(object):
         lines = [ line.strip() for line in lines ]
         lines = [ line.encode('utf8') for line in lines if len(line)]
         
-        if separator == u'auto':
+        if separator == 'auto':
             line = lines[0].strip()
             if line in ( '!;','!,'):
                 separator = line[1:]
             else: separator = ','
 
-        log(" * Reading %s (%s) lines with delimiter '%s'" % (path, len(lines), separator))
+        log(" * Reading %s (%s) lines with delimiter '%s' %s" % (path, len(lines), separator, line))
 
         try : 
             reader = csv.reader(lines, delimiter=separator)
@@ -186,7 +182,7 @@ class Botapad(object):
         
         """
         DEBUG = debug
-
+        print kwargs
 
         csv = self.read(path, **kwargs)
         
@@ -231,6 +227,7 @@ class Botapad(object):
                 names = [ k.name for k in props ]
                 projs = [ k.name for k in props if k.isproj ]
                 indexes = [ k.name for k in props if k.isindex ]
+                if len(indexes) == 0 : indexes =['label']
 
                 typeprops = { p.name : p.type for p in props }
                     
@@ -288,36 +285,39 @@ class Botapad(object):
         if mode == EDGE:
 
             edges = []
-            for row in rows:
-                #row = [r.strip() for r in row]
-                edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
-                src, direction, tgt = edge
-                if direction not in DIRECTIONS :
-                    raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
-                
-                if '<' in direction:
-                    tmp = src
-                    src = tgt
-                    tgt = tmp
-                
-                values = row[1:] if len(row)>1 else []
+            try : 
+                for row in rows:
+                    #row = [r.strip() for r in row]
+                    edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
+                    src, direction, tgt = edge
+                    if direction not in DIRECTIONS :
+                        raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
+                    
+                    if '<' in direction:
+                        tmp = src
+                        src = tgt
+                        tgt = tmp
+                    
+                    values = row[1:] if len(row)>1 else []
 
-                if src in self.idx and tgt in self.idx:
-                    edgeprops = dict(zip(names, values))
-                    edgeprops['label'] = edgeprops.get('label', self.edgetypes[label]['name'])
-                    
-                    payload = {
-                        'edgetype': self.edgetypes[label]['uuid'],
-                        'source': self.idx[src],
-                        'target': self.idx[tgt],
-                        'properties': edgeprops 
-                    }
-                    edges.append(payload)
-                    
-            log( "    [POST] EDGE _ %s %s [%s]" % (len(edges), label , ", ".join(names)))
-            for e in self.bot.post_edges(self.gid, iter(edges)) : 
-                debug(e)
-        
+                    if src in self.idx and tgt in self.idx:
+                        edgeprops = dict(zip(names, values))
+                        edgeprops['label'] = edgeprops.get('label', self.edgetypes[label]['name'])
+                        
+                        payload = {
+                            'edgetype': self.edgetypes[label]['uuid'],
+                            'source': self.idx[src],
+                            'target': self.idx[tgt],
+                            'properties': edgeprops 
+                        }
+                        edges.append(payload)
+                        
+                log( "    [POST] EDGE _ %s %s [%s]" % (len(edges), label , ", ".join(names)))
+                for e in self.bot.post_edges(self.gid, iter(edges)) : 
+                    debug(e)
+            except :
+                print row
+                raise
         # Vertex
         
         if mode == VERTEX:
@@ -499,7 +499,8 @@ def main():
 
     if args.host and args.key and args.name and args.path:
         description = "imported from %s . " % args.path
-        pad = Botapad(args.host, args.key, args.name, description, delete=args.delete)
+        bot = Botagraph(args.host, args.key)
+        pad = Botapad(bot, args.name, description, delete=args.delete)
 
         pprint( pad.parse(args.path, separator=args.separator) )
     

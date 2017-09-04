@@ -6,30 +6,31 @@ import sys
 import datetime 
 import logging
 import codecs
+import json
+import pickle
 from functools import wraps
 
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
+from api.explor import EdgeList, prepare_graph, export_graph
 
 from botapad import Botapad, BotapadError, BotapadURLError, BotapadCsvError
-from botapi import BotApiError
+from botapi import BotApiError, Botagraph,  BotaIgraph
 from botapi.botapi import BotLoginError
 
-#from screenshot import getScreenShot
-#from selenium import webdriver
 
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 
+
+# padagraph host valid token
 PATH = "./static/images" # images storage
+KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 
 # padagraph host t o connect
 HOST = "http://padagraph.io"
-# padagraph host valid token
-KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
-
-#HOST = os.environ.get('BOTAPAD_HOST', "http://localhost:5009")
-#KEY  = codecs.open("../pierre.local", 'r', encoding='utf8').read().strip()
+HOST = os.environ.get('PDG_HOST', "http://localhost:5000")
+KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
@@ -37,7 +38,7 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 # app
 
-print( "== Botapad %s==" % ("DEBUG" if DEBUG else "") )
+print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
 print( "== %s ==" % HOST)
 
 app = Flask(__name__)
@@ -93,6 +94,8 @@ Markdown(app)
 
 
 # browser webdriver
+#from screenshot import getScreenShot
+#from selenium import webdriver
 #driver = webdriver.Chrome("chromedriver")
 
 def snapshot(gid, **kwargs):
@@ -108,11 +111,6 @@ def img_url(gid):
 
 def graph_url(gid):
     return '%s/graph/%s' % ( HOST, gid )
-
-def import_pad(gid, url):
-    description = "imported from %s" % url
-    bot = Botapad(HOST, KEY, gid, description, delete=DELETE)
-    return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
 
 
 # === app routes ===
@@ -197,30 +195,6 @@ def stats():
     return render_template('homepage.html', stats=stats)
 
     
-#@app.route('/test', methods=['GET'])
-def test():
-    gid = "fillon"
-    params = {
-            #template
-            'color' : "12AAAA",
-            'zoom'  : 1200,
-            
-            'auto_rotate': 1,
-                
-            'buttons': 1, # removes play/vote buttons
-            'labels' : 0,  # removes graph name/attributes 
-            # gviz
-            'vtx_size' : 0,
-            'show_text'  : 1 ,     # removes vertex text 
-            'show_nodes' : 1 ,   # removes vertex only 
-            'show_edges' : 1 ,   # removes edges 
-            'show_images': 1 , # removes vertex images 
-        }
-        
-    querystr = "&".join(["%s=%s" % (k,v) for k,v in params.items()])
-    iframe = "%s/iframe/%s?%s#graph" % ( HOST, gid, querystr )
-    return render_template('homepage.html', iframe= iframe, url=graph_url(gid) , img=img_url(gid), complete=True)
-
 @app.route('/readme', methods=['GET', 'POST'])
 def readme():
     md = codecs.open('README.md', 'r', encoding='utf8').read()
@@ -236,27 +210,70 @@ def home():
     return render_template('homepage.html', **kw )
 
 
-@app.route('/import', methods=['GET', 'POST'])
-@app.route('/', methods=['GET'])
-def botimport():
+
+def pad2pdg(gid, url):
+    description = "imported from %s" % url
+    bot = Botagraph(HOST, KEY)
+    botapad = Botapad(bot, gid, description, delete=DELETE)
+    return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
+
+def pad2igraph(gid, url):
+    
+    description = "imported from %s" % url
+    bot = BotaIgraph()
+    botapad = Botapad(bot , gid, description, delete=DELETE)
+    botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
+    graph = bot.get_igraph()
+    return graph
+    
+    
+    
+    
+@app.route('/import', methods=['GET'])
+@app.route('/import/', methods=['GET'])
+@app.route('/import/<string:repo>', methods=['GET', 'POST'])
+@app.route('/import/<string:repo>.<string:content>', methods=['GET', 'POST'])
+def import2pdg(repo='igraph', content=None):
+    if repo in ("padagraph", "igraph"):
+        if content in ("html", "pickle", "json", ):
+            return botimport(repo, content)
+
+        return botimport(repo, 'html')
+            
+    return botimport('igraph', 'html')
+    
+def botimport(repo, content_type="html"):
+
+    #raise ValueError(request)
+    action = "%s?%s" % (repo, request.query_string)
+    print "action " , action
+    routes = "%s/engines" % HOST
+    graph = None
+    data = None
     
     complete = False
     error = None
-    iframe = ""
+    options = ""
 
     gid = request.form.get('gid', None)
     url = request.form.get('url', None)
-    promote = 1 if request.form.get('promote', 0)  else 0
-        
+    print "content_type", content_type
+    content_type = request.form.get('content_type', content_type)
+    print "content_type",  content_type
+    
+    promote = 1 if request.form.get('promote', 0)  else 0        
+    
+    args = request.args
+    color = "#" + args.get("color", "249999" )
 
     if gid and url:
         
-        args = request.args
-        params = {
+        options = {
             #
             'wait' : 4,
             #template
-            'color' : args.get("color", "12AAAA" ),
+            'el': "#viz",
+            'background_color' : color,
             'zoom'  : args.get("zoom", 1200 ),
             'buttons': 0, # removes play/vote buttons
             'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
@@ -267,16 +284,36 @@ def botimport():
             'show_edges' : 0 if args.get("no_edges" , None ) else 1,   # removes edges 
             'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
             
-            'auto_rotate': 1,
+            'auto_rotate': 0,
                 
         }
 
         try : 
-            import_pad(gid, url)
-            querystr = "&".join(["%s=%s" % (k,v) for k,v in params.items()])
-            iframe = "%s/iframe/%s?%s#graph" % ( HOST, gid, querystr )
-            complete = True 
-    
+            if repo == "padagraph":
+                pad2pdg(gid, url)
+                data = "%s/xplor/%s.json" % (HOST, gid) 
+                complete = True 
+
+                if content_type == "json":
+                    return redirect(data, code=302)
+                    
+            elif repo == "igraph":
+                graph = pad2igraph(gid, url)
+                graph = prepare_graph(graph)
+                data = export_graph(graph, id_attribute='uuid')
+                
+                complete = True 
+
+                if content_type == "json":
+                    return jsonify(data)
+                    
+                elif content_type == "pickle":
+                    response = make_response(pickle.dumps(graph))
+                    response.headers["Content-Disposition"] = "attachment; filename=%s.pickle" % gid
+                    return response
+                else :
+                    data = json.dumps(data)
+
         except BotapadCsvError as err:
             error = {
                 'class' : err.__class__.__name__,
@@ -308,7 +345,13 @@ def botimport():
         
         #snapshot(gid, **params)D
 
-    return render_template('homepage.html', iframe= iframe, padurl=url, graphurl=graph_url(gid) , img=img_url(gid), complete=complete, error=error)
+    return render_template('homepage.html',
+        static_host=HOST, action=action, content_type=content_type, color=color,
+        repo=repo, complete=complete, error=error,
+        routes=routes, data=data, options=json.dumps(options),
+        padurl=url, graphurl=graph_url(gid) , img=img_url(gid),
+        )
+
 
 
 # === main ===

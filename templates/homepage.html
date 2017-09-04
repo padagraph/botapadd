@@ -9,20 +9,17 @@
   <!-- Site Properties -->
   <title>Botapad</title>
 
-<!--
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.css">
-    <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.js"></script>
--->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
 
 <!--
-    <link rel="stylesheet" href="static/Semantic-UI-CSS-master/semantic.min.css">
--->
     <link rel="stylesheet" href="http://padagraph.io/static/bower_components/semantic-ui/dist/semantic.min.css">
+-->
 
   <style type="text/css">
+
     
     .ui.inverted.segment {
-        background: #12AAAA;
+        background: #127777;
     }
 
     .masthead.segment {
@@ -125,7 +122,15 @@
         margin-top: 2px
     }
 
-    input[type=checkbox]
+    input[type=radio] {
+        margin:20px;
+    }
+    
+    .ui.form .field label {
+        color:white !important;
+    }
+    
+    input[type=checkbox], input[type=radio]
     {
       /* Double-sized Checkboxes */
       -ms-transform: scale(2); /* IE */
@@ -133,6 +138,62 @@
       -webkit-transform: scale(2); /* Safari and Chrome */
       -o-transform: scale(2); /* Opera */
       padding: 10px;
+    }
+
+
+    span.bold { font-weight: bold }
+    
+    .column.vz { height: 50% !important }
+    a.multi {            
+        position: absolute !important;
+        margin  : 12px;
+    }
+
+    #menu {
+      position:absolute;
+      background: {{color}};
+      top: 264px;
+    }
+    
+    .ui.icon.menu {
+      margin: 12px;
+      text-align: right;
+      top: 24px;
+    }
+
+    #gviz {
+        margin:auto;
+        
+        text-align:left;
+        width:100%;
+        height:calc(100%);
+    }
+
+    #viz {
+        height: 100%;
+        width: 100%;
+    }
+   
+    #labels {
+      position:absolute;
+      bottom: 60px;
+      padding:12px;
+      margin:12px;
+    }
+    
+    .markdown {
+      position:absolute;
+      bottom: 20px;
+    }
+    
+    padagraph-model-popup {
+        position:absolute;
+        top: 264px;
+        right:0px;
+        margin:12px;
+        max-height: calc(100% - 24px);
+        overflow-y: auto;
+        z-index:10;
     }
   </style>
 
@@ -273,8 +334,40 @@
       <div class="ui inverted link list">
         <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
       </div>
-      <iframe src="{{iframe}}" width=100% height=600 ></iframe>
-      <br/>  
+
+      <script src="{{static_host}}/static/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+      <!-- require JS-->
+      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/bower_components/requirejs/require.js"></script>
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
+      <div id="gviz">
+        <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
+
+          <padagraph-gviz options="{{options}}">
+            <div id="viz"></div>
+
+            <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
+
+            <div id="menu" class="ui icon vertical borderless menu"> 
+              <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
+              <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+              <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
+              <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
+            </div>
+
+            <div id="labels">
+              <padagraph-labels-control></padagraph-labels-control>
+            </div>
+
+          </padagraph-gviz>
+        </padagraph-gviz-json>
+        <script>
+            e = document.getElementById('gviz');
+            e.style.height = ( window.innerHeight - 20 )+ "px";
+        </script>
+      </div>  
+    
       <div class="ui inverted link list">
         <a class="active item" href="{{graphurl}}">Visit {{graphurl}}</a>
       </div>
@@ -285,7 +378,7 @@
     
       {% elif error %}
     <div class="ui text container">
-      <h4 class="ui inverted  horizontal divider" >Import error </h4>
+      <<h3> class="ui inverted  horizontal divider" >Import error </h3>
       <div class="ui icon message">
           <i class="cloud download icon"></i>
           <div class="content">
@@ -333,12 +426,12 @@
       {% else %}
     <div class="ui text container">
       <h4 class="ui inverted  horizontal divider">
-        Usage
+        Import to {{repo}}
       </h4>
       
       <h3 class="ui inverted header">Choose a name and fill the pad url</h3>
 
-      <form class="ui form" method="post" action="import">
+      <form class="ui form" method="post" action="{{action}}">
         <div class="field">
           <div class="ui huge input">
             <input type="text" name="gid" placeholder="graph name">
@@ -349,6 +442,17 @@
             <input type="text" name="url" placeholder="pad url">
           </div>
         </div>
+        <div class="inline field center aligned">
+            <input type="radio" name="content_type" {%if content_type == "html" %}checked{%endif%} tabindex="0" value="html">
+            <label>Explore</label>
+            <input type="radio" name="content_type" value="json" tabindex="0" {%if content_type == "json" %}checked{%endif%} >
+            <label>Inline json</label>
+            <input type="radio" name="content_type"  value="pickle" tabindex="0" {%if content_type == "pickle" %}checked{%endif%}>
+            <label>Download as pickle</label>
+            <h4 class="ui hidden horizontal divider">
+            <h4 class="ui hidden horizontal divider">
+        </div>
+        
         <div class="field center aligned">
               <input type="checkbox" tabindex="0" name="promote">
               <h3>Promote this pad, call for participants </h3>
@@ -356,7 +460,7 @@
         <div class="field center aligned">
           <a class="ui large button" href="/readme">readme</a>
           <button type="submit" value="Subscribe" class="ui huge primary submit button">
-            Import this pad
+            Import this pad to {{repo}}
           </button>
 
         </div>
@@ -379,20 +483,27 @@
     <div class="ui container">
       <div class="ui stackable inverted equal height grid">
 
+        <div class="two wide column"></div>
         <div class="three wide column">
           <h4 class="ui inverted header">About</h4>
           <div class="ui inverted link list">
-            <a href="#" class="item">You are here</a>
-            <a href="#" class="item">Contact Us</a>
+            <a href="#" class="disabled item">You are here</a>
+            <a href="#" class="disabled item">Contact Us</a>
           </div>
         </div>
         
-        <div class="four wide column">
+        <div class="three wide column">
+          <h4 class="ui inverted header">Import</h4>
+          <div class="ui inverted link list">
+            <a href="/import/padagraph" class="active item">pad -- padagraph</a>
+            <a href="/import/igraph" class="active item">pad -- igraph</a>
+          </div>
+        </div>
+        <div class="three wide column">
           <h4 class="ui inverted header">Services</h4>
           <div class="ui inverted link list">
-            <a href="import" class="active item">Import a pad</a>
-            <a href="promote" class="active item">Call for participation</a>
-            <a href="stats" class="active item">Service statistiqs</a>
+            <a href="/promote" class="active item">Call for participation</a>
+            <a href="/stats" class="active item">Service statistiqs</a>
           </div>
         </div>
         
@@ -400,18 +511,10 @@
           <h4 class="ui inverted header">Next </h4>
           <div class="ui inverted link list">
           <a class="active item"  href="https://github.com/padagraph/botapadd">Github</a>
-          <a class="item" href="" >donate</a>
+          <a class="disabled item" href="" >donate</a>
           </div>
         </div>
         
-        <div class="three wide column">
-          <h4 class="ui inverted header">&nbsp;</h4>
-          <div class="ui inverted link list">
-            
-          <a class="active item" href="//padagraph.io" >padagraph.io</a>
-          @2017
-          </div>
-        </div>
       </div>
     </div>
   </div>

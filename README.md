@@ -5,7 +5,7 @@ Import data in padagraph.io
 
     * command line
     * flask app
-
+    
 ## Installation
 
     # Native:
@@ -17,6 +17,7 @@ Import data in padagraph.io
     $ make docker-pull  # unncessary if on same host as build
     $ ./deploy-prod.sh
 
+
 # Command Line
 
 * import from file or URL
@@ -24,29 +25,29 @@ Import data in padagraph.io
 
 ## Format
 
-We are using a csv like file format for data.
-One header is required to describe the content of the data.
-Some special characters are used at a begin line:
+We are using a csv like file format for data.  
+One header is required to describe the content of the data.  
+Some special characters are used at a begin line:  
 
-[Comments]
+*[Comments]*  
 * '!' is used to comment a line, usefull for discussion and help, it will be ignored by the program
 
-[Separator]
+*[Separator]*  
 * is defined in the first line "!," a commented comma  can also use "!;"
 
-[Headers]
-* '@' Header for nodes :
-* '_' Header for edges :
+*[Headers]*  
+* '@' Header for nodes :  
+* '_' Header for edges :  
 
-[Properties]
-* '*' marker for starred nodes :
-* '+' marker for multiple values in column
-* '%' marker for projection :
-* '=' used with '%' create a clique with all cell elements :
-* '&' is an import directive to load external data
+*[Properties]*  
+* '*' marker for starred nodes :  
+* '+' marker for multiple values in column  
+* '%' marker for projection :  
+* '=' used with '%' create a clique with all cell elements :  
+* '&' is an import directive to load external data  
 
 
-Headers refers to `nodetypes` or `edgetypes` in the padagraph database.  
+`Headers` refers to `nodetypes` or `edgetypes` in the padagraph database.   
 syntax is ```char name: prop; other``` with `char` in ( `@`,`_` )   
 `:` after  Nodetype name and `;` between properties  
 Properties are defined with a `Text` definition.  
@@ -117,9 +118,9 @@ and 8 edges.
     Politic -- Party   (2)
     Politic -- Stance  (2)
 
-#### Note :
+### Note :
 
-* mixing '%' and '+' in a prop will project row on each value of the cell  
+####   mixing '%' and '+' in a prop will project row on each value of the cell  
 
      @ Test: #id ; %+ prop ; another
      1; a, b, c ; another
@@ -128,7 +129,7 @@ and 8 edges.
      1 -- b
      1 -- c
      
-* mixing '%', '+' and '=' :
+#### mixing '%', '+' and '=' :
 
 '=' create a clique of the nodes means create a link between each values  
 
@@ -205,21 +206,31 @@ Accessible service for botapad
 
 ### Run
 
-* install deps
+#### Install deps
 
-    ```$ pip install -r requirements.txt```
+    $ pip install -r requirements.txt
 
-* export host
+#### Export host
 
-    ```$ export BOTAPAD_HOST=http://www.padagraph.io```
+    $ export BOTAPAD_HOST=http://www.padagraph.io
 
-* copy your token(http://padagraph.io/account/me/generate_auth_token) into key.txt  
-* run  
+#### copy your token
 
-    ```$ python botapadapp.py```
+```get a token``` from (http://padagraph.io/account/me/generate_auth_token)  
+```copy``` to ```key.txt``` 
 
-* import http://localhost:5000
+#### Run  
 
+    $ python botapadapp.py
+
+#### Paths
+
+    /
+    /readme
+    /stats
+    /import
+    /import/igraph
+    /import/padagraph
 
 [DEPRECATED] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
     
