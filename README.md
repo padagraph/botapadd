@@ -185,20 +185,6 @@ they can also be used in a different dataset.
     && python screenshot.py testcsv fin.png  --width 600 --height 600 --zoom 1000 --no-labels --vertex-size 1 --wait 4 --host http://localhost:5000 -d chromedriver \
     && feh fillon.png
 
-## TODO
-
-* [star] starred projected node  
-
-* [materials]nodetype materials (shape, color, size) ??   
-
-* [import]circular import @[Nodetype]#id  
-* [import]url expansion with some providers  
-      [+] navigation for humans between pad, git, cloud ...  
-      [-] url might be unaccurate with some providers  
-      ex : 
-        & https://mensuel.framapad.org/p/uspol  
-        ! is converted during import to  https://mensuel.framapad.org/p/uspol/export/txt  
-
 
 # flask app / Botapadapp
 
@@ -212,7 +198,8 @@ Accessible service for botapad
 
 #### Export host
 
-    $ export BOTAPAD_HOST=http://www.padagraph.io
+    # routes: external server to compute layouts/clustering given
+    $ export ENGINES_HOST=http://www.padagraph.io
 
 #### copy your token
 
@@ -229,8 +216,25 @@ Accessible service for botapad
     /readme
     /stats
     /import
-    /import/igraph
-    /import/padagraph
+    /import/igraph    form
+    /import/padagraph form
+    /static/*.js css  
+
+
 
 [DEPRECATED] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
     
+## TODO
+
+* [star] starred projected node  
+
+* [materials]nodetype materials (shape, color, size) ??   
+
+* [import]circular import @[Nodetype]#id  
+* [import]url expansion with some providers  
+      [+] navigation for humans between pad, git, cloud ...  
+      [-] url might be unaccurate with some providers  
+      ex : 
+        & https://mensuel.framapad.org/p/uspol  
+        ! is converted during import to  https://mensuel.framapad.org/p/uspol/export/txt  
+

@@ -338,16 +338,17 @@
       </div>
 
         
-      <script src="{{static_host}}/static/webcomponents-lite.js"></script>
 
-      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
-      
+      <script src="{{static_host}}/static/webcomponents-lite.js"></script>
+      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>      
       <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
+
 <!--
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
 -->
+
       <div id="gviz">
         <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
 
@@ -494,6 +495,7 @@
         <div class="three wide column">
           <h4 class="ui inverted header">About</h4>
           <div class="ui inverted link list">
+            <a href="/readme" class="active item">read me</a>
             <a href="#" class="disabled item">You are here</a>
             <a href="#" class="disabled item">Contact Us</a>
           </div>
@@ -502,8 +504,8 @@
         <div class="three wide column">
           <h4 class="ui inverted header">Import</h4>
           <div class="ui inverted link list">
-            <a href="/import/padagraph" class="active item">pad -- padagraph</a>
-            <a href="/import/igraph" class="active item">pad -- igraph</a>
+            <a href="/import/padagraph" class="active item">... to padagraph</a>
+            <a href="/import/igraph" class="active item">... to igraph</a>
           </div>
         </div>
         <div class="three wide column">
