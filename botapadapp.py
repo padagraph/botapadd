@@ -272,19 +272,21 @@ def botimport(repo, content_type="html"):
             #
             'wait' : 4,
             #template
-            'el': "#viz",
-            'background_color' : color,
             'zoom'  : args.get("zoom", 1200 ),
             'buttons': 0, # removes play/vote buttons
             'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
             # gviz
-            'vtx_size' : args.get("vertex_size", 0 ),
+            'el': "#viz",
+            'background_color' : color,
+            'initial_size' : 16,
+            'vtx_size' : args.get("vertex_size", 2 ),
             'show_text'  : 0 if args.get("no_text"  , None ) else 1,     # removes vertex text 
             'show_nodes' : 0 if args.get("no_nodes" , None ) else 1,   # removes vertex only 
             'show_edges' : 0 if args.get("no_edges" , None ) else 1,   # removes edges 
             'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
             
             'auto_rotate': 0,
+            'adaptive_zoom': 0,
                 
         }
 

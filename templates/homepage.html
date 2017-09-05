@@ -126,7 +126,7 @@
         margin:20px;
     }
     
-    .ui.form .field label {
+    #importform.ui.form .field label {
         color:white !important;
     }
     
@@ -195,6 +195,8 @@
         overflow-y: auto;
         z-index:10;
     }
+
+    padagraph-model-popup .propvalue {  color: #333; }
   </style>
 
 </head>
@@ -364,7 +366,7 @@
         </padagraph-gviz-json>
         <script>
             e = document.getElementById('gviz');
-            e.style.height = ( window.innerHeight - 20 )+ "px";
+            e.style.height = ( window.innerHeight - 70 )+ "px";
         </script>
       </div>  
     
@@ -431,7 +433,7 @@
       
       <h3 class="ui inverted header">Choose a name and fill the pad url</h3>
 
-      <form class="ui form" method="post" action="{{action}}">
+      <form id="importform"  class="ui form" method="post" action="{{action}}">
         <div class="field">
           <div class="ui huge input">
             <input type="text" name="gid" placeholder="graph name">
