@@ -1,0 +1,230 @@
+
+
+
+
+
+#padagraph-top .row {
+    
+}
+
+
+#padagraph-top .column {
+    padding: 6px 0px 6px 0px;
+    z-index: 100;
+
+}
+#padagraph-right.column {
+    padding: 0px;
+    padding-top: 6px;
+}
+
+#padagraph-right .tab {
+    padding: 0px;
+    margin: 0px;
+    height: calc(100% - 68px);
+}
+#padagraph-right .tab.tab-actions{
+    height: calc(100% - 51px);
+}
+
+#padagraph-right .tab .scrollable {
+    max-height: 100%;
+    overflow-y:auto;
+    word-wrap: break-word;
+    text-align: left;
+    padding: 6px;
+/*
+    margin-top  : 10px;
+*/
+}
+
+
+#padagraph-right .ui.secondary.fitted.menu {
+    border-top: 0px;
+}
+
+#padagraph-right .tab .vertical.menu>.item {
+ padding-left:8px;
+
+}
+
+#padagraph-right .tab .vertical.menu>.item .menu .item{
+/*
+ padding-left:2px;
+*/
+}
+
+#padagraph-viz {
+    height : calc(100% - 52px);
+    padding:0px;
+    width:100%;
+}
+
+
+#padagraph-viz .dimmer {
+    background: hsla(60,100%,30%,0.6);
+    padding: 12px;
+}
+
+.startapp .ui.menu, .ui.pointing.dropdown>.menu {
+    border-radius: .2rem;
+    
+}
+
+i.dore.icons i.comment.icon {
+    color: #999900;
+}
+
+.menu.inverted i.dore.icons i.share.icon {
+    color: #e2E2E2;
+}
+
+i.dore.icons i.share.icon {
+    color: #666;
+}
+
+
+
+
+
+.padagraph-box, .padagraph-box-messages {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 12px;
+    z-index:100;
+    background: rgba(51, 51, 51, 0.6);
+}
+
+.padagraph-box {
+    height: 100%;
+    width: 100%;
+}
+
+.padagraph-box .ui.steps .step {
+    padding: 0px !important;
+}
+
+.padagraph-box>.message {
+    padding: 0px;
+    padding-top: 2px;
+    border: 1px solid #16191D;
+    border-radius: 0px;
+    max-height:800px;
+    max-width: 800px;
+    text-align: left;
+    margin: auto;
+}
+
+.padagraph-box>.message>.form>.header {
+    padding: 18px;
+    text-align: left;
+    background-color: #333;
+    color: white;
+    
+}
+.padagraph-box .message .form  .content {
+    height: auto;
+    padding: 12px;
+    overflow: auto;
+}
+
+.padagraph-box .padagraph-edit-buttons {
+    padding-bottom: 42px !important;
+    margin-top: 10px !important;
+}
+
+.padagraph-box   .padagraph-edit-buttons .right.floated.button {
+    margin-right: 12px;
+}  
+.padagraph-box .padagraph-edit-buttons .left.floated.button {
+    margin-left: 12px;
+}  
+
+
+.ui.star.rating .icon:hover {
+    color:#DDC507;
+}
+
+
+
+/*
+ *
+ *.padagraph-box{
+            height: 100%;
+        }
+        
+        .padagraph-box .message {
+            padding: 0px;
+            padding-top: 2px;
+            border: 1px solid #16191D;
+            border-radius: 0px;
+            max-height:800px;
+            max-width: 800px;
+            text-align: left;
+            margin: auto;
+        }
+        
+        
+        .padagraph-box .message .form .header {
+            padding: 18px;
+            text-align: left;
+            background-color: #333;
+            color: white;
+            
+        }
+        .padagraph-box .message .form /deep/ .content {
+            height: auto;
+            padding: 12px;
+        }
+        
+        .padagraph-box .padagraph-edit-buttons {
+            padding-bottom: 48px !important;
+        }
+        .padagraph-box /deep/  .padagraph-edit-buttons button.right.floated.button {
+            margin-right: 12px;
+        }  
+        .padagraph-box /deep/  .padagraph-edit-buttons button.left.floated {
+            margin-left: 12px;
+        }  
+
+ * 
+ *
+ *
+ * 
+ *
+ * :host .padagraph-box {
+            height:100%;
+        }
+        
+        .ui.message {
+            padding-top: 20px;
+            padding: 0px;
+            border: 1px solid #2A63AC;
+            border-radius: 0px;
+            max-height:800px;
+            max-width: 800px;
+            text-align: left;
+            margin: auto;
+        }
+        .form .header {
+            padding: 18px;
+            text-align: left;
+            background-color: #333;
+            color: white;
+            
+        }
+        .form .content {
+            height: auto;
+            padding: 12px;
+        }
+
+        .padagraph-edit-buttons {
+            padding-bottom: 48px;
+        }
+        
+        button.ui.icon.right.floated.button {
+            margin-right: 12px;
+        }  
+*/

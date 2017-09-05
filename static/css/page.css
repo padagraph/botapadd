@@ -1,0 +1,95 @@
+
+body {
+/*
+    background-color:#999900;
+*/
+    background-color:#F7F7F7;
+}
+
+ #padagraph-row-top {
+    background-color: #333;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    margin-bottom: 20px !important;
+    padding: 0px;
+    padding-top: 10px;
+    height: 70px;
+}
+
+
+
+#padagraph-row-top .row {
+    padding: 4px;
+}
+
+
+
+
+
+/*  one page app css */
+
+h1.ui.header {
+    margin-bottom:-20px;
+}
+
+    
+.ui.divider { margin:14px; }
+
+#padagraph-viz {
+    background-color:{{color}};
+    margin:auto;
+}
+
+.compact.mini.buttons {
+        vertical-align:middle;
+}
+.compact.mini.buttons .ui.button{
+    padding:6px !important;
+}
+.compact.mini.buttons .downvote.icon.button .icon, .compact.mini.buttons .upvote.icon.button .icon{
+    margin-right:4px;
+}
+.ui.primary.button{
+    margin-left:8px;
+}
+
+
+/*  iframe css */
+
+
+
+#markdown {
+    position: absolute;
+    overflow-y: scroll;
+    display:none;
+    top: 0px;
+    left: 0px;
+    height: 90%;
+    margin: 20px;
+    padding: 20px;
+    background-color:{{color}};
+    border: 1px solid white;
+    opacity: 0.87;
+}
+#markdown h1, #markdown h2 {
+    border-bottom: 2px solid #0f8e8e;
+}  
+#markdown a {
+    color: #000e40;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+.panel {
+    position: relative;
+    top: -32px;
+    left: -6px;
+    text-align: center;
+    margin:auto;
+}
+
+.small.button {
+    margin-top: -4px;
+    vertical-align: top;
+}
