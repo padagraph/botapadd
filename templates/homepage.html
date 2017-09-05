@@ -337,12 +337,17 @@
         <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
       </div>
 
-      <script src="{{static_host}}/static/bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
-      <!-- require JS-->
-      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/bower_components/requirejs/require.js"></script>
+        
+      <script src="{{static_host}}/static/webcomponents-lite.js"></script>
+
+      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
+      
+      <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
+<!--
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
+-->
       <div id="gviz">
         <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
 

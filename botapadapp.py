@@ -28,8 +28,9 @@ PATH = "./static/images" # images storage
 KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 
 # padagraph host t o connect
-HOST = "http://padagraph.io"
-HOST = os.environ.get('PDG_HOST', "http://localhost:5000")
+STATIC_HOST = os.environ.get('STATIC_HOST', "http://padagraph.io")
+ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
+
 KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
 
 # delete before import
@@ -39,7 +40,7 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 # app
 
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
-print( "== %s ==" % HOST)
+print( "== engines:%s static:%s ==" % (ENGINES_HOST, STATIC_HOST) )
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -104,13 +105,13 @@ def snapshot(gid, **kwargs):
     """
     path = '%s/%s.png' % ( PATH, gid )
     #driver, HOST, gid, path, width, height, {iframe params}
-    getScreenShot(driver, HOST, gid, path, 400,400, **kwargs)    
+    getScreenShot(driver, ENGINES_HOST, gid, path, 400,400, **kwargs)    
 
 def img_url(gid):
     return '%s/%s.png' % ( PATH, gid )
 
 def graph_url(gid):
-    return '%s/graph/%s' % ( HOST, gid )
+    return '%s/graph/%s' % ( ENGINES_HOST, gid )
 
 
 # === app routes ===
@@ -213,7 +214,7 @@ def home():
 
 def pad2pdg(gid, url):
     description = "imported from %s" % url
-    bot = Botagraph(HOST, KEY)
+    bot = Botagraph(ENGINES_HOST, KEY)
     botapad = Botapad(bot, gid, description, delete=DELETE)
     return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
 
@@ -247,7 +248,7 @@ def botimport(repo, content_type="html"):
     #raise ValueError(request)
     action = "%s?%s" % (repo, request.query_string)
     print "action " , action
-    routes = "%s/engines" % HOST
+    routes = "%s/engines" % ENGINES_HOST
     graph = None
     data = None
     
@@ -293,7 +294,7 @@ def botimport(repo, content_type="html"):
         try : 
             if repo == "padagraph":
                 pad2pdg(gid, url)
-                data = "%s/xplor/%s.json" % (HOST, gid) 
+                data = "%s/xplor/%s.json" % (ENGINES_HOST, gid) 
                 complete = True 
 
                 if content_type == "json":
@@ -348,7 +349,7 @@ def botimport(repo, content_type="html"):
         #snapshot(gid, **params)D
 
     return render_template('homepage.html',
-        static_host=HOST, action=action, content_type=content_type, color=color,
+        static_host=STATIC_HOST, action=action, content_type=content_type, color=color,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
         padurl=url, graphurl=graph_url(gid) , img=img_url(gid),
