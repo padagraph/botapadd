@@ -204,7 +204,7 @@ Accessible service for botapad
 #### copy your token
 
 ```get a token``` from (http://padagraph.io/account/me/generate_auth_token)  
-```copy``` to ```key.txt``` 
+```copy``` to ```secret/key.txt``` 
 
 #### Run  
 
