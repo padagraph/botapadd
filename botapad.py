@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import argparse
 from botapi import Botagraph, BotApiError
@@ -51,6 +52,14 @@ def convert_url(url):
 
      """
      
+    #re_ggdoc = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
+    #doc = re.findall(re_ggdoc, url)
+    #if  len(frama) :
+        #frama = [r for r in frama[0] if len(r)]
+        #if  len(frama) == 2 :
+            #url = "https://docs.google.com/document/d/%s/export?format=txt" % (frama[0], frama[1])
+            #return url
+            
     re_framapad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
@@ -135,19 +144,34 @@ class Botapad(object):
 
     def read(self, path, separator='auto'):
         
+        encoding = 'utf-8'
         path = path.strip()
+
         if path[0:4] == 'http':
             try : 
                 url = convert_url(path)
-                log( " * Downloading %s %s\n" % (url,separator))
+                log( " * Downloading %s %s\n" % (url, separator))
                 content = requests.get(url).text
+                # bug BOM ggdoc
+                if content[0:1] == u'\ufeff':
+                    content = content[1:]
                 lines = content.split('\n')
             except :
                 raise BotapadURLError("Can't download %s" % url, url)
+
         else:
             log( " * Opening %s \n" % path)
+            
+            bytes = min(32, os.path.getsize(path))
+            raw = open(path, 'rb').read(bytes)
+            if raw.startswith(codecs.BOM_UTF8):
+                encoding = 'utf-8-sig'
+            #else:
+                #result = chardet.detect(raw)
+                #encoding = result['encoding']
+
             try : 
-                with codecs.open(path, 'r', encoding='utf8' ) as fin:
+                with codecs.open(path, 'r', encoding=encoding ) as fin:
                     lines = [ line for line in fin]
             except :
                 raise BotapadError("Can't read file %s" % path)
@@ -157,11 +181,11 @@ class Botapad(object):
         
         if separator == 'auto':
             line = lines[0].strip()
+            print 'auto', lines[0].strip(), line[1:] == "!;"
             if line in ( '!;','!,'):
                 separator = line[1:]
             else: separator = ','
-
-        log(" * Reading %s (%s) lines with delimiter '%s' %s" % (path, len(lines), separator, line))
+        log(" * Reading %s [%s] (%s) lines with delimiter '%s' " % (path, encoding, len(lines), separator))
 
         try : 
             reader = csv.reader(lines, delimiter=separator)
