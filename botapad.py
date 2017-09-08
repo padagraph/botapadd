@@ -51,15 +51,13 @@ def convert_url(url):
         framapad expension  auto add /export/txt
 
      """
-     
-    #re_ggdoc = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
-    #doc = re.findall(re_ggdoc, url)
-    #if  len(frama) :
-        #frama = [r for r in frama[0] if len(r)]
-        #if  len(frama) == 2 :
-            #url = "https://docs.google.com/document/d/%s/export?format=txt" % (frama[0], frama[1])
-            #return url
-            
+    re_ggdoc = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/(edit)"
+    ggdoc = re.findall(re_ggdoc, url)
+    if  len(ggdoc) :
+        ggdoc = [r for r in ggdoc[0] if len(r)]
+        if  len(ggdoc) == 2 :
+            return "https://docs.google.com/document/d/%s/export?format=txt" % (ggdoc[0])
+    
     re_framapad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
     frama = re.findall(re_framapad, url)
     if  len(frama) :
