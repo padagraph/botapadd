@@ -25,8 +25,8 @@ STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
 KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 
-ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
-KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
+#ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
+#KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
@@ -214,14 +214,19 @@ def home():
 @app.route('/framagraph/<string:gid>', methods=['GET'])
 def live(gid):
     padurl = "https://annuel2.framapad.org/p/%s" % gid
-    graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+    graphurl = "/import/igraph.html?s=framapad&gid=%s&live=1&nofoot=1" % gid
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
     
+@app.route('/googledoc', methods=['GET'])
 @app.route('/googledoc/<string:gid>', methods=['GET'])
-def googledoc(gid):
-    padurl = "https://docs.google.com/document/d/%s/edit" % gid
-    graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+def googledoc(gid=None):
+    if gid:
+        padurl = "https://docs.google.com/document/d/%s?embedded=true" % gid
+    else:
+        padurl = "https://docs.google.com/document/u/0/"
+        
+    graphurl = "/import/igraph.html?s=google&gid=%s&live=1&nofoot=1" % gid
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
     
@@ -277,18 +282,27 @@ def botimport(repo, content_type="html"):
     # form
     gid = request.form.get('gid', None)
     padurl = request.form.get('url', None)
+
+
     content_type = request.form.get('content_type', content_type)
     promote = 1 if request.form.get('promote', 0)  else 0        
     #args
     args = request.args
+    
+    pad_source = args.get('s', None) 
     color = "#" + args.get("color", "249999" )
     footer = not(args.get('nofoot', 0) == "1")
     live = args.get('live', 0) == "1"
 
     if live:
         gid = args.get('gid', None)
-        padurl = "https://annuel2.framapad.org/p/%s" % gid
-        graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+        graphurl = "/import/igraph.html?s=%s&gid=%s&live=1&nofoot=1" % (pad_source, gid)
+        
+        if pad_source  == "framapad":
+            padurl = "https://annuel2.framapad.org/p/%s" % gid
+            
+        elif pad_source  == "google":
+            padurl = "https://docs.google.com/document/d/%s/edit" % gid
 
         
     if gid and padurl:
@@ -325,6 +339,7 @@ def botimport(repo, content_type="html"):
                     return redirect(data, code=302)
                     
             elif repo == "igraph":
+                
                 graph = pad2igraph(gid, padurl)
                 graph = prepare_graph(graph)
                 data = export_graph(graph, id_attribute='uuid')

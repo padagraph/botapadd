@@ -16,15 +16,15 @@
 -->
 
   <style type="text/css">
-
     
-    .ui.inverted.segment {
+    
+    body, .ui.inverted.segment {
         background: #127777;
     }
 
     .masthead.segment {
       min-height: 700px;
-      padding: 1em 0em;
+      padding: 5px;
     }
     .masthead .logo.item img {
       margin-right: 1em;
@@ -324,62 +324,10 @@
     </div>
 
     
- 
-    {% elif framapad and not fail  %}
-    <div class="ui container">
-      <div class="ui inverted link list">
-        <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
-      </div>
-
-        
-
-      <script src="{{static_host}}/static/webcomponents-lite.js"></script>
-      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>      
-      <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
-<!--
-      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
-      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
-      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
--->
-
-
-      <div id="gviz">
-        <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
-
-          <padagraph-gviz options="{{options}}">
-            <div id="viz"></div>
-
-            <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
-
-            <div id="menu" class="ui icon vertical borderless menu"> 
-              <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
-              <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
-              <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
-              <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
-            </div>
-
-            <div id="labels">
-              <padagraph-labels-control></padagraph-labels-control>
-            </div>
-
-          </padagraph-gviz>
-        </padagraph-gviz-json>
-        <script>
-            e = document.getElementById('gviz');
-            e.style.height = ( window.innerHeight - 70 )+ "px";
-        </script>
-      </div>  
-    
-      <div class="ui inverted link list">
-        <a class="active item" href="{{graphurl}}">Visit {{graphurl}}</a>
-      </div>
-      </p>
-
-    </div>
-
     
       {% elif complete and not fail  %}
     <div class="ui container">
+      {% if footer%}  
       <h4 class="ui inverted  horizontal divider">
         Import complete
       </h4>
@@ -387,7 +335,7 @@
       <div class="ui inverted link list">
         <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
       </div>
-
+      {% endif %}  
         
 
       <script src="{{static_host}}/static/webcomponents-lite.js"></script>
@@ -426,9 +374,12 @@
             e.style.height = ( window.innerHeight - 70 )+ "px";
         </script>
       </div>  
-     {% if not live %}
+     {% if live %}
       <div class="ui inverted link list">
-        <a class="ui active button" href="{{graphurl}}">refresh</a>
+<!--
+        <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
+-->
+        <a class="ui active button" href="{{refreshurl}}">refresh</a>
       </div>
      {% else %}
       <div class="ui inverted link list">
@@ -539,6 +490,7 @@
 
       
 
+ 
   {% if footer%}  
   
   <div class="ui inverted vertical footer segment">
