@@ -23,8 +23,9 @@ PATH = "./static/images" # images storage
 
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
-
 KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
+
+ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
 KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
 
 # delete before import
@@ -210,12 +211,30 @@ def home():
     return render_template('homepage.html', **kw )
 
 
+@app.route('/framagraph/<string:gid>', methods=['GET'])
+def live(gid):
+    padurl = "https://annuel2.framapad.org/p/%s" % gid
+    graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+
+    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
+    
+@app.route('/googledoc/<string:gid>', methods=['GET'])
+def googledoc(gid):
+    padurl = "https://docs.google.com/document/d/%s/edit" % gid
+    graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+
+    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
+    
+
+
+    
+
 
 def pad2pdg(gid, url):
     description = "imported from %s" % url
     bot = Botagraph(ENGINES_HOST, KEY)
     botapad = Botapad(bot, gid, description, delete=DELETE)
-    return bot.parse(url, separator='auto', debug=app.config['DEBUG'])
+    return botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
 
 def pad2igraph(gid, url):
     
@@ -246,27 +265,33 @@ def botimport(repo, content_type="html"):
 
     #raise ValueError(request)
     action = "%s?%s" % (repo, request.query_string)
-    print "action " , action
     routes = "%s/engines" % ENGINES_HOST
+
     graph = None
-    data = None
-    
+    data = None    
     complete = False
     error = None
     options = ""
+    graphurl = None
 
+    # form
     gid = request.form.get('gid', None)
-    url = request.form.get('url', None)
-    print "content_type", content_type
+    padurl = request.form.get('url', None)
     content_type = request.form.get('content_type', content_type)
-    print "content_type",  content_type
-    
     promote = 1 if request.form.get('promote', 0)  else 0        
-    
+    #args
     args = request.args
     color = "#" + args.get("color", "249999" )
+    footer = not(args.get('nofoot', 0) == "1")
+    live = args.get('live', 0) == "1"
 
-    if gid and url:
+    if live:
+        gid = args.get('gid', None)
+        padurl = "https://annuel2.framapad.org/p/%s" % gid
+        graphurl = "/import/igraph.html?gid=%s&live=1&nofoot=1" % gid
+
+        
+    if gid and padurl:
         
         options = {
             #
@@ -292,7 +317,7 @@ def botimport(repo, content_type="html"):
 
         try : 
             if repo == "padagraph":
-                pad2pdg(gid, url)
+                pad2pdg(gid, padurl)
                 data = "%s/xplor/%s.json" % (ENGINES_HOST, gid) 
                 complete = True 
 
@@ -300,7 +325,7 @@ def botimport(repo, content_type="html"):
                     return redirect(data, code=302)
                     
             elif repo == "igraph":
-                graph = pad2igraph(gid, url)
+                graph = pad2igraph(gid, padurl)
                 graph = prepare_graph(graph)
                 data = export_graph(graph, id_attribute='uuid')
                 
@@ -334,7 +359,7 @@ def botimport(repo, content_type="html"):
                 'class' : err.__class__.__name__,
                 'message' : err.message,
                 'host' : err.host, 
-                'url' : url, 
+                'url' : padurl, 
             }
         finally:
             today = datetime.datetime.now()
@@ -342,7 +367,7 @@ def botimport(repo, content_type="html"):
             db.execute ("""
             insert into imports (imported_on, gid, padurl, status, help )
             values (?, ?, ?, ?, ? )
-            """ , ( today, gid, url, 1 if complete else 0 , promote ) )
+            """ , ( today, gid, padurl, 1 if complete else 0 , promote ) )
             db.commit()
         
         #snapshot(gid, **params)D
@@ -351,7 +376,8 @@ def botimport(repo, content_type="html"):
         static_host=STATIC_HOST, action=action, content_type=content_type, color=color,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
-        padurl=url, graphurl=graph_url(gid) , img=img_url(gid),
+        padurl=padurl, graphurl = graphurl,
+        footer=footer, live=live,       
         )
 
 # =====

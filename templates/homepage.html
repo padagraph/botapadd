@@ -209,17 +209,19 @@
 <div class="pusher">
     
   <div class="ui inverted vertical masthead center aligned segment">
+
+    {% if footer %}  
     <div class="ui text container">
       <h1 class="ui inverted header">
         padagraph.io
       </h1>
       <h2>Open a pad and a graph will follow </h2>
     </div>
-
+    {% endif %}
 
 
     
-      {% if readme %}
+    {% if readme %}
     <div class="ui  left aligned text container">
       <h4 class="ui inverted  horizontal divider">
         readme
@@ -230,8 +232,8 @@
     </div>
 
     
+    {% elif promote %}
     
-      {% elif promote %}
     <h4 class="ui hidden divider"></h4>
 
     <div class="ui  left aligned text container">
@@ -268,7 +270,7 @@
 
     
     
-      {% elif stats %}
+    {% elif stats %}
     <div class="ui  left aligned text container">
       <h4 class="ui inverted  horizontal divider">
         stats
@@ -323,16 +325,8 @@
 
     
  
-      {% elif complete and not fail  %}
+    {% elif framapad and not fail  %}
     <div class="ui container">
-      <h4 class="ui inverted  horizontal divider">
-        Import complete
-      </h4>
-      <p>  
-<!--
-      <a class="" href="{{url}}"><img src='{{img}}'/></a>
-      <br/>  
--->
       <div class="ui inverted link list">
         <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
       </div>
@@ -342,12 +336,12 @@
       <script src="{{static_host}}/static/webcomponents-lite.js"></script>
       <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>      
       <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
-
 <!--
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
       <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
 -->
+
 
       <div id="gviz">
         <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
@@ -384,9 +378,70 @@
     </div>
 
     
-      {% elif error %}
+      {% elif complete and not fail  %}
+    <div class="ui container">
+      <h4 class="ui inverted  horizontal divider">
+        Import complete
+      </h4>
+      <p>  
+      <div class="ui inverted link list">
+        <a class="active item" href="{{padurl}}">Imported from {{padurl}}</a>
+      </div>
+
+        
+
+      <script src="{{static_host}}/static/webcomponents-lite.js"></script>
+      <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>      
+      <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
+<!--
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-collection.html"/>
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-controls.html"/>
+      <link rel="import" href="{{static_host}}/static/padagraph_webcomponents/padagraph-gviz.html"/>
+-->
+
+
+      <div id="gviz">
+        <padagraph-gviz-json routes="{{routes}}" data="{{data}}" >
+
+          <padagraph-gviz options="{{options}}">
+            <div id="viz"></div>
+
+            <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
+
+            <div id="menu" class="ui icon vertical borderless menu"> 
+              <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
+              <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+              <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
+              <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
+            </div>
+
+            <div id="labels">
+              <padagraph-labels-control></padagraph-labels-control>
+            </div>
+
+          </padagraph-gviz>
+        </padagraph-gviz-json>
+        <script>
+            e = document.getElementById('gviz');
+            e.style.height = ( window.innerHeight - 70 )+ "px";
+        </script>
+      </div>  
+     {% if not live %}
+      <div class="ui inverted link list">
+        <a class="ui active button" href="{{graphurl}}">refresh</a>
+      </div>
+     {% else %}
+      <div class="ui inverted link list">
+        <a class="active item" href="{{graphurl}}">Visit {{graphurl}}</a>
+      </div>
+     {%endif%}   
+
+    </div>
+
+    
+    {% elif error %}
     <div class="ui text container">
-      <<h3> class="ui inverted  horizontal divider" >Import error </h3>
+      <h3 class="ui inverted  horizontal divider">Import error </h3>
       <div class="ui icon message">
           <i class="cloud download icon"></i>
           <div class="content">
@@ -484,8 +539,8 @@
 
       
 
-
-
+  {% if footer%}  
+  
   <div class="ui inverted vertical footer segment">
       <h4 class="ui inverted  horizontal divider"> the bottom  </h4>
     <div class="ui container">
@@ -527,6 +582,8 @@
       </div>
     </div>
   </div>
+  
+   {% endif  %}
 </div>
 
 </body>
