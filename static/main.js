@@ -12,13 +12,13 @@ var path = "../static/bower_components/"
         //backbone   : path + 'backbone/backbone-min',
         //jquery     : path + 'jquery/dist/jquery.min',
         
-        //cello     : 'cello.min',
-        //gviz      : 'gviz.min',
-        //embed     : 'embed.min',
+        cello     : 'cello.min',
+        gviz      : 'gviz.min',
+        embed     : 'embed.min',
         
-        cello     : 'cello',
-        gviz      : 'gviz',
-        embed     : 'embed',     
+        //cello     : 'cello',
+        //gviz      : 'gviz',
+        //embed     : 'embed',     
         
         threejs   : 'three',
         numeric   : 'numeric-1.2.6',
