@@ -512,17 +512,196 @@ def export_graph(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[],
     return  igraph2dict(graph, exclude_gattrs, exclude_vattrs, exclude_eattrs, id_attribute)    
 
 
+# === layout ===
+
+from reliure.web import ReliureAPI, EngineView
+from reliure.pipeline import Optionable, Composable
+from reliure.types import GenericType
+from reliure.engine import Engine
+from reliure.utils.log import get_basic_logger
+
+
+class EdgeList(GenericType):
+    def parse(self, data):
+        gid = data.get('graph', None)
+        edgelist = data.get('edgelist', None)
+
+        if gid is None :
+            raise ValueError('graph should not be null')
+        if edgelist is None :
+            raise ValueError('edgelist should not be null')
+
+        return data
+        
+def edge_subgraph( data ):
+    _format  = data['format']
+    gid = data['graph']
+
+    if _format == 'index_edgelist' :
+        nodelist =  data['nodelist']
+        edgelist =  data['edgelist']
+        weights =  data.get('weights', None)
+        directed =  data.get('directed', False)
+        return egde_list_subgraph(nodelist, edgelist, weights )
+
+def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
+    
+    graph = igraph.Graph(directed= directed, 
+                     graph_attrs={},
+                     n=len(node_list),
+                     vertex_attrs={'uuid': node_list},
+                     edges=edge_list,
+                     edge_attrs={'weight': weights})
+    return graph
+
+        
+@app.route('/engines', methods=['GET'])
+def engines():
+    r = request.path
+    return jsonify({'routes': {
+            'layout' : "%s/engines/layout" % ENGINES_HOST,
+            'clustering' : "%s/engines/clustering" % ENGINES_HOST ,
+        }})
+
+
+# Layout functions
+
+
+def export_layout(graph, layout):
+    uuids = graph.vs['uuid']
+    coords = { uuid: layout[i] for i,uuid in enumerate(uuids)  }
+    return {
+        "desc"  : str(layout),
+        "coords": coords
+    }
+
+
+
+def layout_engine():
+    # setup
+    engine = Engine("gbuilder", "layout", "export")
+    engine.gbuilder.setup(in_name="request", out_name="graph", hidden=True)
+    engine.layout.setup(in_name="graph", out_name="layout")
+    engine.export.setup(in_name=["graph", "layout"], out_name="layout", hidden=True)
+    
+    engine.gbuilder.set(edge_subgraph) 
+
+    from cello.layout.simple import KamadaKawaiLayout, GridLayout, FruchtermanReingoldLayout
+    #from cello.layout.simple import DrlLayout
+    from cello.layout.proxlayout import ProxLayoutPCA, ProxLayoutRandomProj, ProxLayoutMDS, ProxMDSSugiyamaLayout
+    from cello.layout.transform import Shaker
+    from cello.layout.transform import ByConnectedComponent
+    import BRUNO_simple
+
+    layouts = [
+        # BRN
+        #("KamadaKawai2D_HOMOsquare" , BRUNO_simple.KamadaKawai3D_HOMOsquare(dim=2) | Shaker(kelastic=.9) ),
+        #("KamadaKawai2D_HOMOcircle" , BRUNO_simple.KamadaKawai3D_HOMOcircle(dim=2) | Shaker(kelastic=.9) ),
+        #("KamadaKawai3D_HOMOcircle" , BRUNO_simple.KamadaKawai3D_HOMOcircle(dim=3) | Shaker(kelastic=.9) ),
+        #("KamadaKawai3D_HOMOsquare" , BRUNO_simple.KamadaKawai3D_HOMOsquare(dim=3) | Shaker(kelastic=.9) ),
+        #("KamadaKawai3D_TRANSLATE" , BRUNO_simple.KamadaKawai3D_TRANSLATE(dim=3) | Shaker(kelastic=.9) ),
+        #("KamadaKawai2D_TRANSLATE" , BRUNO_simple.KamadaKawai3D_TRANSLATE(dim=2) | Shaker(kelastic=.9) ),
+        #("KamadaKawai_TRANSLATE2D_to_3D" , BRUNO_simple.KamadaKawai_TRANSLATE2D_to_3D(dim=2) | Shaker(kelastic=.9) ),
+        # 3D
+        ("3DKamadaKawai" , KamadaKawaiLayout(dim=3) ),
+        ("3DMds"         , ProxLayoutMDS(dim=3) | Shaker(kelastic=.9) ),
+        ("3DPca"         , ProxLayoutPCA(dim=3, ) | Shaker(kelastic=.9) ),
+        ("3DPcaWeighted" , ProxLayoutPCA(dim=3, weighted=True) | Shaker(kelastic=.9) ),
+        ("3DRandomProj"  , ProxLayoutRandomProj(dim=3) ),
+        ("3DOrdered"     , ProxMDSSugiyamaLayout(dim=3) | Shaker(kelastic=0.9) ),
+        # 2D
+        ("2DPca"         , ProxLayoutPCA(dim=2) | Shaker(kelastic=1.8) ),
+        ("2DMds"         , ProxLayoutMDS(dim=2 ) | Shaker(kelastic=.9) ),
+        ("2DKamadaKawai" , KamadaKawaiLayout(dim=2) ),
+        # tree
+        ("2DFruchtermanReingoldLayout" , FruchtermanReingoldLayout(dim=2) ),
+        ("3DFruchtermanReingoldLayout" , FruchtermanReingoldLayout(dim=3) ),
+        ("2DFruchtermanReingoldLayoutWeighted" , FruchtermanReingoldLayout(dim=2, weighted=True) ),
+        ("3DFruchtermanReingoldLayoutWeighted" , FruchtermanReingoldLayout(dim=3, weighted=True) ),
+    ] 
+
+    for k,v in layouts:
+        v.name = k
+        
+    layouts = [ l for n,l in layouts ]        
+    engine.layout.set( *layouts )
+    
+    engine.export.set( export_layout )
+
+    return engine
+
+
+def clustering_engine():
+    """ Return a default engine over a lexical graph
+    """
+    # setup
+    engine = Engine("gbuilder", "clustering", "labelling")
+    engine = Engine("gbuilder", "clustering")
+    engine.gbuilder.setup(in_name="request", out_name="graph", hidden=True)
+    engine.clustering.setup(in_name="graph", out_name="clusters")
+    #engine.labelling.setup(in_name="clusters", out_name="clusters", hidden=True)
+
+    engine.gbuilder.set(edge_subgraph) 
+
+    ## Clustering
+    from cello.graphs.transform import EdgeAttr
+    from cello.clustering.common import Infomap, Walktrap
+    #RMQ infomap veux un pds, donc on en ajoute un bidon
+    walktrap = EdgeAttr(weight=1.) | Walktrap()
+    walktrap.name = "Walktrap"
+    infomap = EdgeAttr(weight=1.) | Infomap() 
+    infomap.name = "Infomap"
+    engine.clustering.set(walktrap, infomap)
+
+    ## Labelling
+    from cello.clustering.labelling.model import Label
+    from cello.clustering.labelling.basic import VertexAsLabel, TypeFalseLabel, normalize_score_max
+
+    def _labelling(graph, cluster, vtx):
+        return  Label(vtx["uuid"], score=1, role="default")
+    
+    #labelling = VertexAsLabel( _labelling ) | normalize_score_max
+    #engine.labelling.set(labelling)
+
+    return engine
+
+    
+
+def build_app():
+
+    
+    api = ReliureAPI( "engines" ,expose_route = False)
+    
+    # Layouts
+    view = EngineView(layout_engine())
+    view.set_input_type(EdgeList())
+    view.add_output("layout", lambda x:x)
+
+    api.register_view(view, url_prefix="layout")
+
+    from cello.clustering import export_clustering
+
+    # Clusters
+    view = EngineView(clustering_engine())
+    view.set_input_type(EdgeList())
+    view.add_output("clusters", export_clustering,  vertex_id_attr='uuid')
+
+    api.register_view(view, url_prefix="clustering")
+
+    app.register_blueprint(api)
+
 
 
 # === main ===
+from flask_runner import Runner
     
 def main():
     ## run the app
-    from flask_runner import Runner
+
+    build_app()
 
     runner = Runner(app)
     runner.run()
-
 
 if __name__ == '__main__':
     sys.exit(main())
