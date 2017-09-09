@@ -591,17 +591,8 @@ def layout_engine():
     from cello.layout.proxlayout import ProxLayoutPCA, ProxLayoutRandomProj, ProxLayoutMDS, ProxMDSSugiyamaLayout
     from cello.layout.transform import Shaker
     from cello.layout.transform import ByConnectedComponent
-    import BRUNO_simple
 
     layouts = [
-        # BRN
-        #("KamadaKawai2D_HOMOsquare" , BRUNO_simple.KamadaKawai3D_HOMOsquare(dim=2) | Shaker(kelastic=.9) ),
-        #("KamadaKawai2D_HOMOcircle" , BRUNO_simple.KamadaKawai3D_HOMOcircle(dim=2) | Shaker(kelastic=.9) ),
-        #("KamadaKawai3D_HOMOcircle" , BRUNO_simple.KamadaKawai3D_HOMOcircle(dim=3) | Shaker(kelastic=.9) ),
-        #("KamadaKawai3D_HOMOsquare" , BRUNO_simple.KamadaKawai3D_HOMOsquare(dim=3) | Shaker(kelastic=.9) ),
-        #("KamadaKawai3D_TRANSLATE" , BRUNO_simple.KamadaKawai3D_TRANSLATE(dim=3) | Shaker(kelastic=.9) ),
-        #("KamadaKawai2D_TRANSLATE" , BRUNO_simple.KamadaKawai3D_TRANSLATE(dim=2) | Shaker(kelastic=.9) ),
-        #("KamadaKawai_TRANSLATE2D_to_3D" , BRUNO_simple.KamadaKawai_TRANSLATE2D_to_3D(dim=2) | Shaker(kelastic=.9) ),
         # 3D
         ("3DKamadaKawai" , KamadaKawaiLayout(dim=3) ),
         ("3DMds"         , ProxLayoutMDS(dim=3) | Shaker(kelastic=.9) ),
