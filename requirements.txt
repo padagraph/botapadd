@@ -1,10 +1,12 @@
-gunicorn
+#gunicorn
 
 flask
 flask-runner
 Flask-Markdown
 
-# Botagraph & BotaIgraph
+# cello reliure Botagraph & BotaIgraph
+reliure
+https://github.com/ynnk/cello/archive/master.zip
 https://github.com/padagraph/botapi/archive/master.zip
 
 # padagraph screenshot
