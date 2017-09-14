@@ -51,6 +51,7 @@ def convert_url(url):
         framapad expension  auto add /export/txt
 
      """
+
     re_ggdoc = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/(edit)"
     ggdoc = re.findall(re_ggdoc, url)
     if  len(ggdoc) :
@@ -66,16 +67,16 @@ def convert_url(url):
             url = "https://%s.framapad.org/p/%s/export/txt" % (frama[0], frama[1])
             return url
             
-    #https://framacalc.org/uspaties
-    re_framacalc = "https?:\/\/framacalc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
+    
+    re_framacalc = "https?:\/\/(?:frama|ether)calc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
     frama = re.findall(re_framacalc, url)
     debug( "convert_url", url , frama )
     if  len(frama) :
         frama = [r for r in frama[0] if len(r)]
         if  len(frama) == 1 :
-            url = "https://framacalc.org/%s.csv" % (frama[0])
-            return url
-            
+            #url = "https://framacalc.org/%s.csv" % (frama[0])
+            #url = "https://framacalc.org/%s.csv" % (frama[0])
+            return "%s.csv" % url
     
     return url
 
@@ -102,8 +103,8 @@ class Botapad(object):
     
     def __init__(self, bot, gid, description, delete=False):
         # Bot creation & login 
-        log( "\n * Locating graph %s @ padagraph \n  " % (gid) )
         
+        log( "\n * Locating graph %s @ padagraph \n  " % (gid) )
         self.gid = gid
 
         self.imports = set()

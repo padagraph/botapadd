@@ -211,8 +211,15 @@ def home():
     return render_template('homepage.html', **kw )
 
 
+@app.route('/decalcograph/<string:gid>', methods=['GET'])
+def decalcograph(gid):
+    padurl = "https://ethercalc.org/%s" % gid
+    graphurl = "/import/igraph.html?s=ethercalc&gid=%s&live=1&nofoot=1" % gid
+
+    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
+    
 @app.route('/framagraph/<string:gid>', methods=['GET'])
-def live(gid):
+def framagraph(gid):
     padurl = "https://annuel2.framapad.org/p/%s" % gid
     graphurl = "/import/igraph.html?s=framapad&gid=%s&live=1&nofoot=1" % gid
 
@@ -230,9 +237,7 @@ def googledoc(gid=None):
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
     
-
-
-    
+   
 
 
 def pad2pdg(gid, url):
@@ -265,6 +270,7 @@ def import2pdg(repo='igraph', content=None):
         return botimport(repo, 'html')
             
     return botimport('igraph', 'html')
+    
     
 def botimport(repo, content_type="html"):
 
@@ -303,6 +309,9 @@ def botimport(repo, content_type="html"):
             
         elif pad_source  == "google":
             padurl = "https://docs.google.com/document/d/%s/edit" % gid
+
+        elif pad_source  == "ethercalc":
+            padurl = "https://ethercalc.org/%s" % gid
 
         
     if gid and padurl:
