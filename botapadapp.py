@@ -35,6 +35,7 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
 # app
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
+print( "== Running with gunicorn : %s==" % (RUN_GUNICORN) )
 print( "== engines:%s static:%s ==" % (ENGINES_HOST, STATIC_HOST) )
 
 app = Flask(__name__)
@@ -281,7 +282,7 @@ def botimport(repo, content_type="html"):
 
     #raise ValueError(request)
     action = "%s?%s" % (repo, request.query_string)
-    routes = "%s/engines" % ENGINES_HOST
+    routes = "%s/get_engines" % ENGINES_HOST
 
     graph = None
     data = None    
@@ -582,7 +583,7 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
     return graph
 
         
-@app.route('/engines', methods=['GET'])
+@app.route('/routes', methods=['GET'])
 def engines():
     r = request.path
     return jsonify({'routes': {
