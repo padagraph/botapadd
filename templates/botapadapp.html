@@ -149,7 +149,11 @@
       #menu {
         position:absolute;
         background: {{color}};
-        top: 264px;
+        top: 176px;
+      }
+      
+      .nofoot #menu {
+        top: 24px;
       }
       
       .ui.icon.menu {
@@ -160,6 +164,7 @@
       
       #gviz {
           margin:auto;
+          margin-bottom:4px;
           
           text-align:left;
           width:100%;
@@ -173,11 +178,13 @@
       
       #labels {
         position:absolute;
-        bottom: 60px;
+        bottom: 12px;
         padding:12px;
         margin:12px;
       }
-      
+      .nofoot #labels {
+        bottom: -30px;
+      }
       .markdown {
         position:absolute;
         bottom: 20px;
@@ -193,13 +200,17 @@
           z-index:10;
       }
       
+      .nofoot padagraph-model-popup {
+          top: 20px;
+      }
+      
       padagraph-model-popup .propvalue {  color: #333; }
     </style>
   </head>
   <body>
     <!-- Page Contents-->
     <div class="pusher">
-      <div class="ui inverted vertical masthead center aligned segment">{% if footer %}  
+      <div class="ui inverted vertical center aligned segment">{% if footer %}  
         <div class="ui text container">
           <h1 class="ui inverted header">padagraph.io</h1>
           <h2>Open a pad and a graph will follow </h2>
@@ -286,7 +297,7 @@
           <script src="{{static_host}}/static/webcomponents-lite.js"></script>
           <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
           <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
-          <div id="gviz">
+          <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
             <padagraph-gviz-json routes="{{routes}}" data="{{data}}">
               <padagraph-gviz options="{{options}}">
                 <div id="viz"></div>
@@ -297,16 +308,18 @@
                   <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
                   <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
                 </div>
-                <div id="labels"><padagraph-labels-control></padagraph-labels-control></div>
+                <div id="labels">
+                  <padagraph-labels-control></padagraph-labels-control>
+                </div>
               </padagraph-gviz>
             </padagraph-gviz-json>
             <script>
               e = document.getElementById('gviz');
-              e.style.height = ( window.innerHeight - 70 )+ "px";
+              e.style.height = ( window.innerHeight - 62 )+ "px";
               
             </script>
-          </div>
-          <div class="ui inverted link list"><a class="ui"></a><a href="{{graphurl}}" class="ui active button">refresh</a></div>
+          </div>{% if graphurl %}   <a href="{{graphurl}}" class="ui active right floated button">refresh</a>
+          <!--a.ui.active.primary.button(href="{{padurl}}") edit-->{% endif %}
         </div>{% elif error %}
         <div class="ui text container">
           <h3 class="ui inverted horizontal divider">Import error </h3>
