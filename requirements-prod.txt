@@ -1,0 +1,16 @@
+#gunicorn
+
+flask
+flask-runner
+Flask-Markdown
+
+# cello reliure Botagraph & BotaIgraph
+reliure
+#https://github.com/ynnk/cello/archive/master.zip
+https://github.com/padagraph/botapi/archive/master.zip
+
+# padagraph screenshot
+# selenium
+
+# used with igraph repo
+#python-igraph
