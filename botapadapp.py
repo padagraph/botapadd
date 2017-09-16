@@ -256,7 +256,7 @@ def pad2pdg(gid, url):
 def pad2igraph(gid, url):
     
     description = "imported from %s" % url
-    bot = BotaIgraph()
+    bot = BotaIgraph(directed=True)
     botapad = Botapad(bot , gid, description, delete=DELETE)
     botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
     graph = bot.get_igraph()

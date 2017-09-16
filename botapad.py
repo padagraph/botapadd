@@ -318,6 +318,7 @@ class Botapad(object):
                     #row = [r.strip() for r in row]
                     edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
                     src, direction, tgt = edge
+                    print edge
                     if direction not in DIRECTIONS :
                         raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
                     
