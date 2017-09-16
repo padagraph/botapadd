@@ -21,8 +21,10 @@ DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 # padagraph host valid token
 PATH = "./static/images" # images storage
 
+RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
+
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 except:
@@ -707,10 +709,12 @@ def build_app():
     app.register_blueprint(api)
 
 
+# Start app
 
-# === main ===
-from flask_runner import Runner
+if RUN_GUNICORN: build_app()
+
     
+from flask_runner import Runner
 def main():
     ## run the app
 
