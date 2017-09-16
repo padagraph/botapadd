@@ -282,7 +282,7 @@ def botimport(repo, content_type="html"):
 
     #raise ValueError(request)
     action = "%s?%s" % (repo, request.query_string)
-    routes = "%s/get_engines" % ENGINES_HOST
+    routes = "%s/routes" % ENGINES_HOST
 
     graph = None
     data = None    
@@ -690,7 +690,6 @@ def build_app():
 
     
     api = ReliureAPI( "engines" ,expose_route = False)
-    
     # Layouts
     view = EngineView(layout_engine())
     view.set_input_type(EdgeList())
@@ -718,6 +717,7 @@ if RUN_GUNICORN: build_app()
 from flask_runner import Runner
 def main():
     ## run the app
+    print "running main"
 
     build_app()
 
