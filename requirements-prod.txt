@@ -3,6 +3,7 @@
 flask
 flask-runner
 Flask-Markdown
+flask_cors
 
 # cello reliure Botagraph & BotaIgraph
 reliure
