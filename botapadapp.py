@@ -14,7 +14,7 @@ from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
-from botapad import Botapad, BotapadError, BotapadURLError, BotapadCsvError
+from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 
@@ -23,23 +23,24 @@ PATH = "./static/images" # images storage
 
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
-KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
-
-#ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
-#KEY  = codecs.open("../me.local", 'r', encoding='utf8').read().strip()
+try:
+    KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
+except:
+    KEY = "SHOULD BE ADDED in secret/key.txt"	
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 
-
 # app
-
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
 print( "== engines:%s static:%s ==" % (ENGINES_HOST, STATIC_HOST) )
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
 
+# Allow origin
+from flask_cors import CORS
+CORS(app)
 
 # ===
 # Database 
@@ -193,13 +194,13 @@ def stats():
         
     stats['rows'] = rows
     cursor.close()
-    return render_template('homepage.html', stats=stats)
+    return render_template('botapadapp.html', stats=stats)
 
     
 @app.route('/readme', methods=['GET', 'POST'])
 def readme():
     md = codecs.open('README.md', 'r', encoding='utf8').read()
-    return render_template('homepage.html', readme=md )
+    return render_template('botapadapp.html', readme=md )
     
     
 def home():
@@ -208,20 +209,21 @@ def home():
         'complete' : False,
         'readme' : False,
     }
-    return render_template('homepage.html', **kw )
+    return render_template('botapadapp.html', **kw )
 
 
 @app.route('/decalcograph/<string:gid>', methods=['GET'])
 def decalcograph(gid):
     padurl = "https://ethercalc.org/%s" % gid
-    graphurl = "/import/igraph.html?s=ethercalc&gid=%s&live=1&nofoot=1" % gid
+    graphurl = "/import/igraph.html?s=ethercalc&gid=%s&nofoot=1" % gid
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
-    
+
+
 @app.route('/framagraph/<string:gid>', methods=['GET'])
-def framagraph(gid):
+def live(gid):
     padurl = "https://annuel2.framapad.org/p/%s" % gid
-    graphurl = "/import/igraph.html?s=framapad&gid=%s&live=1&nofoot=1" % gid
+    graphurl = "/import/igraph.html?s=framapad&gid=%s&nofoot=1" % gid
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
     
@@ -233,11 +235,13 @@ def googledoc(gid=None):
     else:
         padurl = "https://docs.google.com/document/u/0/"
         
-    graphurl = "/import/igraph.html?s=google&gid=%s&live=1&nofoot=1" % gid
+    graphurl = "/import/igraph.html?s=google&gid=%s&nofoot=1" % gid
 
     return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
     
-   
+
+
+    
 
 
 def pad2pdg(gid, url):
@@ -271,7 +275,6 @@ def import2pdg(repo='igraph', content=None):
             
     return botimport('igraph', 'html')
     
-    
 def botimport(repo, content_type="html"):
 
     #raise ValueError(request)
@@ -285,24 +288,23 @@ def botimport(repo, content_type="html"):
     options = ""
     graphurl = None
 
+    #args
+    args = request.args
     # form
-    gid = request.form.get('gid', None)
+    gid = request.form.get('gid', args.get('gid', None))
     padurl = request.form.get('url', None)
-
 
     content_type = request.form.get('content_type', content_type)
     promote = 1 if request.form.get('promote', 0)  else 0        
-    #args
-    args = request.args
     
     pad_source = args.get('s', None) 
     color = "#" + args.get("color", "249999" )
     footer = not(args.get('nofoot', 0) == "1")
     live = args.get('live', 0) == "1"
 
-    if live:
+    if pad_source:
         gid = args.get('gid', None)
-        graphurl = "/import/igraph.html?s=%s&gid=%s&live=1&nofoot=1" % (pad_source, gid)
+        graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (pad_source, gid)
         
         if pad_source  == "framapad":
             padurl = "https://annuel2.framapad.org/p/%s" % gid
@@ -310,9 +312,8 @@ def botimport(repo, content_type="html"):
         elif pad_source  == "google":
             padurl = "https://docs.google.com/document/d/%s/edit" % gid
 
-        elif pad_source  == "ethercalc":
-            padurl = "https://ethercalc.org/%s" % gid
-
+        else:
+            padurl = pad_source
         
     if gid and padurl:
         
@@ -371,6 +372,15 @@ def botimport(repo, content_type="html"):
                 'url' : err.path, 
                 'separator' : err.separator, 
             }
+        
+        except BotapadParseError as err:
+            print "EXCEPT BotapadParseError" , err
+            error = {
+                'class' : err.__class__.__name__,
+                'url' : err.path, 
+                'separator' : "NONE",
+                'message'  : err.message
+            }
             
         except BotapadURLError as err:
             error = {
@@ -385,6 +395,12 @@ def botimport(repo, content_type="html"):
                 'host' : err.host, 
                 'url' : padurl, 
             }
+        #except :
+            #error = {
+                #'class' : "ImportERROR",
+                #'message' : "unexpected",
+                #'url' : padurl, 
+            #}
         finally:
             today = datetime.datetime.now()
             db = get_db()
@@ -396,12 +412,12 @@ def botimport(repo, content_type="html"):
         
         #snapshot(gid, **params)D
 
-    return render_template('homepage.html',
-        static_host=STATIC_HOST, action=action, content_type=content_type, color=color,
+    return render_template('botapadapp.html',
+        static_host=STATIC_HOST, color=color,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
         padurl=padurl, graphurl = graphurl,
-        footer=footer, live=live,       
+        footer=footer
         )
 
 # =====

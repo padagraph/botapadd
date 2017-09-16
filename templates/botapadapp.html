@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Standard Meta-->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <!-- Site Properties-->
+    <title>Botapad</title>
+    <!--
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.js"></script>
+    <link rel="stylesheet" href="static/Semantic-UI-CSS-master/semantic.min.css">
+    
+    -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
+    <style type="text/css">
+      body, .ui.inverted.segment {
+          background: #127777;
+      }
+      
+      .masthead.segment {
+        min-height: 700px;
+        padding: 5px;
+      }
+      .masthead .logo.item img {
+        margin-right: 1em;
+      }
+      .masthead .ui.menu .ui.button {
+        margin-left: 0.5em;
+      }
+      .masthead h1.ui.header {
+        margin-top: 1rem;
+        margin-bottom: 0em;
+        font-size: 4em;
+        font-weight: normal;
+      }
+      .masthead h2 {
+        font-size: 1.7em;
+        font-weight: normal;
+        padding-bottom: 1em;
+      }
+      
+      .ui.vertical.stripe {
+        padding: 4em 0em;
+      }
+      .ui.vertical.stripe h3 {
+        font-size: 2em;
+      }
+      .ui.vertical.stripe .button + h3,
+      .ui.vertical.stripe p + h3 {
+        margin-top: 3em;
+      }
+      .ui.vertical.stripe .floated.image {
+        clear: both;
+      }
+      .ui.vertical.stripe p {
+        font-size: 1.33em;
+      }
+      .ui.vertical.stripe .horizontal.divider {
+        margin: 3em 0em;
+      }
+      
+      .quote.stripe.segment {
+        padding: 0em;
+      }
+      .quote.stripe.segment .grid .column {
+        padding-top: 5em;
+        padding-bottom: 5em;
+      }
+      
+      .footer.segment {
+        padding: 5em 0em;
+      }
+      
+      @media only screen and (max-width: 700px) {
+        .ui.fixed.menu {
+          display: none !important;
+        }
+        .secondary.pointing.menu .item,
+        .secondary.pointing.menu .menu {
+          display: none;
+        }
+        .secondary.pointing.menu .toc.item {
+          display: block;
+        }
+        .masthead.segment {
+          min-height: 350px;
+        }
+        .masthead h1.ui.header {
+          font-size: 2em;
+          margin-top: 1.5em;
+        }
+        .masthead h2 {
+          margin-top: 0.5em;
+          font-size: 1.5em;
+        }
+      }
+      
+      a.inverted { color:white;}
+      
+      iframe {
+          border: none;
+          }
+      
+      pre {
+          background: darkcyan;
+          padding: 6px;
+          margin: 0px 30px 10px 0px;
+      }
+      
+      form .ui.checkbox label {
+          font-size: 24px;
+          padding-left: 24px;
+          color: white;
+      }
+      
+      form h3 {
+          margin-top: 2px
+      }
+      
+      input[type=radio] {
+          margin:20px;
+      }
+      
+      #importform.ui.form .field label {
+          color:white !important;
+      }
+      
+      input[type=checkbox], input[type=radio]
+      {
+        /* Double-sized Checkboxes */
+        -ms-transform: scale(2); /* IE */
+        -moz-transform: scale(2); /* FF */
+        -webkit-transform: scale(2); /* Safari and Chrome */
+        -o-transform: scale(2); /* Opera */
+        padding: 10px;
+      }
+      
+      
+      span.bold { font-weight: bold }
+      
+      .column.vz { height: 50% !important }
+      a.multi {            
+          position: absolute !important;
+          margin  : 12px;
+      }
+      
+      #menu {
+        position:absolute;
+        background: {{color}};
+        top: 264px;
+      }
+      
+      .ui.icon.menu {
+        margin: 12px;
+        text-align: right;
+        top: 24px;
+      }
+      
+      #gviz {
+          margin:auto;
+          
+          text-align:left;
+          width:100%;
+          height:calc(100%);
+      }
+      
+      #viz {
+          height: 100%;
+          width: 100%;
+      }
+      
+      #labels {
+        position:absolute;
+        bottom: 60px;
+        padding:12px;
+        margin:12px;
+      }
+      
+      .markdown {
+        position:absolute;
+        bottom: 20px;
+      }
+      
+      padagraph-model-popup {
+          position:absolute;
+          top: 264px;
+          right:0px;
+          margin:12px;
+          max-height: calc(100% - 24px);
+          overflow-y: auto;
+          z-index:10;
+      }
+      
+      padagraph-model-popup .propvalue {  color: #333; }
+    </style>
+  </head>
+  <body>
+    <!-- Page Contents-->
+    <div class="pusher">
+      <div class="ui inverted vertical masthead center aligned segment">{% if footer %}  
+        <div class="ui text container">
+          <h1 class="ui inverted header">padagraph.io</h1>
+          <h2>Open a pad and a graph will follow </h2>
+        </div>{% endif %}
+        {% if readme %}
+        <div class="ui left aligned text container">
+          <h4 class="ui inverted horizontal divider">readme</h4>      {% filter markdown %}
+                      {{readme}}
+                {% endfilter %}
+        </div>{% elif promote %}
+        <h4 class="ui hidden divider"></h4>
+        <div class="ui left aligned text container">
+          <h5 class="ui inverted horizontal divider"><i class="icon announcement"></i>    Call for participation !</h5>
+          <div class="ui inverted one statistics">
+            <div class="statistic">
+              <div class="value">   {{promote.count }} </div>
+              <div class="label"> datasets </div>
+            </div>
+          </div>
+          <table class="ui compact single line table">
+            <thead>
+              <tr>
+                <th>date</th>
+                <th>pad url</th>
+                <th>graph</th>
+              </tr>
+            </thead>
+            <tbody>{% for item in promote.rows %}
+              <tr>
+                <td>{{ item.date }}{{ item.time }}</td>
+                <td><a href="{{ item.padurl}}" target="_blank">{{ item.padurl }}</a></td>
+                <td><a href="{{ item.graph_url}}" target="_blank">{{ item.gid }}</a></td>
+              </tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>{% elif stats %}
+        <div class="ui left aligned text container">
+          <h4 class="ui inverted horizontal divider">stats</h4>
+          <div class="ui inverted three statistics">
+            <div class="statistic">
+              <div class="value"> {{stats.success }} </div>
+              <div class="label"> imported </div>
+            </div>
+            <div class="statistic">
+              <div class="value"> {{ stats.fails }} </div>
+              <div class="label"> fails </div>
+            </div>
+            <div class="statistic">
+              <div class="value">{{ stats.tries  }} </div>
+              <div class="label"> tries </div>
+            </div>
+          </div>
+        </div>
+        <h4 class="ui hidden divider"></h4>
+        <div class="ui left aligned container">
+          <h5 class="ui inverted horizontal divider">rows</h5>
+          <table class="ui compact single line table">
+            <thead>
+              <tr>
+                <th>date</th>
+                <th>pad url</th>
+                <th>graph</th>
+                <th class="center aligned">promote</th>
+                <th class="center aligned">status</th>
+              </tr>
+            </thead>
+            <tbody>{% for item in stats.rows %}
+              <tr class="{% if not item.status %}error{% endif %}">
+                <td>{{ item.date }}{{ item.time }}</td>
+                <td><a href="{{ item.padurl}}" target="_blank">{{ item.padurl }}</a></td>
+                <td><a href="{{ item.graph_url}}" target="_blank">{{ item.gid }}</a></td>
+                <td class="center aligned">{% if item.help %}<i class="icon announcement"></i>{% endif %}</td>
+                <td class="center aligned">{% if item.status %}<i class="icon checkmark"></i>{%else%}<i class="icon close">{% endif %}</i></td>
+              </tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>{% elif complete and not fail  %}
+        <div class="ui container">{% if footer%}  
+          <h4 class="ui inverted horizontal divider">
+            <Import>complete</Import>
+          </h4>
+          <p></p>
+          <div class="ui inverted link list"><a href="{{padurl}}" class="active item">Imported from {{padurl}}</a></div>{% endif %}  
+          <script src="{{static_host}}/static/webcomponents-lite.js"></script>
+          <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
+          <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
+          <div id="gviz">
+            <padagraph-gviz-json routes="{{routes}}" data="{{data}}">
+              <padagraph-gviz options="{{options}}">
+                <div id="viz"></div>
+                <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
+                <div id="menu" class="ui icon vertical borderless menu">
+                  <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
+                  <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                  <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
+                  <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
+                </div>
+                <div id="labels"><padagraph-labels-control></padagraph-labels-control></div>
+              </padagraph-gviz>
+            </padagraph-gviz-json>
+            <script>
+              e = document.getElementById('gviz');
+              e.style.height = ( window.innerHeight - 70 )+ "px";
+              
+            </script>
+          </div>
+          <div class="ui inverted link list"><a class="ui"></a><a href="{{graphurl}}" class="ui active button">refresh</a></div>
+        </div>{% elif error %}
+        <div class="ui text container">
+          <h3 class="ui inverted horizontal divider">Import error </h3>
+          <div class="ui error icon message"><i class="cloud download icon"></i>
+            <div class="content">
+              <h4>{{error.class}} </h4>{% if error.class == "BotLoginError" %}
+              <ul class="list">
+                <li>The server could not verify that you are authorized to access the URL requested. You either supplied the wrong credentials malformed or expired token. Try logging in and generate a new token</li>
+                <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
+                <li>{{error.message}}</li>
+              </ul>{% elif error.class == "BotapadURLError" %}
+              <ul class="list">
+                <li>URL is malformed or website may not respond ... </li>
+                <li>Can't download document at <a href="{{error.url}}">{{error.url}}</a></li>
+              </ul>{% elif error.class == "BotapadCsvError" %}
+              <ul class="list">
+                <li>Error while parsing <a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
+                <li>Parsing data failed in {{error.url}}</li>
+                <li>we used the character <code>{{error.separator}}</code> as a separator</li>
+              </ul>{% else %}
+              <ul class="list">
+                <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
+                <li>{{error.message}}</li>
+              </ul>{%endif%}
+            </div>
+          </div>
+        </div>
+        <div class="ui horizontal divider"></div><i class="teal cloud icon"></i>{% else %}
+        <div class="ui text container">
+          <h4 class="ui inverted horizontal divider">Import to {{repo}}</h4>
+          <h3 class="ui inverted header">Choose a name and fill the pad url</h3>
+          <form method="post" action="igraph" class="ui form">
+            <div class="field">
+              <div class="ui huge input">
+                <input type="text" name="gid" placeholder="graph name">
+              </div>
+            </div>
+            <div class="field">
+              <div class="ui huge input">
+                <input type="text" name="url" placeholder="pad url">
+              </div>
+            </div>
+            <div class="inline field center aligned">
+              <input type="radio" name="content_type" tabindex="0" value="html">
+              <label>Explore</label>
+              <input type="radio" name="content_type" value="json" tabindex="0">
+              <label>Inline json</label>
+              <input type="radio" name="content_type" value="pickle" tabindex="0">
+              <label>Download as pickle</label>
+              <h4 class="ui inverted horizontal divider"></h4>
+              <h4 class="ui inverted horizontal divider"></h4>
+            </div>
+            <div class="field center aligned">
+              <input type="checkbox" tabindex="0" name="promote">
+              <h3>Promote this pad, call for participants </h3>
+            </div>
+            <div class="field center aligned"><a href="/readme" class="ui large button">readme</a>
+              <button type="submit" value="Subscribe" class="ui huge primary submit button">Import this pad</button>
+            </div>
+          </form>
+        </div>{% endif%}
+      </div>{% if footer%}  
+      <div class="ui inverted vertical footer segment">
+        <h4 class="ui inverted horizontal divider"> the bottom  </h4>
+        <div class="ui container">
+          <div class="ui stackable inverted equal height grid">
+            <div class="three wide column">
+              <h4 class="ui inverted header">About</h4>
+              <div class="ui inverted link list"><a href="#" class="item">You are here</a><a href="#" class="item">Contact Us</a></div>
+            </div>
+            <div class="four wide column">
+              <h4 class="ui inverted header">Services</h4>
+              <div class="ui inverted link list"><a href="import" class="active item">Import a pad</a><a href="promote" class="active item">Call for participation</a><a href="stats" class="active item">Service statistiqs</a></div>
+            </div>
+            <div class="three wide column">
+              <h4 class="ui inverted header">Next </h4>
+              <div class="ui inverted link list"><a href="https://github.com/padagraph/botapadd" class="active item">Github</a><a href="" class="item">donate</a></div>
+            </div>
+            <div class="three wide column">
+              <h4 class="ui inverted header"> </h4>
+              <div class="ui inverted link list"><a href="//padagraph.io" class="active item">padagraph.io @2017</a></div>
+            </div>
+          </div>
+        </div>
+      </div>{% endif%}
+    </div>
+  </body>
+</html>

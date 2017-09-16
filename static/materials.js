@@ -10,7 +10,7 @@
                 'label_visible' : false,
                 'fontColor': "#4C4D00",
                 'textAlign': "center",
-                'orientation_visible' : false,
+                'orientation_visible' : true,
                 'label_visible' : false,
 
                 //'lineType' : "dashed",

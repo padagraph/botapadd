@@ -86,7 +86,12 @@ Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'ispro
 
 class BotapadError(Exception):
     pass
-
+    
+class BotapadParseError(Exception):
+    def __init__(self, path, message):
+        self.path = path
+        self.message = message
+    
 class BotapadCsvError(Exception):
     def __init__(self, path, separator, message):
         self.path = path
@@ -210,7 +215,6 @@ class Botapad(object):
         csv = self.read(path, **kwargs)
         
         rows = []
-        
         for row in csv:
             cell = row[0]
             # ! comment
@@ -225,7 +229,7 @@ class Botapad(object):
                 # circular references
                 if url not in self.imports:
                     log("=== Importing === '%s'" % url)
-                    self.parse(url)
+                    self.parse(url, debug=debug)
                 else :
                     log ("=== IMPORT === ! circular import ! skipping %s" % url)
                     
@@ -298,6 +302,7 @@ class Botapad(object):
 
         return path , self.bot.get_graph(self.gid), self.imports
 
+            
     def post(self, current, rows):
         
         if not len(rows) or not len(current): return
@@ -367,14 +372,17 @@ class Botapad(object):
                 payload.append( postdata)
             
             # post nodes
-            
-            log( "    [POST] @ %s %s" % (len(payload), label) , names  ,index_props) 
-            for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
-                key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
-                self.idx[ key ] = uuid
-                log(key , uuid)
-                debug(node)
-
+            try : 
+                log( "    [POST] @ %s %s" % (len(payload), label) , names  ,index_props) 
+                for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
+                    key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
+                    self.idx[ key ] = uuid
+                    log(key , uuid)
+                    debug(node)
+            except KeyError as e:
+                message = "Cannot find column `%s` in : \n %s" % ( e, payload )
+                raise BotapadParseError("", message)
+                
             self.apply_projectors(rows, label )
             
 
