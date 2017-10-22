@@ -282,12 +282,12 @@ class Botapad(object):
                         for i, v in enumerate(row[1:]):
                             if i >= len(props): break
                             if props[i].ismulti :
-                                row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
+                                row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) if e.strip() != "" ]
                     elif self.current[0] == VERTEX:
                         for i, v in enumerate(row):
                             if i >= len(props): break
                             if props[i].ismulti :
-                                row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) ]
+                                row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) if e.strip() != "" ]
                             
                 rows.append(row)
 
