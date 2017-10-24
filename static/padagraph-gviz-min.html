@@ -9298,6 +9298,10 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
       }
     },
 
+    refresh: function refresh() {
+      this.parse(this.routes, this.data, this.sync);
+    },
+
     parse: function parse(routes, data, sync) {
 
       var parse = this;
@@ -9480,10 +9484,10 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
         }
 
     });
-});</script></dom-module><dom-module id="padagraph-collection-filter" assetpath="./"><template><style>.menu .form {padding:6px}
-</style><div on-click="filter_count" class$="{{button_class('ui dropdown', asitem, aslabel)}}" class="ui dropdown"><template is="dom-if" if="{{is_mode_node}}"> <i class="ui circle thin icon"></i></template><template is="dom-if" if="{{is_mode_edge}}"> <i class="ui minus icon"></i></template><span>{{ filtered_count }} </span><div class="menu"><div on-click="set_type_filter" class="item">All</div><template is="dom-if" if="{{ selected_node }}"> <div on-click="set_selected_label" class="item"><padagraph-vertex-card-xs model="[[selected_node]]"></padagraph-vertex-card-xs></div></template><div class="divider"></div><h4 class="ui header">Label</h4><div class="ui form"><div style="margin: 0 1em 0.3em 0em;" class="field"><div class="ui small icon input"><i class="search icon"></i><input type="text" placeholder="Label filter" value="{{filter_label::input}}"></div></div><template is="dom-if" if="{{is_mode_node}}"> <div class="field"><div class="ui labelfilter checkbox"><input type="checkbox" on-click="click_filter_label_chk"><label>include neighbors</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Types</h4><div class="ui form"><template is="dom-repeat" items="[[filter_types]]"><div class="field"><div class="ui typefilter checkbox"><input id="{{item.label}}" on-click="set_type_filter" type="checkbox" checked="{{item.selected}}"><label for="{{item.label}}">{{item.label}} ({{item.count}})</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Layout</h4><div class="form"><div class="field"><div on-click="update_layout" class="ui primary compact button">update</div></div></div></div></div></template><script>'use strict';
+});</script></dom-module><dom-module id="padagraph-collection-filter" assetpath="./"><style>.menu .form {padding:6px}
+</style><template><div on-click="filter_count" class$="{{button_class('ui dropdown', asitem, aslabel)}}" class="ui dropdown"><template is="dom-if" if="{{is_mode_node}}"> <i class="ui circle thin icon"></i></template><template is="dom-if" if="{{is_mode_edge}}"> <i class="ui minus icon"></i></template><span>{{ filtered_count }} </span><div class="menu"><div on-click="set_type_filter" class="item">All</div><template is="dom-if" if="{{ selected_node }}"> <div on-click="set_selected_label" class="item"><padagraph-vertex-card-xs model="[[selected_node]]"></padagraph-vertex-card-xs></div></template><div class="divider"></div><h4 class="ui header">Label</h4><div class="ui form"><div style="margin: 0 1em 0.3em 0em;" class="field"><div class="ui small icon input"><i class="search icon"></i><input type="text" placeholder="Label filter" value="{{filter_label::input}}"></div></div><template is="dom-if" if="{{is_mode_node}}"> <div class="field"><div class="ui labelfilter checkbox"><input type="checkbox" on-click="click_filter_label_chk"><label>include neighbors</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Types</h4><div class="ui form"><template is="dom-repeat" items="[[filter_types]]"><div class="field"><div class="ui typefilter checkbox"><input id="{{item.label}}" on-click="set_type_filter" type="checkbox" checked="{{item.selected}}"><label for="{{item.label}}">{{item.label}} ({{item.count}})</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Layout</h4><div class="form"><div class="field"><div on-click="update_layout" class="ui primary compact button">update</div></div></div></div></div></template><script>'use strict';
 
-require(['backbone', 'jquery'], function (Backbone, $) {
+require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 
   Polymer({
     is: "padagraph-collection-filter",
@@ -9528,6 +9532,8 @@ require(['backbone', 'jquery'], function (Backbone, $) {
     setGraphModel: function setGraphModel(app, graph) {
       var _this = this;
 
+      if (!app || !graph) return;
+
       $('.dropdown', this).dropdown();
       this.collection = null;
       this.types = null;
@@ -9535,8 +9541,6 @@ require(['backbone', 'jquery'], function (Backbone, $) {
       this.is_mode_node = this.mode == "node";
 
       this.remove_all();
-
-      if (!app || !graph) return;
 
       if (this.is_mode_node) {
         this.collection = this.graph.vs;
@@ -9582,10 +9586,20 @@ require(['backbone', 'jquery'], function (Backbone, $) {
     },
 
     set_type_filters: function set_type_filters() {
-      var collection = this.mode == "node" ? this.graph.nodetypes : this.graph.edgetypes;
-      this.filter_types = _.map(collection.models, function (e) {
-        return { label: e.label, selected: true, count: 0 };
+      var types = this.mode == "node" ? this.graph.nodetypes : this.graph.edgetypes;
+      var collection = this.mode == "node" ? this.graph.vs : this.graph.es;
+
+      var ls = _.map(types.models, function (e) {
+        var filter = function filter(m) {
+          return e.get('uuid') == m.type.get('uuid');
+        };
+        var count = collection.filter(filter).length;
+        return { label: e.label, selected: true, count: count };
       });
+      var fs = _.filter(ls, function (e) {
+        return e.count > 0;
+      });
+      this.filter_types = fs;
     },
 
     set_type_filter: function set_type_filter(filter) {

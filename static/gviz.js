@@ -1022,10 +1022,15 @@ gviz.ThreeViz = Backbone.View.extend({
         this._width = attrs['width'] || -1;     // < 0 means that we take the width of the $el
         this._height = attrs['height'] || -1;
         Cello.get(this, "width", function(){
-            return _this._width > 0 ? _this._width : _this.$el.width();
+            var w = _this.$el.width();
+            if (w <= 0 ) w = $(window).width();
+            return _this._width > 0 ? _this._width : w ;
         });
+            
         Cello.get(this, "height", function(){
-            return _this._height > 0 ? _this._height : _this.$el.height();
+            var w = _this.$el.height();
+            if (w <= 0 ) w = $(window).height();
+            return _this._height > 0 ? _this._height : w;
         });
 
         this.clear_color = new THREE.Color(attrs['background_color']);

@@ -205,6 +205,7 @@
       }
       
       padagraph-model-popup .propvalue {  color: #333; }
+      
     </style>
   </head>
   <body>
@@ -351,7 +352,7 @@
         <div class="ui text container">
           <h4 class="ui inverted horizontal divider">Import to {{repo}}</h4>
           <h3 class="ui inverted header">Choose a name and fill the pad url</h3>
-          <form method="post" action="igraph" class="ui form">
+          <form method="post" action="{{repo}}.html" class="ui form">
             <div class="field">
               <div class="ui huge input">
                 <input type="text" name="gid" placeholder="graph name">
@@ -361,20 +362,11 @@
               <div class="ui huge input">
                 <input type="text" name="url" placeholder="pad url">
               </div>
-            </div>
-            <div class="inline field center aligned">
-              <input type="radio" name="content_type" tabindex="0" value="html">
-              <label>Explore</label>
-              <input type="radio" name="content_type" value="json" tabindex="0">
-              <label>Inline json</label>
-              <input type="radio" name="content_type" value="pickle" tabindex="0">
-              <label>Download as pickle</label>
-              <h4 class="ui inverted horizontal divider"></h4>
               <h4 class="ui inverted horizontal divider"></h4>
             </div>
             <div class="field center aligned">
               <input type="checkbox" tabindex="0" name="promote">
-              <h3>Promote this pad, call for participants </h3>
+              <h4>Promote this pad, call for participants </h4>
             </div>
             <div class="field center aligned"><a href="/readme" class="ui large button">readme</a>
               <button type="submit" value="Subscribe" class="ui huge primary submit button">Import this pad</button>
@@ -392,7 +384,7 @@
             </div>
             <div class="four wide column">
               <h4 class="ui inverted header">Services</h4>
-              <div class="ui inverted link list"><a href="import" class="active item">Import a pad</a><a href="promote" class="active item">Call for participation</a><a href="stats" class="active item">Service statistiqs</a></div>
+              <div class="ui inverted link list"><a href="/import/igraph" class="active item">Import a pad </a><a href="/import/padagraph" class="active item">Import to padagraph</a><a href="/promote" class="active item">Call for participation</a><a href="/stats" class="active item">Service statistiqs</a></div>
             </div>
             <div class="three wide column">
               <h4 class="ui inverted header">Next </h4>
