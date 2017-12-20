@@ -16,7 +16,16 @@ from flask import render_template, render_template_string, abort, redirect, url_
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 
+from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
+from reliure.utils.log import get_app_logger_color
+
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
+
+
+log_level = logging.INFO if DEBUG else logging.WARN
+logger = get_app_logger_color("cillex", app_log_level=log_level, log_level=log_level)
+
+
 
 RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
 
@@ -296,6 +305,8 @@ def import2pdg(repo='igraph', content=None):
     
 def botimport(repo, padurl, gid, content_type):
 
+    print repo, content_type, gid, padurl
+    
     action = "%s?%s" % (repo, request.query_string)
     routes = "%s/engines" % ENGINES_HOST
     
@@ -359,6 +370,19 @@ def botimport(repo, padurl, gid, content_type):
 
                 else :
                     graph = pad2igraph(gid, padurl)
+
+                    if graph.vcount() > 300 : 
+
+                        LENMIN = graph.vcount() / 100 - 5
+                        LENMIN = 10
+                        vfilter = lambda v : len(v.neighbors()) < LENMIN
+                        expander = RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        #for v in graph.vs : print vfilter(v)
+
+                        print 0 , graph.summary()
+                        graph = expander(graph)
+                        print LENMIN , graph.summary()
+                    
                     graph = prepare_graph(graph)
                     data = export_graph(graph, id_attribute='uuid')                    
                     complete = True 
