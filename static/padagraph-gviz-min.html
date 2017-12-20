@@ -9268,6 +9268,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
       routes: Object,
       data: { type: Object, value: null },
       sync: { type: String, value: null }, // url
+
       on_complete: Object,
 
       /* privates */
@@ -9311,16 +9312,6 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
         return _.isString(e);
       };
 
-      if (isurl(data)) {
-        $.ajax({
-          url: data,
-          success: function success(r) {
-            parse.set('data', r);
-          }
-        });
-        return;
-      }
-
       if (isurl(routes)) {
         $.ajax({
           url: routes,
@@ -9331,18 +9322,26 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
         return;
       }
 
+      if (isurl(data)) {
+        $.ajax({
+          url: data,
+          success: function success(r) {
+            parse.set('data', r);
+          }
+        });
+        return;
+      }
+
       if (!routes || !data) return;
 
       // app, models & engines
+      var app;
       var app_params = {
-        $el: $(this)
+        $el: $(this),
+        'routes': routes
       };
-      app_params = _.extend(app_params, { 'routes': routes });
 
-      var app = new App.Iframe(app_params);
-
-      app.aaaa = this.id;
-
+      app = new App.Iframe(app_params);
       app.create_clustering_model();
 
       if (sync) {
@@ -9350,18 +9349,16 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
         var urlRoot = sync.substring(0, sync.lastIndexOf('/') + 1);
         app.create_graph_model({ urlRoot: urlRoot, url: sync });
         app.models.graph.set('gid', gid);
-        app.models.graph.fetch();
-
         app.create_query_model();
         app.models.query.graph = app.models.graph.id;
       } else {
         app.create_graph_model({});
-        app.models.graph.attributes['gid'] = "TEST - " + app.aaaa;
+        app.models.graph.attributes['gid'] = "g" + this.id;
       }
 
-      var graph = app.models.graph;
-      var complete = function complete() {
+      var complete = function complete(app) {
 
+        var graph = app.models.graph;
         var viz = $("padagraph-gviz", parse)[0];
         viz.graph = graph;
         viz.app = app;
@@ -9370,13 +9367,21 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
         app.gviz = viz.gviz;
         app.set_auto_compute(false);
 
-        graph.reset(data, { silent: true });
-        graph.vs.each(function (vtx) {
-          vtx.add_flag("form");
-        });
+        var reset = function reset() {
+          graph.reset(data, { silent: true });
 
-        app.set_auto_compute(true);
-        app.auto_compute();
+          graph.vs.each(function (vtx) {
+            vtx.add_flag("form");
+          });
+
+          app.set_auto_compute(true);
+          app.auto_compute();
+        };
+
+        if (sync) {
+          graph.on('sync', reset);
+          graph.fetch({ parse: false });
+        } else reset();
 
         parse.completed = true;
         parse.onComplete();
@@ -9485,303 +9490,381 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 
     });
 });</script></dom-module><dom-module id="padagraph-collection-filter" assetpath="./"><style>.menu .form {padding:6px}
-</style><template><div on-click="filter_count" class$="{{button_class('ui dropdown', asitem, aslabel)}}" class="ui dropdown"><template is="dom-if" if="{{is_mode_node}}"> <i class="ui circle thin icon"></i></template><template is="dom-if" if="{{is_mode_edge}}"> <i class="ui minus icon"></i></template><span>{{ filtered_count }} </span><div class="menu"><div on-click="set_type_filter" class="item">All</div><template is="dom-if" if="{{ selected_node }}"> <div on-click="set_selected_label" class="item"><padagraph-vertex-card-xs model="[[selected_node]]"></padagraph-vertex-card-xs></div></template><div class="divider"></div><h4 class="ui header">Label</h4><div class="ui form"><div style="margin: 0 1em 0.3em 0em;" class="field"><div class="ui small icon input"><i class="search icon"></i><input type="text" placeholder="Label filter" value="{{filter_label::input}}"></div></div><template is="dom-if" if="{{is_mode_node}}"> <div class="field"><div class="ui labelfilter checkbox"><input type="checkbox" on-click="click_filter_label_chk"><label>include neighbors</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Types</h4><div class="ui form"><template is="dom-repeat" items="[[filter_types]]"><div class="field"><div class="ui typefilter checkbox"><input id="{{item.label}}" on-click="set_type_filter" type="checkbox" checked="{{item.selected}}"><label for="{{item.label}}">{{item.label}} ({{item.count}})</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Layout</h4><div class="form"><div class="field"><div on-click="update_layout" class="ui primary compact button">update</div></div></div></div></div></template><script>'use strict';
+
+.ui.typefilter.checkbox {
+    margin-left: 12px;
+}
+.ui.groupfilter.checkbox {
+    margin-top: 12px;
+}
+</style><template><div on-click="filter_count" class$="{{button_class('ui dropdown', asitem, aslabel)}}" class="ui dropdown"><template is="dom-if" if="{{is_mode_node}}"> <i class="ui circle thin icon"></i></template><template is="dom-if" if="{{is_mode_edge}}"> <i class="ui minus icon"></i></template><span>{{ filtered_count }} </span><div class="menu"><div on-click="set_type_filter" class="item">All</div><template is="dom-if" if="{{ selected_node }}"> <div on-click="set_selected_label" class="item"><padagraph-vertex-card-xs model="[[selected_node]]"></padagraph-vertex-card-xs></div></template><div class="divider"></div><h4 class="ui header">Label</h4><div class="ui form"><div style="margin: 0 1em 0.3em 0em;" class="field"><div class="ui small icon input"><i class="search icon"></i><input type="text" placeholder="Label filter" value="{{filter_label::input}}"></div></div><template is="dom-if" if="{{is_mode_node}}"> <div class="field"><div class="ui labelfilter checkbox"><input type="checkbox" on-click="click_filter_label_chk"><label>include neighbors</label></div></div></template></div><div class="divider"></div><h4 class="ui header">Types</h4><div class="ui form groups"><template is="dom-repeat" items="{{filter_groups}}" as="group"><div class="field"><div class="ui groupfilter checkbox"><input id="chkgroup{{group.label}}" on-click="set_group_filter" type="checkbox" checked="checked"><label for$="chkgroup{{group.label}}">{{group.label}} ({{group.count}}) </label></div></div><template is="dom-repeat" items="{{group.items}}" as="item"><div class="field"><div class="ui typefilter checkbox"><input id="type{{item.label}}" on-click="set_type_filter" type="checkbox" checked="checked"><label for$="type{{item.label}}">{{item.name}} ({{item.count}})</label></div></div></template></template></div><div class="divider"></div><h4 class="ui header">Layout</h4><div class="form"><div class="field"><div on-click="update_layout" class="ui primary compact button">update</div></div></div></div></div></template><script>'use strict';
 
 require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 
-  Polymer({
-    is: "padagraph-collection-filter",
+    Polymer({
+        is: "padagraph-collection-filter",
 
-    properties: {
-      app: Object,
-      graph: Object,
-      mode: {
-        type: String, value: 'node' }, // [edge, node]
+        properties: {
+            app: Object,
+            graph: Object,
+            mode: {
+                type: String, value: 'node' }, // [edge, node]
 
-      asitem: { type: Boolean, value: false },
-      aslabel: { type: Boolean, value: false },
-      /* privates */
-      elements: {
-        type: Array, value: function value() {
-          return [];
-        } },
+            asitem: { type: Boolean, value: false },
+            aslabel: { type: Boolean, value: false },
+            /* privates */
+            elements: {
+                type: Array, value: function value() {
+                    return [];
+                } },
 
-      filter_types: {
-        type: Array, value: null },
-      filter_label: {
-        type: String, value: "" },
-      filter_label_chk: {
-        type: Boolean, value: false },
-      filtered_count: {
-        type: String
-      }
-    },
-
-    observers: ['setGraphModel(app, graph)', 'apply_filters(elements, filter_types, filter_label, filter_label_chk)'],
-
-    button_class: function button_class(css, asitem, aslabel) {
-
-      return css + " " + (this.asitem ? "item" : this.aslabel ? "label" : "");
-    },
-
-    created: function created() {
-      this._listener = {};
-      _.extend(this._listener, Backbone.Events);
-    },
-
-    setGraphModel: function setGraphModel(app, graph) {
-      var _this = this;
-
-      if (!app || !graph) return;
-
-      $('.dropdown', this).dropdown();
-      this.collection = null;
-      this.types = null;
-      this.is_mode_edge = this.mode == "edge";
-      this.is_mode_node = this.mode == "node";
-
-      this.remove_all();
-
-      if (this.is_mode_node) {
-        this.collection = this.graph.vs;
-        this.types = this.graph.nodetypes;
-      } else if (this.is_mode_edge) {
-        this.collection = this.graph.es;
-        this.types = this.graph.edgetypes;
-      }
-
-      this._listener.stopListening();
-
-      this._listener.listenTo(this.collection, 'add', this.push_node.bind(this));
-      this._listener.listenTo(this.collection, 'remove', this.pop_node.bind(this));
-      this._listener.listenTo(this.collection, 'reset', this.remove_all.bind(this));
-
-      this._listener.listenTo(this.collection, 'addflag:selected', this.add_selected.bind(this));
-      this._listener.listenTo(this.collection, 'rmflag:selected', this.rm_selected.bind(this));
-
-      this._listener.listenTo(this.collection, 'filter:changed', this.filter_count.bind(this));
-      if (this.is_mode_edge) {
-        this._listener.listenTo(this.graph.vs, 'filter:changed', this.filter_count.bind(this));
-      }
-
-      this._listener.listenTo(this.types, 'add', this.reset_filters.bind(this));
-
-      setTimeout(function () {
-        _this.reset_filters();
-      }, 1000);
-    },
-
-    reset_filters: function reset_filters() {
-
-      this.set_type_filters();
-
-      $('.typefilter.checkbox input', this).each(function (e, x) {
-        x.checked = false;
-      });
-      $('.labelfilter.checkbox input', this).each(function (e, x) {
-        x.checked = false;
-      });
-      this.filter_label_chk = false;
-      this.filter_label = "";
-    },
-
-    set_type_filters: function set_type_filters() {
-      var types = this.mode == "node" ? this.graph.nodetypes : this.graph.edgetypes;
-      var collection = this.mode == "node" ? this.graph.vs : this.graph.es;
-
-      var ls = _.map(types.models, function (e) {
-        var filter = function filter(m) {
-          return e.get('uuid') == m.type.get('uuid');
-        };
-        var count = collection.filter(filter).length;
-        return { label: e.label, selected: true, count: count };
-      });
-      var fs = _.filter(ls, function (e) {
-        return e.count > 0;
-      });
-      this.filter_types = fs;
-    },
-
-    set_type_filter: function set_type_filter(filter) {
-      if (filter.model) {
-        filter.model.item.selected = !filter.model.item.selected;
-
-        var array = this.filter_types;
-        this.filter_types = [];
-        this.filter_types = array;
-      } else {
-        // match all collection models
-        this.reset_filters();
-      }
-    },
-
-    set_selected_label: function set_selected_label() {
-      if (this.selected_node) {
-        $('.labelfilter.checkbox input', this).each(function (e, x) {
-          x.checked = true;
-        });
-        $('.typefilter.checkbox input', this).each(function (e, x) {
-          x.checked = true;
-        });
-        this.filter_label_chk = true;
-        this.filter_label = this.selected_node.label;
-      }
-    },
-    add_selected: function add_selected(model) {
-      this.selected_node = model;
-    },
-
-    rm_selected: function rm_selected(model) {
-      this.selected_node = null;
-    },
-
-    click_filter_label_chk: function click_filter_label_chk() {
-      var chk = $('.labelfilter.checkbox input', this)[0];
-      this.filter_label_chk = chk.checked;
-    },
-
-    update_filtering: function update_filtering() {
-      this.apply_filters(this.elements, this.filter_types, this.filter_label, this.filter_label_chk);
-    },
-
-    apply_filters: function apply_filters(elements, types, label, _chk) {
-      var _this2 = this;
-
-      if (!types || !types.length) return;
-
-      $(".filter.icon", this).toggleClass('red');
-      $(".filter.icon", this).toggleClass('loading');
-
-      _.each(types, function (e, i) {
-        var filter = _this2.filtered([{ label: e.label, selected: true }], label);
-        e.count = elements.filter(filter).length;
-        _this2.notifyPath('filter_types.' + i + '.count');
-      });
-
-      var filter = this.filtered(types, label);
-      var filter_inv = function filter_inv(e) {
-        return !filter(e);
-      };
-      var disabled = this.collection.models.filter(filter_inv);
-
-      if (this.is_mode_node) {
-
-        var vs = this.collection;
-        vs.add_flag("disabled", disabled, true);
-        vs.trigger('filter:changed');
-
-        var es = this.collection.graph.es;
-        var filter_edge = function filter_edge(e) {
-          return e.source.has_flag('disabled') || e.target.has_flag('disabled');
-        };
-        var disabled_edges = es.models.filter(filter_edge);
-        es.add_flag("disabled-by-nodes", disabled_edges, true, { silent: true });
-
-        var disabled_edges = _.union(disabled_edges, es.by_flag("disabled-by-edges"));
-
-        es.add_flag("disabled", disabled_edges, true);
-        es.trigger("filter:changed");
-      }
-
-      if (this.is_mode_edge) {
-
-        var es = this.collection;
-        es.add_flag("disabled-by-edges", disabled, true, { silent: true });
-        var by_nodes = es.by_flag("disabled-by-nodes");
-
-        var disabled = _.union(disabled, by_nodes);
-        es.add_flag("disabled", disabled, true);
-        es.trigger("filter:changed");
-      }
-      $(".filter.icon", this).toggleClass('red');
-      $(".filter.icon", this).toggleClass('loading');
-    },
-
-    filter_count: function filter_count() {
-      var disabled = this.collection.by_flag("disabled");
-      this.filtered_count = this.collection.length - disabled.length;
-    },
-
-    filtered: function filtered(types, pattern) {
-      var mode = this.mode;
-      var selected = _.filter(types, function (e) {
-        return e.selected;
-      });
-      var chk_neighbors = this.filter_label_chk;
-
-      return function (item) {
-
-        var matchpattern = true;
-        var matchtype = true;
-
-        if (pattern && pattern != "") {
-          var label = item.label.toLowerCase();
-          pattern = pattern.toLowerCase();
-
-          matchpattern = label.match(pattern);
-          if (mode == "node" && chk_neighbors && !matchpattern && item.neighbors) {
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-              for (var _iterator = item.neighbors()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var e = _step.value;
-
-                label = e.label.toLowerCase();
-                matchpattern = label.match(pattern);
-                if (matchpattern) break;
-              }
-            } catch (err) {
-              _didIteratorError = true;
-              _iteratorError = err;
-            } finally {
-              try {
-                if (!_iteratorNormalCompletion && _iterator['return']) {
-                  _iterator['return']();
-                }
-              } finally {
-                if (_didIteratorError) {
-                  throw _iteratorError;
-                }
-              }
+            filter_groups: {
+                type: Array, value: null },
+            filter_types: {
+                type: Array, value: null },
+            filter_label: {
+                type: String, value: "" },
+            filter_label_chk: {
+                type: Boolean, value: false },
+            filtered_count: {
+                type: String
             }
-          }
+        },
+
+        observers: ['setGraphModel(app, graph)', 'apply_filters(elements, filter_groups, filter_label, filter_label_chk)'],
+
+        button_class: function button_class(css, asitem, aslabel) {
+
+            return css + " " + (this.asitem ? "item" : this.aslabel ? "label" : "");
+        },
+
+        created: function created() {
+            this._listener = {};
+            _.extend(this._listener, Backbone.Events);
+        },
+
+        setGraphModel: function setGraphModel(app, graph) {
+            var _this = this;
+
+            if (!app || !graph) return;
+
+            $('.dropdown', this).dropdown();
+            this.collection = null;
+            this.types = null;
+            this.is_mode_edge = this.mode == "edge";
+            this.is_mode_node = this.mode == "node";
+
+            this.remove_all();
+
+            if (this.is_mode_node) {
+                this.collection = this.graph.vs;
+                this.types = this.graph.nodetypes;
+            } else if (this.is_mode_edge) {
+                this.collection = this.graph.es;
+                this.types = this.graph.edgetypes;
+            }
+
+            this._listener.stopListening();
+
+            this._listener.listenTo(this.collection, 'add', this.push_node.bind(this));
+            this._listener.listenTo(this.collection, 'remove', this.pop_node.bind(this));
+            this._listener.listenTo(this.collection, 'reset', this.remove_all.bind(this));
+
+            this._listener.listenTo(this.collection, 'addflag:selected', this.add_selected.bind(this));
+            this._listener.listenTo(this.collection, 'rmflag:selected', this.rm_selected.bind(this));
+
+            this._listener.listenTo(this.collection, 'filter:changed', this.filter_count.bind(this));
+            if (this.is_mode_edge) {
+                this._listener.listenTo(this.graph.vs, 'filter:changed', this.filter_count.bind(this));
+            }
+
+            this._listener.listenTo(this.types, 'add', this.reset_filters.bind(this));
+
+            setTimeout(function () {
+                _this.reset_filters();
+            }, 1000);
+        },
+
+        reset_filters: function reset_filters() {
+
+            this.set_type_filters();
+
+            $('.typefilter.checkbox input', this).each(function (e, x) {
+                x.checked = true;
+            });
+            $('.groupfilter.checkbox input', this).each(function (e, x) {
+                x.checked = true;
+            });
+            $('.labelfilter.checkbox input', this).each(function (e, x) {
+                x.checked = false;
+            });
+
+            _.each(this.filter_groups, function (e, i) {
+                e.selected = true;
+            });
+
+            _.each(this.filter_types, function (e, i) {
+                e.selected = true;
+            });
+
+            this.filter_label_chk = false;
+            this.filter_label = "";
+        },
+
+        set_type_filters: function set_type_filters() {
+            var types = this.mode == "node" ? this.graph.nodetypes : this.graph.edgetypes;
+            var collection = this.mode == "node" ? this.graph.vs : this.graph.es;
+
+            var ls = _.map(types.models, function (e) {
+                var filter = function filter(m) {
+                    return e.get('uuid') == m.type.get('uuid');
+                };
+                var count = collection.filter(filter).length;
+
+                var group = e.label.indexOf('/') > 0 ? e.label.substr(0, e.label.indexOf('/')) : "*";
+                var name = e.label.substr(e.label.indexOf('/') + 1);
+
+                return { group: group, name: name, label: e.label, selected: true, count: count };
+            });
+
+            var fs = _.filter(ls, function (e) {
+                return e.count > 0;
+            });
+            var groups = _.groupBy(fs, function (e) {
+                return e.group;
+            });
+            groups = _.map(groups, function (v, k) {
+                var count = _.reduce(v, function (memo, e) {
+                    return memo + e.count;
+                }, 0);
+                return { label: k, selected: true, items: v, count: count };
+            });
+
+            this.filter_groups = groups;
+        },
+
+        set_group_filter: function set_group_filter(filter) {
+            if (filter.model) {
+                var group = this;
+                filter.model.group.selected = !filter.model.group.selected;
+                _.each(filter.model.group.items, function (e) {
+                    e.selected = filter.model.group.selected;
+                    document.getElementById("type" + e.label).checked = e.selected;
+                });
+
+                var array = this.filter_groups;
+                this.filter_groups = [];
+                this.filter_groups = array;
+            } else {
+                // match all collection models
+                this.reset_filters();
+            }
+        },
+
+        set_type_filter: function set_type_filter(filter) {
+            if (filter.model) {
+                var item = filter.model.item;
+                item.selected = !item.selected;
+
+                //var _f = this.filtered( [item], this.filter_label )
+                //e.count = elements.filter( _f ).length;
+                _.each(this.filter_groups, function (e, i) {
+                    if (e.label == item.group) {
+                        e.selected = true;
+                        document.getElementById("chkgroup" + e.label).checked = true;
+                    }
+                });
+
+                var array = this.filter_groups;
+                this.filter_groups = [];
+                this.filter_groups = array;
+            } else {
+                // match all collection models
+                this.reset_filters();
+            }
+        },
+
+        set_selected_label: function set_selected_label() {
+            if (this.selected_node) {
+                $('.labelfilter.checkbox input', this).each(function (e, x) {
+                    x.checked = true;
+                });
+                $('.groupfilter.checkbox input', this).each(function (e, x) {
+                    x.checked = true;
+                });
+                $('.typefilter.checkbox input', this).each(function (e, x) {
+                    x.checked = true;
+                });
+                this.filter_label_chk = true;
+                this.filter_label = this.selected_node.label;
+            }
+        },
+
+        add_selected: function add_selected(model) {
+            this.selected_node = model;
+        },
+
+        rm_selected: function rm_selected(model) {
+            this.selected_node = null;
+        },
+
+        click_filter_label_chk: function click_filter_label_chk() {
+            var chk = $('.labelfilter.checkbox input', this)[0];
+            this.filter_label_chk = chk.checked;
+        },
+
+        update_filtering: function update_filtering() {
+            this.apply_filters(this.elements, this.filter_types, this.filter_label, this.filter_label_chk);
+        },
+
+        apply_filters: function apply_filters(elements, groups, label, _chk) {
+            var _this2 = this;
+
+            if (!groups || !groups.length) return;
+
+            $(".filter.icon", this).toggleClass('red');
+            $(".filter.icon", this).toggleClass('loading');
+
+            _.each(groups, function (g, i) {
+                _.each(g.items, function (e, j) {
+                    var filter = _this2.filtered([{ label: e.label, selected: true }], label);
+                    e.count = elements.filter(filter).length;
+                    //this.notifyPath('filter_types.'+i+'.count' )
+                    _this2.notifyPath('filter_groups.' + i + '.items.' + j + '.count');
+                });
+                g.count = _.reduce(g.items, function (memo, e) {
+                    return memo + e.count;
+                }, 0);
+                _this2.notifyPath('filter_groups.' + i + '.count');
+            });
+
+            var types = _.flatten(_.map(groups, function (e) {
+                return e.items;
+            }));
+            var filter = this.filtered(types, label);
+            var filter_inv = function filter_inv(e) {
+                return !filter(e);
+            };
+            var disabled = this.collection.models.filter(filter_inv);
+
+            if (this.is_mode_node) {
+
+                var vs = this.collection;
+                vs.add_flag("disabled", disabled, true);
+                vs.trigger('filter:changed');
+
+                var es = this.collection.graph.es;
+                var filter_edge = function filter_edge(e) {
+                    return e.source.has_flag('disabled') || e.target.has_flag('disabled');
+                };
+                var disabled_edges = es.models.filter(filter_edge);
+                es.add_flag("disabled-by-nodes", disabled_edges, true, { silent: true });
+
+                var disabled_edges = _.union(disabled_edges, es.by_flag("disabled-by-edges"));
+
+                es.add_flag("disabled", disabled_edges, true);
+                es.trigger("filter:changed");
+            }
+
+            if (this.is_mode_edge) {
+
+                var es = this.collection;
+                es.add_flag("disabled-by-edges", disabled, true, { silent: true });
+                var by_nodes = es.by_flag("disabled-by-nodes");
+
+                var disabled = _.union(disabled, by_nodes);
+                es.add_flag("disabled", disabled, true);
+                es.trigger("filter:changed");
+            }
+            $(".filter.icon", this).toggleClass('red');
+            $(".filter.icon", this).toggleClass('loading');
+        },
+
+        filter_count: function filter_count() {
+            var disabled = this.collection.by_flag("disabled");
+            this.filtered_count = this.collection.length - disabled.length;
+        },
+
+        filtered: function filtered(types, pattern) {
+            var mode = this.mode;
+            var selected = _.filter(types, function (e) {
+                return e.selected;
+            });
+            var chk_neighbors = this.filter_label_chk;
+
+            return function (item) {
+
+                var matchpattern = true;
+                var matchtype = true;
+
+                if (pattern && pattern != "") {
+                    var label = item.label.toLowerCase();
+                    pattern = pattern.toLowerCase();
+
+                    matchpattern = label.match(pattern);
+                    if (mode == "node" && chk_neighbors && !matchpattern && item.neighbors) {
+                        var _iteratorNormalCompletion = true;
+                        var _didIteratorError = false;
+                        var _iteratorError = undefined;
+
+                        try {
+                            for (var _iterator = item.neighbors()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                                var e = _step.value;
+
+                                label = e.label.toLowerCase();
+                                matchpattern = label.match(pattern);
+                                if (matchpattern) break;
+                            }
+                        } catch (err) {
+                            _didIteratorError = true;
+                            _iteratorError = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion && _iterator['return']) {
+                                    _iterator['return']();
+                                }
+                            } finally {
+                                if (_didIteratorError) {
+                                    throw _iteratorError;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                matchtype = matchtype & _.filter(selected, function (e) {
+
+                    var label = null;
+                    if (mode == "node") label = item.nodetype.label;
+                    if (mode == "edge") label = item.edgetype.label;
+                    return label == e.label;
+                }).length;
+
+                return matchtype && matchpattern;
+            };
+        },
+
+        update_layout: function update_layout() {
+            this.app.trigger('engine:auto_compute');
+        },
+
+        push_node: function push_node(el) {
+
+            if (!el) return;
+            if (this.mode == "edge" && el.is_loop()) return;
+
+            this.push("elements", el);
+        },
+
+        pop_node: function pop_node(el) {
+            this.arrayDelete("elements", el);
+        },
+
+        remove_all: function remove_all() {
+            this.splice("elements", 0, this.elements.length);
         }
 
-        matchtype = matchtype & _.filter(selected, function (e) {
-
-          var label = null;
-          if (mode == "node") label = item.nodetype.label;
-          if (mode == "edge") label = item.edgetype.label;
-          return label == e.label;
-        }).length;
-
-        return matchtype && matchpattern;
-      };
-    },
-
-    update_layout: function update_layout() {
-      this.app.trigger('engine:auto_compute');
-    },
-
-    push_node: function push_node(el) {
-
-      if (!el) return;
-      if (this.mode == "edge" && el.is_loop()) return;
-
-      this.push("elements", el);
-    },
-
-    pop_node: function pop_node(el) {
-      this.arrayDelete("elements", el);
-    },
-
-    remove_all: function remove_all() {
-      this.splice("elements", 0, this.elements.length);
-    }
-
-  });
+    });
 });</script></dom-module><dom-module id="padagraph-collection" assetpath="./"><template><style>.menu .form {
     padding-left: 12px;
     padding-top: 6px;

@@ -445,7 +445,7 @@ Models.QueryUnit = Backbone.Model.extend({
         },
 
         /* Set the Query unit from a raw string */
-        set_from_str: function(graph, query){
+        set_from_str: function(query){
             this.set("query", query);
         },
 
@@ -925,7 +925,6 @@ App.Base = Backbone.View.extend({
         // --- Query model ---
         var app = this;        
         app.models.query = new QueryUnits([], {});
-
     },
 
     create_graph_model: function(attrs){
@@ -1048,7 +1047,7 @@ App.Base = Backbone.View.extend({
         if ( routes.explore ){
             var explore = Engine({url: routes.explore.url});
             explore.register_input("request", app.models.query);
-            app.listenTo( Backbone, "engine:explore", function(params){
+            app.listenTo( Backbone,"engine:explore", function(params){
                 app.models.query.reset_from_models(params)
                 explore.play();
             });
@@ -1067,10 +1066,9 @@ App.Base = Backbone.View.extend({
             });
             app.listenTo(starred, 'play:success', app.explore_reset);
             app.engines.starred = starred;
-
         }
-        // Additive node engine
         
+        // Additive node engine
         if ( routes.additive_nodes ){
 
             var additiveNodeQuery = new Models.AdditiveNodesQuery({graph: app.models.graph })
@@ -1179,7 +1177,7 @@ App.Base = Backbone.View.extend({
         var engine_fetched = function(engine){
             pending.count -=1;
             //pending[]
-            if( pending.count == 0 && pending.complete ) pending.complete();
+            if( pending.count == 0 && pending.complete ) pending.complete(app);
         };
 
         
@@ -1251,9 +1249,7 @@ App.Base = Backbone.View.extend({
         
         if (app.engines.explore)
           app.engines.explore.fetch({ success: function(){
-            // start history
             engine_fetched();
-            Backbone.history.start({pushState: true, root: app.root_url});
         }});
     },
 
@@ -1517,7 +1513,6 @@ App.Simple = App.Base.extend({
     initialize : function(attrs, options){
         App.Simple.__super__.initialize.apply(this, arguments);
     },
-
     
     setClusterings: function(data){
         var appmenus = $('padagraph-app-menu')[0];
