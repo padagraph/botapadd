@@ -156,8 +156,6 @@ Models.Vertex = Cello.Vertex.extend({
         return this.graph.url() + "/node" + (this.id ? ("/"+ this.id ) : "");
     },
 
-    
-
     star  : function() { this.set_starred(true)  },
     
     unstar: function() { this.set_starred(false) },
@@ -865,6 +863,7 @@ function apply_layout(graph, response){
 }
 
 var App = {}
+App.Models = Models;
 App.Base = Backbone.View.extend({
 
     // DEBUG

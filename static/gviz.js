@@ -2153,6 +2153,7 @@ gviz.ThreeVizHelpers = {
 
                 var x = 0,
                 y = 0,
+                
                 text_width = 0, //compute the text width
                 paddingX = material.textPaddingX | 0,
                 paddingY1 = (material.textPaddingY | 0) +  ((text_lines.length-1) * -12)/text_lines.length + 9 * (i);
@@ -2161,24 +2162,27 @@ gviz.ThreeVizHelpers = {
                 _.each(text_lines[i], function (token){
                     var font = _this.node_materials[token.css].font;
                     font = get_font(font, viz.user_font_size)
-                    context.font = font
+                    context.font = font;
                     fontsize = _.max([fontsize, parseInt(/([0-9]*)px/.exec(font)[1])]);
                     text_width += context.measureText(token.form).width;
                 });
                 
                 /* vertical text alignement */
-                 if (material.textVerticaAlign == 'center'){
+                 if (material.textVerticalAlign == 'center'){
                     y = 1; 
                     paddingY = y - i * + fontsize;                    
                 }
-                else if (material.textVerticaAlign == 'top'){
-                    y = 0.5; 
+                else if (material.textVerticalAlign == 'bottom'){
+                    y = 0; 
+                    paddingY = y - i * -fontsize;
+                }
+                else //if (material.textVerticalAlign == 'top')
+                {
+                    y = 0.5;
                     paddingY = y - (i * -fontsize) / 2;
                 }
-                else {  // else if (material.textVerticaAlign == 'bottom'){
-                    y = 1; 
-                    paddingY = y - i * - fontsize;
-                }
+                
+                // context.translate(0,y*material.scale);
 
                 /* horizontal text alignement */
                 if (material.textAlign == 'left'){
@@ -2197,7 +2201,7 @@ gviz.ThreeVizHelpers = {
                 // text scale
                 context.scale(material.fontScale, material.fontScale);
 
-                _.each(text_lines[i], function (token, i){
+                _.each(text_lines[i], function (token, j){
 
                     var css = _this.node_materials[token.css];
 
@@ -2209,14 +2213,13 @@ gviz.ThreeVizHelpers = {
                     var paddingRelX = css.paddingRelX | 0;
                     var paddingRelY = css.paddingRelY | 0;
 
-                    
                     var dimension = context.measureText(token.form);
                     var text_width = dimension.width;
                     var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
 
                     //update of padding
                     var xi = x + paddingRelX;
-                    var yi = y + paddingY + paddingRelY +  (i)*( text_height | 0);
+                    var yi = y - paddingY - (i)*(  paddingRelY + (text_height | 0));
 
                     /* : TODO : text background */  
                     //maxX = Math.max(maxX, dimension.width + letter_width/2);
@@ -2232,7 +2235,6 @@ gviz.ThreeVizHelpers = {
                     }
                     if (css.fontStrokeStyle && css.fontStrokeWidth ){
                         set_context_style(context, "strokeStyle", css.fontStrokeStyle);
-                        //set_context_style(context, "strokeStyle", material.strokeStyle);
                         context.lineWidth = css.fontStrokeWidth;
                         context.strokeText(token.form , xi, yi);
                     }
@@ -2240,7 +2242,7 @@ gviz.ThreeVizHelpers = {
                     //updating of x to print the rest of the text
                     x  += text_width;
                 });
-
+                
                 context.restore();
             }
             context.restore();

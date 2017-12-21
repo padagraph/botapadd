@@ -16,7 +16,10 @@ from flask import render_template, render_template_string, abort, redirect, url_
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 
+from cello.graphs import IN, OUT, ALL
+from cello.graphs.prox import ProxSubgraph
 from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
+
 from reliure.utils.log import get_app_logger_color
 
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
@@ -328,7 +331,8 @@ def botimport(repo, padurl, gid, content_type):
     if padurl:
         
         promote = 1 if request.form.get('promote', 0)  else 0    
-        graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
+        graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
+        graphurl = "?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in  args.keys()])
                     
         options = {
             #
@@ -371,16 +375,26 @@ def botimport(repo, padurl, gid, content_type):
                 else :
                     graph = pad2igraph(gid, padurl)
 
+
+                    
                     if graph.vcount() > 300 : 
 
+                        
                         LENMIN = graph.vcount() / 100 - 5
                         LENMIN = 10
-                        vfilter = lambda v : len(v.neighbors()) < LENMIN
-                        expander = RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        vfilter = lambda v : False
+                        subgraph = ProxSubgraph() | RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        
                         #for v in graph.vs : print vfilter(v)
 
-                        print 0 , graph.summary()
-                        graph = expander(graph)
+                        length = int(args.get("length" , 3 ) )
+                        cut = int(args.get("cut" , 50 ) )
+                        mode = int(args.get("mode" , ALL ))
+                        addloops = int(args.get("addloops" , 1 )) == 1
+                        pzeros = args.get("pz" , "" )
+                        pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
+                        print pzeros , graph.summary()
+                        graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
                         print LENMIN , graph.summary()
                     
                     graph = prepare_graph(graph)
@@ -503,6 +517,7 @@ def igraph2dict(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[], 
     v_idx = { }
     for vid, vtx in enumerate(graph.vs):
         vertex = vtx.attributes()
+        vertex['__index'] = vtx.index
         if id_attribute is not None:
             v_idx[vid] = vertex[id_attribute]
         else:
