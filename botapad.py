@@ -47,41 +47,52 @@ def csv_rows(lines, start_col=None, end_col=None, separator=";"):
 
 # TODO
 def convert_url(url):
+    return parse_url(url)[0]
+    
+def parse_url(url):
     """ complete url if needed
         framapad expension  auto add /export/txt
 
      """
-
-    re_ggdoc = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/(edit)"
-    ggdoc = re.findall(re_ggdoc, url)
-    if  len(ggdoc) :
-        ggdoc = [r for r in ggdoc[0] if len(r)]
-        if  len(ggdoc) == 2 :
-            return "https://docs.google.com/document/d/%s/export?format=txt" % (ggdoc[0])
+    re_pad = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/?"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://docs.google.com/document/d/%s/export?format=txt" % (pad[0]), pad[0], "txt"
     
-    re_framapad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
-    frama = re.findall(re_framapad, url)
-    if  len(frama) :
-        frama = [r for r in frama[0] if len(r)]
-        if  len(frama) == 2 :
-            url = "https://%s.framapad.org/p/%s/export/txt" % (frama[0], frama[1])
-            return url
+    re_pad = "https?:\/\/docs.google.com/spreadsheets/d/([0-9a-zA-Z\-_]+)/"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://docs.google.com/spreadsheets/d/%s/export?format=csv" % (pad[0]), pad[0], "csv"
+    
+    re_pad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) == 2 :
+            url = "https://%s.framapad.org/p/%s/export/txt" % (pad[0], pad[1])
+            return url, pad[0], "txt"
             
-    
-    re_framacalc = "https?:\/\/(?:frama|ether)calc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
-    frama = re.findall(re_framacalc, url)
-    debug( "convert_url", url , frama )
-    if  len(frama) :
-        frama = [r for r in frama[0] if len(r)]
-        if  len(frama) == 1 :
-            #url = "https://framacalc.org/%s.csv" % (frama[0])
-            #url = "https://framacalc.org/%s.csv" % (frama[0])
-            return "%s.csv" % url
-    
-    return url
+    # ethercald & framacalc
+    re_pad = "https?:\/\/(?:frama|ether)calc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
+    pad = re.findall(re_pad, url)
+    debug( "convert_url", url , pad )
+    if  len(pad) :
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) :
+            return "%s.csv" % url, pad[0], "csv"
 
+    # hackmd
+    re_pad = "https?:\/\/hackmd.io\/(?:s/)?([0-9a-zA-Z\-_\=\+]+)"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://hackmd.io/%s/download" % pad[0], pad[0], "md"
+        
+    # github
+    
+    return url, None, ""
 
-Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj', 'iscliq'])
+#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , ! 
+Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj', 'iscliq', 'isignored'])
 
 
 class BotapadError(Exception):
@@ -189,6 +200,7 @@ class Botapad(object):
             if line in ( '!;','!,'):
                 separator = line[1:]
             else: separator = ','
+            
         log(" * Reading %s [%s] (%s) lines with delimiter '%s' " % (path, encoding, len(lines), separator))
 
         try : 
@@ -246,7 +258,11 @@ class Botapad(object):
                 label = cols[0] # @Something
                 
                 # ( name, type indexed, projection )
-                props = [ Prop( norm_key(e), Text(multi="+" in e), "@" in e, "#" in e, "+" in e,  "%" in e, "+" in e and "=" in e ) for e in  cols[1:]]
+                props = [ Prop( name=norm_key(e), type=Text(multi="+" in e),
+                    isref="@" in e, isindex="#" in e, ismulti="+" in e,
+                    isproj="%" in e, iscliq="+" in e and "=" in e ,
+                    isignored="!" in e) for e in  cols[1:] ]
+
                 start = 0
                 end   = None
                 props = props[start: end]
@@ -373,14 +389,16 @@ class Botapad(object):
                 payload.append( postdata)
             
             # post nodes
+            node = None
             try : 
                 log( "    [POST] @ %s %s" % (len(payload), label) , names  ,index_props) 
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
                     self.idx[ key ] = uuid
                     log(key , uuid)
-                    debug(node)
             except KeyError as e:
+                print(e)
+                pprint( payload)
                 message = "Cannot find column `%s` in : \n %s" % ( e, payload )
                 raise BotapadParseError("", message)
                 
@@ -417,7 +435,7 @@ class Botapad(object):
             nodeprops = { "label": Text() }
 
             if tgt not  in self.node_headers:
-                self.node_headers[tgt] = [ Prop('label', Text(), False, False, False, False, False )]
+                self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False )]
                 self.nodetypes[tgt] = self.bot.post_nodetype(self.gid, tgt, tgt, nodeprops)
 
                 payload = []

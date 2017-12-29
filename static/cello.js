@@ -1338,7 +1338,6 @@ var Graph = Backbone.Model.extend({
         // create a graph from json data
         Cello.debug("parse graph", data);
 
-        this.edge_list = {};
 
         if (data.nodetypes)
         {
@@ -1354,11 +1353,16 @@ var Graph = Backbone.Model.extend({
             this.meta.set(data.meta, {parse:true})
 
         options = options ? _.clone(options) : {};
-        this.es.reset([], options);
-        this.vs.reset([], options);
-        options = {parse:true};
-        this.vs.set(data.vs, options);
-        this.es.set(data.es, options);
+        if (data.vs && data.es){
+
+            this.edge_list = {};
+
+            this.es.reset([], options);
+            this.vs.reset([], options);
+            options = {parse:true};
+            this.vs.set(data.vs, options);
+            this.es.set(data.es, options);
+        }
 
         this.trigger('reset');
         
@@ -1779,6 +1783,7 @@ var Vertex = Backbone.Model.extend({
         Cello.get(this, "graph", function(){
                 return vertex.collection != null ? vertex.collection.graph : null;
             });
+            
         Cello.get(this, "nodetype",  function(){
                 return vertex.graph ? vertex.graph.get_node_type( vertex.get('nodetype') ): null;
             });
@@ -1956,7 +1961,17 @@ var Edges = Backbone.Collection.extend({
 
     initialize: function(models, options){
         this.graph = options.graph;
-    }
+    },
+
+    between: function(src, tgt, directed){
+        if (src && tgt)
+        {
+            return this.models.filter(function(e){
+                if (directed) return e.source == src & e.target == tgt;
+                return (e.source == src | e.source == tgt) & (e.target == src | e.target == tgt);
+            });
+        }
+    },
 });
 
 var TypeCollection = Backbone.Collection.extend({
@@ -1981,6 +1996,8 @@ Cello.Vertices = Vertices;
 Cello.Vertex = Vertex;
 Cello.Edges = Edges;
 Cello.Edge = Edge;
+Cello.EdgeType = EdgeType;
+Cello.NodeType = NodeType;
 
 
 // Returns a random integer between min and max

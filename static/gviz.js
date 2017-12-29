@@ -1022,10 +1022,15 @@ gviz.ThreeViz = Backbone.View.extend({
         this._width = attrs['width'] || -1;     // < 0 means that we take the width of the $el
         this._height = attrs['height'] || -1;
         Cello.get(this, "width", function(){
-            return _this._width > 0 ? _this._width : _this.$el.width();
+            var w = _this.$el.width();
+            if (w <= 0 ) w = $(window).width();
+            return _this._width > 0 ? _this._width : w ;
         });
+            
         Cello.get(this, "height", function(){
-            return _this._height > 0 ? _this._height : _this.$el.height();
+            var w = _this.$el.height();
+            if (w <= 0 ) w = $(window).height();
+            return _this._height > 0 ? _this._height : w;
         });
 
         this.clear_color = new THREE.Color(attrs['background_color']);
@@ -1186,8 +1191,6 @@ gviz.ThreeViz = Backbone.View.extend({
         var width = this.width,
             height = this.height;
 
-        //height = 600, width = 600;
-
         this.controls.handleResize(); // bug when resizing canvas instead of window
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
@@ -1311,8 +1314,6 @@ gviz.ThreeViz = Backbone.View.extend({
             geometry.computeBoundingSphere();
             _this.set_line_material(line);
         }
-
-        
         
         _this.listenTo(edge.source, "change:coords", function() {
             if( edge.collection)
@@ -1324,12 +1325,14 @@ gviz.ThreeViz = Backbone.View.extend({
                 _this.setPosition(geometry.vertices[1], edge.target.get('coords'), this.changeCoordSpeed, easing , complete );
         });
 
-        _this.listenTo(edge, "rmflag", function() {
+        _this.listenTo(edge, "rmflag", function(e, options) {
+            //console.log(e, options)
             _this.set_line_material(line);
             _this.request_animation();
         });
 
-        _this.listenTo(edge, "addflag", function() {
+        _this.listenTo(edge, "addflag", function(flag, e, options) {
+            //console.log(flag, e, options)
             _this.set_line_material(line);
             _this.request_animation();
         });
@@ -1491,7 +1494,6 @@ gviz.ThreeViz = Backbone.View.extend({
 
         wnode.program_material = material;
         wnode.material_needs_update = false;
-
     },
 
     set_line_material: function(line){
@@ -1510,7 +1512,7 @@ gviz.ThreeViz = Backbone.View.extend({
             vertexColors = THREE.VertexColors;
         }
         else
-            color = new THREE.Color(material.color)
+            color = new THREE.Color(material.color);
 
         // line flags
         line.material.linecap  = material.linecap;  // "butt", "round", "square"
@@ -2151,6 +2153,7 @@ gviz.ThreeVizHelpers = {
 
                 var x = 0,
                 y = 0,
+                
                 text_width = 0, //compute the text width
                 paddingX = material.textPaddingX | 0,
                 paddingY1 = (material.textPaddingY | 0) +  ((text_lines.length-1) * -12)/text_lines.length + 9 * (i);
@@ -2159,36 +2162,36 @@ gviz.ThreeVizHelpers = {
                 _.each(text_lines[i], function (token){
                     var font = _this.node_materials[token.css].font;
                     font = get_font(font, viz.user_font_size)
-                    context.font = font
+                    context.font = font;
                     fontsize = _.max([fontsize, parseInt(/([0-9]*)px/.exec(font)[1])]);
                     text_width += context.measureText(token.form).width;
-                    if (i == 1){
-                        there_we_are = "!";
-                    }
                 });
                 
                 /* vertical text alignement */
-                 if (material.textVerticaAlign == 'center'){
+                 if (material.textVerticalAlign == 'center'){
                     y = 1; 
                     paddingY = y - i * + fontsize;                    
                 }
-                else if (material.textVerticaAlign == 'top'){
-                    y = 0.5; 
+                else if (material.textVerticalAlign == 'bottom'){
+                    y = 0; 
+                    paddingY = y - i * -fontsize;
+                }
+                else //if (material.textVerticalAlign == 'top')
+                {
+                    y = 0.5;
                     paddingY = y - (i * -fontsize) / 2;
                 }
-                else {  // else if (material.textVerticaAlign == 'bottom'){
-                    y = 1; 
-                    paddingY = y - i * - fontsize;
-                }
+                
+                // context.translate(0,y*material.scale);
 
                 /* horizontal text alignement */
                 if (material.textAlign == 'left'){
                     context.translate(1*material.scale,0);
-                    x = 0;
+                    x = 0 + paddingX;
                 }
                 else if (material.textAlign == 'right'){
                     context.translate(-1*material.scale,0)
-                    x = -text_width;
+                    x = -text_width + paddingX;
                 }
                 else {  // center: default
                     context.translate(0,1)
@@ -2198,7 +2201,7 @@ gviz.ThreeVizHelpers = {
                 // text scale
                 context.scale(material.fontScale, material.fontScale);
 
-                _.each(text_lines[i], function (token, i){
+                _.each(text_lines[i], function (token, j){
 
                     var css = _this.node_materials[token.css];
 
@@ -2210,14 +2213,13 @@ gviz.ThreeVizHelpers = {
                     var paddingRelX = css.paddingRelX | 0;
                     var paddingRelY = css.paddingRelY | 0;
 
-                    
                     var dimension = context.measureText(token.form);
                     var text_width = dimension.width;
                     var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
 
                     //update of padding
                     var xi = x + paddingRelX;
-                    var yi = y + paddingY + paddingRelY +  (i)*( text_height | 0);
+                    var yi = y - paddingY - (i)*(  paddingRelY + (text_height | 0));
 
                     /* : TODO : text background */  
                     //maxX = Math.max(maxX, dimension.width + letter_width/2);
@@ -2233,7 +2235,6 @@ gviz.ThreeVizHelpers = {
                     }
                     if (css.fontStrokeStyle && css.fontStrokeWidth ){
                         set_context_style(context, "strokeStyle", css.fontStrokeStyle);
-                        //set_context_style(context, "strokeStyle", material.strokeStyle);
                         context.lineWidth = css.fontStrokeWidth;
                         context.strokeText(token.form , xi, yi);
                     }
@@ -2241,7 +2242,7 @@ gviz.ThreeVizHelpers = {
                     //updating of x to print the rest of the text
                     x  += text_width;
                 });
-
+                
                 context.restore();
             }
             context.restore();
@@ -2267,10 +2268,8 @@ edge_materials : [
         'font' : 'normal 12px Arial',
         'fontFillStyle': "#4C4D00",
         'textAlign': "center",
-                
         
-        'orientation_visible':false,
-        
+        'orientation_visible':false,       
                                     
     }},
 ],
@@ -2538,8 +2537,8 @@ Gviz.SimpleViz = function(graph, attrs){
             
             var edges = graph.incident(node);
             //graph.es.add_flag('es-bolder', edges);
-            graph.es.add_flag('es-mo-adjacent',  edges);
-            graph.es.add_flag('es-mo-faded', _.difference(graph.es.models, edges));
+            graph.es.add_flag('es-mo-adjacent',  edges, false );
+            graph.es.add_flag('es-mo-faded', _.difference(graph.es.models, edges), false);
 
             gviz.request_animation();
         });
@@ -3850,7 +3849,7 @@ gviz.GraphRenderer = function ( parameters ) {
 
             if ( material === undefined || material.visible === false ) continue;
 
-            _elemBox.makeEmpty();
+                _elemBox.makeEmpty();
 
             if ( element instanceof THREE.RenderableSprite ) {
 
@@ -4044,6 +4043,14 @@ gviz.GraphRenderer = function ( parameters ) {
     }
 
     function renderLine( v1, v2, element, material ) {
+
+        setOpacity( material.opacity );
+        setBlending( material.blending );
+        setLineWidth( material.linewidth );
+        setLineCap( material.linecap );
+        setLineJoin( material.linejoin);
+
+        
         if ( _this.DISPLAY_EDGE == false ) return ;
         if ( material.opacity == 0.  ) return ;
         
@@ -4078,7 +4085,7 @@ gviz.GraphRenderer = function ( parameters ) {
         // == context transformation ==
         _context.save();
 
-        _context.translate( v1.positionScreen.x, v1.positionScreen.y );
+        _context.translate( v1.positionScreen.x, v1.positionScreen.y + 5 );
         _context.rotate( rotation );
         _context.scale(1, -1);
 
@@ -4086,20 +4093,16 @@ gviz.GraphRenderer = function ( parameters ) {
         var opacity = material.opacity;
 
         // fog opacity
-        if( _this.ENABLE_FOG && element.object._edge.flags[1]==null)
-        {
-            var opacityFactor = Math.min(element.object._edge.source._opacityFactor, element.object._edge.target._opacityFactor);
-            opacity = material.opacity * opacityFactor;
-        }
-        setOpacity( opacity );
-        setBlending( material.blending );
-        setLineWidth( material.linewidth );
-        setLineCap( material.linecap );
-        setLineJoin( material.linejoin);
+        //if( _this.ENABLE_FOG && element.object._edge.flags[1]==null)
+        //{
+            //var opacityFactor = Math.min(element.object._edge.source._opacityFactor, element.object._edge.target._opacityFactor);
+            //if (opacityFactor)
+                //opacity = material.opacity * opacityFactor;
+        //}
 
         if ( material.vertexColors !== THREE.VertexColors ) {
 
-            _context.strokeStyle=material.color.getStyle();
+            _context.strokeStyle = material.color.getStyle();
 
         } else {
 
@@ -4107,7 +4110,7 @@ gviz.GraphRenderer = function ( parameters ) {
             var colorStyle2 = element.vertexColors[1].getStyle();
 
             if ( colorStyle1 === colorStyle2 ) {
-                _context.strokeStyle=colorStyle1;
+                _context.strokeStyle = colorStyle1;
             } else {
 
                 try {
@@ -4117,7 +4120,7 @@ gviz.GraphRenderer = function ( parameters ) {
                 } catch ( exception ) {
                     grad = colorStyle1;
                 }
-                setStrokeStyle( grad );
+                _context.strokeStyle = grad ;
             }
         }
         
@@ -4133,18 +4136,21 @@ gviz.GraphRenderer = function ( parameters ) {
         _context.closePath();
 
         // stroke line & reset dash and gap
+
         _context.stroke();
+        
         _elemBox.expandByScalar( material.linewidth * 2 );
         _context.setLineDash( [] );
 
 
         // display edge label
+        var edgeLabel = "";
         _context.translate(dist/2, 0);
         if(_this.DISPLAY_EDGE_LABEL && material.label_visible)
         {
             _context.save();
 
-            var edgeLabel = element.object._edge.label;
+            edgeLabel = element.object._edge.label;
             if (!edgeLabel) 
             {
                 if(inverted)
@@ -4175,7 +4181,7 @@ gviz.GraphRenderer = function ( parameters ) {
             _context.save();
             _context.translate(-dist/2 + dec, 0);
             _context.scale(-scale, -scale);
-            _context.strokeStyle = colorStyle2;
+            setStrokeStyle( colorStyle2 );
             drawTriangle(0,0.5, 0,-0.5, 1, 0 );
             _context.stroke();
             _context.restore();
@@ -4187,15 +4193,14 @@ gviz.GraphRenderer = function ( parameters ) {
             _context.save();
             _context.translate(dist/2 - dec , 0);
             _context.scale(-scale, -scale);
-            _context.strokeStyle = colorStyle1;
-            // _context.beginPath();
-            // _context.arc(0, 0, 1, 0, gviz.ThreeVizHelpers.PI2, true);
-            // _context.closePath();
+            setStrokeStyle( colorStyle1 );
             drawTriangle(0,0.5, 0,-0.5, 1, 0 );
             _context.stroke();
             _context.restore();
         }
+        
         _context.restore();
+
     }
 
     //

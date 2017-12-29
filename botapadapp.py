@@ -16,14 +16,28 @@ from flask import render_template, render_template_string, abort, redirect, url_
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 
+from cello.graphs import IN, OUT, ALL
+from cello.graphs.prox import ProxSubgraph
+from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
+
+from reliure.utils.log import get_app_logger_color
+
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
+
+
+log_level = logging.INFO if DEBUG else logging.WARN
+logger = get_app_logger_color("cillex", app_log_level=log_level, log_level=log_level)
+
+
+
+RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
 
 # padagraph host valid token
 PATH = "./static/images" # images storage
 
-RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
+PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
 
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
@@ -36,7 +50,7 @@ DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
 # app
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
 print( "== Running with gunicorn : %s==" % (RUN_GUNICORN) )
-print( "== engines:%s static:%s ==" % (ENGINES_HOST, STATIC_HOST) )
+print( "== engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PADAGRAPH_HOST) )
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -206,15 +220,6 @@ def readme():
     return render_template('botapadapp.html', readme=md )
     
     
-def home():
-    kw = {
-        'fail' : False,
-        'complete' : False,
-        'readme' : False,
-    }
-    return render_template('botapadapp.html', **kw )
-
-
 @app.route('/decalcograph/<string:gid>', methods=['GET'])
 def decalcograph(gid):
     padurl = "https://ethercalc.org/%s" % gid
@@ -249,7 +254,7 @@ def googledoc(gid=None):
 
 def pad2pdg(gid, url):
     description = "imported from %s" % url
-    bot = Botagraph(ENGINES_HOST, KEY)
+    bot = Botagraph(PADAGRAPH_HOST, KEY)
     botapad = Botapad(bot, gid, description, delete=DELETE)
     return botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
 
@@ -263,6 +268,12 @@ def pad2igraph(gid, url):
     return graph
     
     
+
+@app.route('/embed', methods=['GET'])
+def embed():
+    padurl = request.query_string
+    graphurl = "/import/igraph.html?s=%s&gid=graph&nofoot=1" % (padurl)
+    return botimport('igraph', padurl, "graph", "embed")
     
     
 @app.route('/import', methods=['GET'])
@@ -270,56 +281,59 @@ def pad2igraph(gid, url):
 @app.route('/import/<string:repo>', methods=['GET', 'POST'])
 @app.route('/import/<string:repo>.<string:content>', methods=['GET', 'POST'])
 def import2pdg(repo='igraph', content=None):
-    if repo in ("padagraph", "igraph"):
-        if content in ("html", "pickle", "json", ):
-            return botimport(repo, content)
-
-        return botimport(repo, 'html')
-            
-    return botimport('igraph', 'html')
     
-def botimport(repo, content_type="html"):
+    if repo in ("padagraph", "igraph"):
+        content = request.form.get('content_type', content)
+        if content in ("html", "embed", "pickle", "json", ):
 
-    #raise ValueError(request)
+            gid = request.form.get('gid', request.args.get('gid', "graph"))
+            padurl = request.form.get('url', None)
+            pad_source = request.args.get('s', padurl)
+
+            if pad_source:
+
+                if pad_source  == "framapad":
+                    padurl = "https://annuel2.framapad.org/p/%s" % gid
+                    
+                elif pad_source in ('google', 'googledoc'):
+                    padurl = "https://docs.google.com/document/d/%s/edit" % gid
+
+                else : padurl = pad_source
+
+            return botimport(repo, padurl, gid, content)
+
+        return botimport(repo, None, None, 'html')
+            
+    return botimport('igraph', None, None, 'html')
+    
+def botimport(repo, padurl, gid, content_type):
+
+    print repo, content_type, gid, padurl
+    
     action = "%s?%s" % (repo, request.query_string)
-    routes = "%s/routes" % ENGINES_HOST
-
+    routes = "%s/engines" % ENGINES_HOST
+    
     graph = None
     data = None    
     complete = False
     error = None
     options = ""
-    graphurl = None
+    graphurl = ""
 
     #args
     args = request.args
-    # form
-    gid = request.form.get('gid', args.get('gid', None))
-    padurl = request.form.get('url', None)
+    color = "#" + args.get("color", "249999" )    
 
-    content_type = request.form.get('content_type', content_type)
-    promote = 1 if request.form.get('promote', 0)  else 0        
-    
-    pad_source = args.get('s', None) 
-    color = "#" + args.get("color", "249999" )
-    footer = not(args.get('nofoot', 0) == "1")
-    live = args.get('live', 0) == "1"
+    footer = not(args.get('nofoot', 0) == "1") # default true
 
-    if pad_source:
-        gid = args.get('gid', None)
-        graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (pad_source, gid)
-        
-        if pad_source  == "framapad":
-            padurl = "https://annuel2.framapad.org/p/%s" % gid
-            
-        elif pad_source  == "google":
-            padurl = "https://docs.google.com/document/d/%s/edit" % gid
+    if content_type == "embed": footer = False
 
-        else:
-            padurl = pad_source
+    if padurl:
         
-    if gid and padurl:
-        
+        promote = 1 if request.form.get('promote', 0)  else 0    
+        graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
+        graphurl = "?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in  args.keys()])
+                    
         options = {
             #
             'wait' : 4,
@@ -341,10 +355,11 @@ def botimport(repo, content_type="html"):
             'adaptive_zoom': 0,
                 
         }
-
+    
         try : 
             if repo == "padagraph":
                 pad2pdg(gid, padurl)
+                
                 data = "%s/xplor/%s.json" % (ENGINES_HOST, gid) 
                 complete = True 
 
@@ -352,12 +367,39 @@ def botimport(repo, content_type="html"):
                     return redirect(data, code=302)
                     
             elif repo == "igraph":
-                
-                graph = pad2igraph(gid, padurl)
-                graph = prepare_graph(graph)
-                data = export_graph(graph, id_attribute='uuid')
-                
-                complete = True 
+
+                if content_type == "embed":
+                    complete = True 
+                    data = "%s/import/igraph.json?s=%s" % (ENGINES_HOST, padurl)
+
+                else :
+                    graph = pad2igraph(gid, padurl)
+
+
+                    
+                    if graph.vcount() > 300 : 
+
+                        
+                        LENMIN = graph.vcount() / 100 - 5
+                        LENMIN = 10
+                        vfilter = lambda v : False
+                        subgraph = ProxSubgraph() | RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        
+                        #for v in graph.vs : print vfilter(v)
+
+                        length = int(args.get("length" , 3 ) )
+                        cut = int(args.get("cut" , 50 ) )
+                        mode = int(args.get("mode" , ALL ))
+                        addloops = int(args.get("addloops" , 1 )) == 1
+                        pzeros = args.get("pz" , "" )
+                        pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
+                        print pzeros , graph.summary()
+                        graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
+                        print LENMIN , graph.summary()
+                    
+                    graph = prepare_graph(graph)
+                    data = export_graph(graph, id_attribute='uuid')                    
+                    complete = True 
 
                 if content_type == "json":
                     return jsonify(data)
@@ -384,6 +426,7 @@ def botimport(repo, content_type="html"):
                 'separator' : "NONE",
                 'message'  : err.message
             }
+            raise
             
         except BotapadURLError as err:
             error = {
@@ -474,6 +517,7 @@ def igraph2dict(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[], 
     v_idx = { }
     for vid, vtx in enumerate(graph.vs):
         vertex = vtx.attributes()
+        vertex['__index'] = vtx.index
         if id_attribute is not None:
             v_idx[vid] = vertex[id_attribute]
         else:
@@ -583,7 +627,7 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
     return graph
 
         
-@app.route('/routes', methods=['GET'])
+@app.route('/engines', methods=['GET'])
 def engines():
     r = request.path
     return jsonify({'routes': {
