@@ -616,21 +616,23 @@ def layout_engine():
 
     from cello.layout.simple import KamadaKawaiLayout, GridLayout, FruchtermanReingoldLayout
     #from cello.layout.simple import DrlLayout
-    from cello.layout.proxlayout import ProxLayoutPCA, ProxLayoutRandomProj, ProxLayoutMDS, ProxMDSSugiyamaLayout
+    from cello.layout.proxlayout import ProxLayoutPCA, ProxLayoutRandomProj, ProxLayoutMDS, ProxMDSSugiyamaLayout, ProxLayoutTSNE
     from cello.layout.transform import Shaker
     from cello.layout.transform import ByConnectedComponent
 
     layouts = [
         # 3D
         ("3DKamadaKawai" , KamadaKawaiLayout(dim=3) ),
-        ("3DMds"         , ProxLayoutMDS(dim=3) | Shaker(kelastic=.9) ),
+        ("3DTSNE"         , ProxLayoutTSNE(dim=3) | Shaker(kelastic=.001) ),
+        ("3DMds"         , ProxLayoutMDS(dim=3) | Shaker(kelastic=.001) ),
         ("3DPca"         , ProxLayoutPCA(dim=3, ) | Shaker(kelastic=.9) ),
         ("3DPcaWeighted" , ProxLayoutPCA(dim=3, weighted=True) | Shaker(kelastic=.9) ),
         ("3DRandomProj"  , ProxLayoutRandomProj(dim=3) ),
         ("3DOrdered"     , ProxMDSSugiyamaLayout(dim=3) | Shaker(kelastic=0.9) ),
         # 2D
         ("2DPca"         , ProxLayoutPCA(dim=2) | Shaker(kelastic=1.8) ),
-        ("2DMds"         , ProxLayoutMDS(dim=2 ) | Shaker(kelastic=.9) ),
+        ("2DTSNE"         , ProxLayoutTSNE(dim=2 ) | Shaker(kelastic=.001) ),
+        ("2DMds"         , ProxLayoutMDS(dim=2 ) | Shaker(kelastic=.001) ),
         ("2DKamadaKawai" , KamadaKawaiLayout(dim=2) ),
         # tree
         ("2DFruchtermanReingoldLayout" , FruchtermanReingoldLayout(dim=2) ),
