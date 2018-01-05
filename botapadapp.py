@@ -377,25 +377,26 @@ def botimport(repo, padurl, gid, content_type):
 
 
                     
-                    if graph.vcount() > 300 : 
+                    full = args.get("full" , "" ) == 1
+                    if graph.vcount() > 300 and not full: 
 
                         
                         LENMIN = graph.vcount() / 100 - 5
                         LENMIN = 10
                         vfilter = lambda v : False
-                        subgraph = ProxSubgraph() | RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        subgraph = ProxSubgraph() | GenericVertexFilter(vfilter)
                         
-                        #for v in graph.vs : print vfilter(v)
-
                         length = int(args.get("length" , 3 ) )
                         cut = int(args.get("cut" , 50 ) )
                         mode = int(args.get("mode" , ALL ))
                         addloops = int(args.get("addloops" , 1 )) == 1
                         pzeros = args.get("pz" , "" )
                         pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
+
                         print pzeros , graph.summary()
                         graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
                         print LENMIN , graph.summary()
+
                     
                     graph = prepare_graph(graph)
                     data = export_graph(graph, id_attribute='uuid')                    
