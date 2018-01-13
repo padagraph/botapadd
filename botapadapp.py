@@ -546,7 +546,7 @@ from pdgapi import get_engines_routes
 @app.route('/engines', methods=['GET'])
 def _engines():
     host = ""
-    return jsonify({'routes': get_engines_routes(app, "http://192.168.43.128:5000")})
+    return jsonify({'routes': get_engines_routes(app, host)})
 
     
 
