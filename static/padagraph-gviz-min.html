@@ -9599,7 +9599,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
   });
 });</script></dom-module><dom-module id="padagraph-gviz-json" assetpath="./"><template><content></content></template><script>'use strict';
 
-require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], function (Backbone, Cello, Gviz, Materials, Const, App) {
+require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], function (Backbone, $, S, Cello, Gviz, Materials, Const, App) {
   Polymer({
     is: "padagraph-gviz-json",
 
@@ -10430,7 +10430,7 @@ require(['jquery'], function ($) {
 });</script></dom-module><dom-module id="padagraph-labels-control" assetpath="./"><template><style></style><template is="dom-if" if="{{props.name}}"><div style="display:none" class="markdown description"><a name="desc">       </a>{{props.description}}</div><div id="labelsAndButtons" class="ui grid"> <div on-click="desc" class="ui basic label"> 
 {{props.name}}</div><template is="dom-if" if="{{meta.node_count}}"><div class="ui label"> <i class="circle thin icon"></i>{{meta.node_count}}</div></template><template is="dom-if" if="{{meta.edge_count}}"><div class="ui label"> <i class="minus icon"></i>{{meta.edge_count}}</div></template><template is="dom-if" if="{{meta.star_count}}"><div class="ui label"> <i class="star thin icon"></i>{{meta.star_count}}</div></template><template is="dom-if" if="{{meta.owner}}"><div class="ui label">  <i class="user icon"></i>{{meta.owner}}</div></template><content></content></div></template></template><script>'use strict';
 
-require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
+require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backbone, $, S, Cello, Const) {
   Polymer({
     is: "padagraph-labels-control",
 
@@ -10463,7 +10463,7 @@ require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
   });
 });</script></dom-module><dom-module id="padagraph-engine-control" assetpath="./"><style></style><template><div data-content="blocks" class$="{{button_class('blocks ui dropdown', asitem, aslabel)}}" class="blocks ui dropdown"><i class$="{{ icon(engine)}}" title="{{block.name}}"></i><div class="menu"><div class="header">{{block.name}}</div><div class="divider"></div><template is="dom-repeat" items="[[block.components.models]]"><div data-value$="{{item.name}}" class="item">{{item.name}}</div></template></div></div></template><script>'use strict';
 
-require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
+require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backbone, $, S, Cello, Const) {
   Polymer({
     is: "padagraph-engine-control",
 
