@@ -543,14 +543,12 @@ var GvizShortcuts = function(gviz){ return [
         ],
         [
             '+', "increase vertex size", function(){
-                gviz.user_vtx_size = Math.min(25, gviz.user_vtx_size + 1 );
-                gviz.request_animation();
+                gviz.increase_vertex_size();
             }
         ],
         [
             '-', "decrease vertex size", function(){
-                gviz.user_vtx_size = Math.max(-5, gviz.user_vtx_size - 1 );
-                gviz.request_animation();
+                gviz.decrease_vertex_size();
             }
         ],
         [
@@ -595,12 +593,12 @@ var GvizShortcuts = function(gviz){ return [
         ],
         [
             'd', "increases autorotate speed", function(){
-                gviz.controls.autoRotateSpeed += 0.001;
+                gviz.controls.autoRotateSpeed = gviz.controls.autoRotateSpeed  * 1.5;
             }
         ],
         [
             's', "decreases autorotate speed", function(){
-                gviz.controls.autoRotateSpeed -= 0.001;
+                gviz.controls.autoRotateSpeed = gviz.controls.autoRotateSpeed  / 1.5;
             }
         ],
         [
@@ -1046,12 +1044,15 @@ App.Base = Backbone.View.extend({
         if ( routes.explore ){
             var explore = Engine({url: routes.explore.url});
             explore.register_input("request", app.models.query);
+            
             app.listenTo( Backbone,"engine:explore", function(params){
                 app.models.query.reset_from_models(params)
                 explore.play();
             });
             app.listenTo(explore, 'play:success', app.explore_reset);
+            
             app.engines.explore = explore;
+        
         }
         
         // Starred  engine

@@ -19,6 +19,34 @@
           background: #127777;
       }
       
+              
+      #keb {
+          min-width:350px;
+      }
+      
+      #keb .close{
+          background: #EEE;
+          text-align:right;
+          padding: 4px ;
+      }
+              
+      #keb {
+          min-width:350px;
+      }
+      
+      #keb .close{
+          background: #EEE;
+          text-align:right;
+          padding: 4px ;
+      }
+      
+      a.ui.active.refresh.button {
+          position:absolute;
+          right: 56px;
+          bottom: 22px;
+      }
+      
+      
       .masthead.segment {
         min-height: 700px;
         padding: 5px;
@@ -152,6 +180,8 @@
         top: 176px;
       }
       
+      #menu .divider { margin:3px }
+      
       .nofoot #menu {
         top: 24px;
       }
@@ -168,7 +198,7 @@
           
           text-align:left;
           width:100%;
-          height:calc(100%);
+          height:100%;
       }
       
       #viz {
@@ -183,7 +213,7 @@
         margin:12px;
       }
       .nofoot #labels {
-        bottom: -30px;
+        //bottom: -30px;
       }
       .markdown {
         position:absolute;
@@ -210,6 +240,10 @@
   </head>
   <body>
     <!-- Page Contents-->
+    <div id="keb" style="background:#FAFAFA" class="ui left vertical sidebar">
+      <div class="close"><a class="ui link icon"><i class="close icon"></i></a></div>
+      <padagraph-gviz-control></padagraph-gviz-control>
+    </div>
     <div class="pusher">
       <div class="ui inverted vertical center aligned segment">{% if footer %}  
         <div class="ui text container">
@@ -299,15 +333,18 @@
           <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
           <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
           <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
-            <padagraph-gviz-json routes="{{routes}}" data="{{data}}">
+            <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
               <padagraph-gviz options="{{options}}">
                 <div id="viz"></div>
                 <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
-                <div id="menu" class="ui icon vertical borderless menu">
+                <div id="menu" class="ui icon borderless vertical menu">
                   <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
                   <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                  <div class="ui divider">         </div>
                   <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
                   <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
+                  <padagraph-engine-control engine="explore" asitem="asitem"></padagraph-engine-control>
+                  <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
                 </div>
                 <div id="labels">
                   <padagraph-labels-control></padagraph-labels-control>
@@ -316,10 +353,40 @@
             </padagraph-gviz-json>
             <script>
               e = document.getElementById('gviz');
-              e.style.height = ( window.innerHeight - 62 )+ "px";
+              e.style.height = ( window.innerHeight - 32 )+ "px";
+              
+              document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
+              
+                      console.log(e.detail.app); // true
+                      var app = e.detail.app;
+                      
+                      var engines = [];
+                      var app_engines = {
+                          'explore':app.engines.explore,
+                          'layout':app.engines.layout,
+                          'clustering':app.engines.clustering,
+                      };
+                      
+                      for (var k in app_engines){
+                          var engine = app_engines[k]
+                          engine.name = k;
+                          engines.push(engine);
+                      }
+                      
+                      var keb = document.createElement("padagraph-keb")
+                      keb.engines = engines;
+                      $("#keb")
+                          .sidebar('setting', 'dimPage', false)
+                          .sidebar('setting', 'transition', 'overlay')
+                      $("#keb").append(keb)
+              
+                      $("#keb .close").click( ()=>{ $("#keb").sidebar('hide') } )
+                      $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+                      
+                  })
               
             </script>
-          </div>{% if graphurl %}   <a href="{{graphurl}}" class="ui active right floated button">refresh</a>
+          </div>{% if graphurl %}   <a href="{{graphurl}}" class="ui active refresh button">refresh</a>
           <!--a.ui.active.primary.button(href="{{padurl}}") edit-->{% endif %}
         </div>{% elif error %}
         <div class="ui text container">

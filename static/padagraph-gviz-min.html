@@ -8268,7 +8268,160 @@ this._children = Polymer.TreeApi.arrayCopyChildNodes(this.root);
 this._insertChildren();
 this.fire('dom-change');
 }
-});</script><!--dom-module(id='padagraph-gviz-label')--><dom-module id="padagraph-node-property" assetpath=""><template><label>{{name}}</label><input type="text" value="{{value::input}}"></template><script>"use strict";
+});</script><dom-module id="padagraph-keb-sample" assetpath="./"><style></style><template><template is="dom-if" if="{{ locutions.length }}"><template is="dom-repeat" items="[[locutions]]">{{item}}</template></template></template><script>'use strict';
+
+require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
+  Polymer({
+    is: "padagraph-keb-sample",
+
+    properties: {
+
+      app: { type: Object, value: function value() {} },
+      graph: { type: Object, value: function value() {} },
+      options: { type: Object, value: function value() {} }
+
+    },
+
+    observers: ["create_once(app, graph, options)"]
+
+  });
+});</script></dom-module><dom-module id="keb-option" assetpath="./"><style></style><template><template is="dom-if" if="{{ isBoolean(option) }}"><div class="ui checkbox"><input type="checkbox" on-change="bool_changed" checked="{{value::input}}"><label>{{option.name}}</label></div></template><template is="dom-if" if="{{ isEditable(option) }}"><label>{{option.name}} {{option.otype.help}}</label><input value="{{value::input}}"><br></template><template is="dom-if" if="{{ isChoice(option) }}"><label>{{option.name}} {{option.otype.help}}</label><select value="{{value::input}}"><template is="dom-repeat" items="[[option.otype.choices]]"><option selected$="{{selected(option, item)}}" value="{{item}}">{{item}} </option></template></select></template></template><script>'use strict';
+
+require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
+  Polymer({
+    is: "keb-option",
+
+    properties: {
+      comp: Object,
+      option: Object,
+      value: String
+    },
+
+    observers: ["observe(comp, option)", "observe_input(value)"],
+
+    observe: function observe(comp, option) {
+      console.log(comp, option, this.value);
+      if (this.value != option.value) this.value = option.value;
+    },
+
+    observe_input: function observe_input(value) {
+      if (this.option.value != value) {
+        console.log("setting ", this.option.name, value);
+        this.option.value = value;
+      }
+    },
+
+    isBoolean: function isBoolean(option) {
+      return option.otype.type == 'Boolean';
+    },
+    bool_changed: function bool_changed() {
+      this.option.value = !this.option.value;
+    },
+
+    isChoice: function isChoice(option) {
+      return option.otype.choices != null;
+    },
+    isSelected: function isSelected(option, item) {
+      return option.value == option.parse(item);
+    },
+
+    isEditable: function isEditable(option) {
+      return !this.isChoice(option) && (this.isText(this.option) || this.isNumeric(this.option));
+    },
+    isText: function isText(option) {
+      return option.otype.type == 'Text';
+    },
+    isNumeric: function isNumeric(option) {
+      return option.otype.type == 'Numeric';
+    }
+
+  });
+});</script></dom-module><dom-module id="keb-optionable" assetpath="./"><style>.options_form_menu {
+    margin: 4px;
+}
+.optionable.item {
+    cursor:pointer;
+    padding: 5px;
+    margin-top: 12px;
+    background: #FAFAFA;
+}
+.optionable.selected.item {
+    background: #EAEAEA;
+    border: 1px solid #CCC;
+}
+  </style><template><div class$="{{optionable_css(comp.selected)}}" on-tap="select_component" class="optionable item"><template is="dom-if" if="{{ !comp.selected }}"><a> <i class="caret right icon"></i>{{comp.name}}</a></template><template is="dom-if" if="{{ comp.selected }}"><a class="selected"><i class="checkmark icon"></i>{{comp.name}}</a><template is="dom-if" if="{{comp.options.models.length}}"><div class="options_form_menu"><div class="ui small form"><fieldset><template is="dom-repeat" items="[[comp.options.models]]" as="opt"><template is="dom-if" if="{{ comp.selected }}"><div class="inline field"><keb-option comp="{{comp}}" option="{{opt}}"></keb-option></div></template><template is="dom-if" if="{{ !comp.selected }}"><label>{{ opt.name }} : </label><span>{{opt.value}}</span><br></template></template></fieldset></div></div></template></template></div></template><script>'use strict';
+
+require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
+  Polymer({
+    is: "keb-optionable",
+
+    properties: {
+      engine: Object,
+      block: Object,
+      comp: Object
+    },
+
+    observers: ["observe(comp)"],
+
+    created: function created() {
+      this._listener = {};
+      _.extend(this._listener, Backbone.Events);
+    },
+
+    observe: function observe(comp) {
+      var _this = this;
+
+      this._listener.stopListening();
+      this._listener.listenTo(comp, 'change:selected', function () {
+        _this.notifyPath('comp.selected');
+      });
+    },
+
+    optionable_css: function optionable_css(selected) {
+      var classes = 'optionable item';
+      if (selected) classes += ' selected';
+      return classes;
+    },
+
+    select_component: function select_component(e, detail) {
+      if (this.comp.get("selected") == false) {
+        this.block.select(this.comp);
+        this.engine.play();
+      }
+    }
+
+  });
+});</script></dom-module><dom-module id="padagraph-keb" assetpath="./"><style>.options_form_menu {
+    margin: 4px;
+}
+
+a {
+    color:#333;
+
+}
+
+a.selected {
+    color:teal;
+}
+
+
+</style><template><div class="ui segment"> <template is="dom-repeat" items="[[engines]]" as="engine"><h2 class="header"><a>{{engine.name}}</a></h2><div class="menu"></div><template is="dom-if" if="{{ engine.blocks.models.length }}"><template is="dom-repeat" items="[[engine.blocks.models]]" as="block"><div class="block item"><!--a {{block.name}}--><div class="menu"> </div><template is="dom-repeat" items="[[block.components.models]]" as="optionable"><keb-optionable engine="[[engine]]" block="[[block]]" comp="[[optionable]]"></keb-optionable></template></div></template></template></template></div></template><script>'use strict';
+
+require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
+  Polymer({
+    is: "padagraph-keb",
+
+    properties: {
+
+      engines: Object
+
+    },
+
+    observers: ["observe_model(engines)"],
+
+    observe_model: function observe_model(engines) {}
+  });
+});</script></dom-module><dom-module id="padagraph-node-property" assetpath=""><template><label>{{name}}</label><input type="text" value="{{value::input}}"></template><script>"use strict";
 
 Polymer({
   is: "padagraph-node-property",
@@ -9385,6 +9538,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst', 'embed'], functio
 
         parse.completed = true;
         parse.onComplete();
+        parse.fire('engines-complete', { app: app, engines: app.engines });
       };
 
       app.create_engines();
@@ -9427,14 +9581,11 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             if (!app || graph == null || !graph.vs) return;
             if (this.gviz) return;
 
-            var engines = _.zip([app.layouts, app.clusterings], $("padagraph-engine-control", this));
-
-            _.each(engines, function (e, i, l) {
-                var blocks = e[0];
-                var el = e[1]; // polymer el
+            _.each($("padagraph-engine-control", this), function (el, i, l) {
                 if (el) {
+                    var engine = app.engines[el.engine];
                     el.app = app;
-                    el.blocks = blocks;
+                    if (engine.blocks.models.length) el.block = engine.blocks.models[0];
                 }
             });
 
@@ -9445,6 +9596,12 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                     f.graph = graph;
                 });
             }
+
+            graph.on('reset', function () {
+                _(filters).forEach(function (f) {
+                    f.reset_filters();
+                });
+            });
 
             var popup = $("padagraph-model-popup", this);
             if (popup.length) {
@@ -9484,6 +9641,13 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             gviz.animate();
 
             app.set_viz(gviz);
+
+            var ctrl = $("padagraph-gviz-control");
+            if (ctrl.length) {
+                ctrl = ctrl[0];
+                ctrl.app = app;
+                ctrl.gviz = gviz;
+            }
 
             this.gviz = gviz;
         }
@@ -10035,6 +10199,37 @@ require(['backbone', 'jquery'], function (Backbone, $) {
             this.splice("elements", 0, this.elements.length);
         }
     });
+});</script></dom-module><dom-module id="padagraph-gviz-control" assetpath="./"><style>a i.icon { margin: 0px}</style><template><div class="ui segment"><h2 class="header">Visualisation</h2><div class="ui small form"><fieldset><div class="inline field"><a id="vtx_size_inc" class="link icon"><i class="large zoom icon"></i></a><a id="vtx_size_dec" class="link icon"><i class="large zoom out icon"></i></a><a id="font_size_inc" class="link icon"><i class="large fitted font icon"></i><i class="small fitted add icon"></i></a><a id="font_size_dec" class="link icon"><i class="large fitted font icon"></i><i class="small fitted minus icon"></i></a></div></fieldset></div></div></template><script>"use strict";
+
+require(['jquery'], function ($) {
+  Polymer({
+    is: "padagraph-gviz-control",
+
+    properties: {
+      // engine for parameters ?  
+      app: Object,
+      gviz: Object
+    },
+
+    observers: ["setupUI(app, gviz)"],
+
+    setupUI: function setupUI(app, gviz) {
+      if (!app || !gviz) return;
+      $("#vtx_size_inc").click(function () {
+        gviz.increase_vertex_size();
+      });
+      $("#vtx_size_dec").click(function () {
+        gviz.decrease_vertex_size();
+      });
+
+      $("#font_size_inc").click(function () {
+        gviz.increase_font_size();
+      });
+      $("#font_size_dec").click(function () {
+        gviz.decrease_font_size();
+      });
+    }
+  });
 });</script></dom-module><dom-module id="padagraph-labels-control" assetpath="./"><template><style></style><template is="dom-if" if="{{props.name}}"><div style="display:none" class="markdown description"><a name="desc">       </a>{{props.description}}</div><div id="labelsAndButtons" class="ui grid"> <div on-click="desc" class="ui basic label"> 
 {{props.name}}</div><template is="dom-if" if="{{meta.node_count}}"><div class="ui label"> <i class="circle thin icon"></i>{{meta.node_count}}</div></template><template is="dom-if" if="{{meta.edge_count}}"><div class="ui label"> <i class="minus icon"></i>{{meta.edge_count}}</div></template><template is="dom-if" if="{{meta.star_count}}"><div class="ui label"> <i class="star thin icon"></i>{{meta.star_count}}</div></template><template is="dom-if" if="{{meta.owner}}"><div class="ui label">  <i class="user icon"></i>{{meta.owner}}</div></template><content></content></div></template></template><script>'use strict';
 
@@ -10069,7 +10264,7 @@ require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
     }
 
   });
-});</script></dom-module><dom-module id="padagraph-engine-control" assetpath="./"><template><style></style><div data-content="blocks" class$="{{button_class('blocks ui dropdown', asitem, aslabel)}}" class="blocks ui dropdown"><i class$="{{ icon(engine)}}"></i><div class="menu"><div class="header">{{engine}}</div><div class="divider"></div><template is="dom-repeat" items="[[blocks]]"><div data-value$="{{item.value}}" class="item">{{item.name}}</div></template></div></div></template><script>'use strict';
+});</script></dom-module><dom-module id="padagraph-engine-control" assetpath="./"><style></style><template><div data-content="blocks" class$="{{button_class('blocks ui dropdown', asitem, aslabel)}}" class="blocks ui dropdown"><i class$="{{ icon(engine)}}" title="{{block.name}}"></i><div class="menu"><div class="header">{{block.name}}</div><div class="divider"></div><template is="dom-repeat" items="[[block.components.models]]"><div data-value$="{{item.name}}" class="item">{{item.name}}</div></template></div></div></template><script>'use strict';
 
 require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
   Polymer({
@@ -10077,16 +10272,16 @@ require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
 
     properties: {
 
-      app: Object,
-      blocks: Object,
       engine: String,
+      app: Object,
+      block: Object,
 
       asitem: { type: Boolean, value: false },
       aslabel: { type: Boolean, value: false }
 
     },
 
-    observers: ["setupUI(app, blocks)"],
+    observers: ["setupUI(app, block)"],
 
     button_class: function button_class(css, asitem, aslabel) {
       return css + " " + (this.asitem ? "item" : this.aslabel ? "label" : "");
@@ -10094,14 +10289,15 @@ require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
 
     icon: function icon(engine) {
       var icons = {
+        'explore': 'share alternate icon',
         'layout': 'cube icon',
         'clustering': 'block layout icon'
       };
       return icons[engine];
     },
-    setupUI: function setupUI(app, blocks) {
-      if (!app || !blocks) return;
-      var app = this.app;
+
+    setupUI: function setupUI(app, block) {
+      if (!app || !block) return;
       var engine = this.engine;
 
       $('.blocks', this).dropdown({
