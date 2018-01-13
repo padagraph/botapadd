@@ -46,6 +46,10 @@
           bottom: 22px;
       }
       
+      padagraph-node-search {
+          position: absolute;
+          bottom: 22px;
+      }
       
       .masthead.segment {
         min-height: 700px;
@@ -386,7 +390,8 @@
                   })
               
             </script>
-          </div>{% if graphurl %}   <a href="{{graphurl}}" class="ui active refresh button">refresh</a>
+          </div>
+          <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui active refresh button">refresh</a>
           <!--a.ui.active.primary.button(href="{{padurl}}") edit-->{% endif %}
         </div>{% elif error %}
         <div class="ui text container">
