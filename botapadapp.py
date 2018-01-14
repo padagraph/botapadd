@@ -91,6 +91,7 @@ create table imports (
 from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
 
 from pdglib.graphdb_ig import IGraphDB, engines
+
 graphdb = IGraphDB({})
 graphdb.open_database()
 
@@ -391,8 +392,10 @@ def botimport(repo, padurl, gid, content_type):
                 else :
                     graph = pad2igraph(gid, padurl)
                     graph = prepare_graph(graph)
-                    
+                    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+                    graph['meta']['owner'] = None
                     graphdb.graphs[gid] = graph
+                                        
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                     
                     if graph.vcount() > 300: 
@@ -547,7 +550,7 @@ from pdgapi import get_engines_routes
     
 @app.route('/engines', methods=['GET'])
 def _engines():
-    host = ""
+    host = ENGINES_HOST
     return jsonify({'routes': get_engines_routes(app, host)})
 
     
