@@ -72,11 +72,20 @@ def parse_url(url):
             url = "https://%s.framapad.org/p/%s/export/txt" % (pad[0], pad[1])
             return url, pad[0], "txt"
             
+    # padagraph.io
+    re_pad = "https?:\/\/calc.padagraph.io/([0-9a-zA-Z\-_]+)([\.csv]+)?"
+    pad = re.findall(re_pad, url)
+    debug( "convert_url", url , pad )
+    if  len(pad):
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) :
+            return "%s.csv" % url, pad[0], "csv"
+
     # ethercald & framacalc
     re_pad = "https?:\/\/(?:frama|ether)calc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
     pad = re.findall(re_pad, url)
     debug( "convert_url", url , pad )
-    if  len(pad) :
+    if  len(pad):
         pad = [r for r in pad[0] if len(r)]
         if  len(pad) :
             return "%s.csv" % url, pad[0], "csv"
