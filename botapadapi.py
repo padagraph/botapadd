@@ -53,12 +53,12 @@ def explore_engine(graphdb):
     
     searchs = []
     for k,w,l,m,n  in [
-              (u"Search", True, 3, OUT,30 ), ]:
+              (u"Search", True, 3, ALL ,30 ), ]:
         search = Optionable("GraphSearch")
         search._func = subgraph
         search.add_option("weighted", Boolean(default=w))
         search.add_option("add_loops", Boolean(default=True, help="add loops on vertices"))
-        search.add_option("mode", Numeric(choices=[ IN, OUT, ALL], default=m, help="edge directions"))
+        search.add_option("mode", Numeric(choices=[ OUT, IN,  ALL], default=m, help="edge directions"))
         search.add_option("length", Numeric( vtype=int, min=1, default=l))
         search.add_option("cut", Numeric( vtype=int, min=2, default=n))
         

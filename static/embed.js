@@ -176,7 +176,7 @@ Models.Vertex = Cello.Vertex.extend({
           error: function(){}
         });
 
-
+        
     },
 
     
@@ -230,6 +230,33 @@ Models.Vertex = Cello.Vertex.extend({
         return props;
     },
 
+    fetch_neighbors: function(mode, success){
+
+        var self = this;
+        var url_root = this.url() ;
+
+        if (this._neighbors) {
+            success(this._neighbors);
+            return;
+        }
+
+        $.ajax({
+          url: url_root + "/neighbors",
+          type:"POST",
+          data:JSON.stringify({
+                  start:0,
+                  mode: this.mode
+              }),
+          contentType:"application/json; charset=utf-8",
+          dataType:"json",
+          success: function(data){
+            self._neighbors = data;
+            success(data);    
+          }
+        })
+
+    },
+
     toCard: function(){
         return {
                     uuid : this.id,
@@ -253,6 +280,26 @@ Models.Vertex = Cello.Vertex.extend({
 },{ // !! static not in the same brackets !!
     active_flags : ['intersected', 'faded', 'selected']
 });
+
+Models.EdgeType = Cello.EdgeType.extend({
+
+    parse_label: function(){
+
+            var label = this.label;
+            
+            var token = label.substring(label.indexOf('/') + 1);
+            
+            var e = {};
+            e.label =  label;
+            e.family = label.indexOf('/') >= 0 ? label.substring(0,label.indexOf('/')) : "";
+            e.name = label.indexOf('/') > 0  ? label.substring(label.indexOf('/')) : label;
+            e.subscript = "";
+            return e;
+        }
+
+    });
+
+
 
 Models.Edge = Cello.Edge.extend({
 
@@ -931,6 +978,7 @@ App.Base = Backbone.View.extend({
         attrs = _.extend( {
             vertex_model: Models.Vertex,
             edge_model: Models.Edge,
+            edgetype_model: Models.EdgeType,
             
         }, attrs ? attrs : {} )
         var graph = new Cello.Graph(attrs);
@@ -1176,8 +1224,16 @@ App.Base = Backbone.View.extend({
 
         var engine_fetched = function(engine){
             pending.count -=1;
+            console.log(' engine_fetched ', pending.count )
             //pending[]
-            if( pending.count == 0 && pending.complete ) pending.complete(app);
+            if( pending.count == 0 ) {
+                
+                if ( pending.complete ) pending.complete(app);
+                else {
+                    var event = new Event("app_engines_fetched", {"bubbles":true, "cancelable":false});
+                    document.dispatchEvent(event);
+                }
+            };
         };
 
         
@@ -1576,9 +1632,6 @@ App.Simple = App.Base.extend({
         // --- webcomponents graph model ---
         $('padagraph-node-search')[0].graph = graph;
         $('padagraph-notifications')[0].setGraphModel(graph);
-
-
-
 
         //- chelou 
         $('#newNodeType').click(function(){Backbone.trigger('edit:nodetype', false)})

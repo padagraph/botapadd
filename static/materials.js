@@ -105,11 +105,12 @@
                 'fontFillStyle'  : '#222',  //#366633',
                 //'fontStrokeStyle'  : 'black',
                 //'fontStrokeWidth' : 0.6,
+               
+                "textAlign": "left",
+                "textVerticalAlign" : 'center',
+                'textPaddingY'  : -3,
+                'textPaddingX'  : 0.5,
                 
-                'textPaddingY'  : -0.8,
-                'textPaddingX'  : 0,
-                'textAlign'     : 'center',
-                'textVerticalAlign'     : 'center',
             } },
 
 
