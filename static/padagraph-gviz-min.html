@@ -10817,7 +10817,14 @@ require(['jquery'], function ($) {
       });
     }
   });
-});</script></dom-module><dom-module id="padagraph-labels-control" assetpath="./"><template><style></style><template is="dom-if" if="{{props.name}}"><div style="display:none" class="markdown description"><a name="desc">       </a>{{props.description}}</div><div id="labelsAndButtons" class="ui grid"> <div on-click="desc" class="ui basic label"> 
+});</script></dom-module><dom-module id="padagraph-labels-control" assetpath="./"><template><style>.ui.tab {
+    height : 400px;
+    width : 600px;
+    overflow: auto;
+    } 
+fieldset {
+    background-color: #eee; }
+  </style><template is="dom-if" if="{{props.name}}"><template is="dom-if" if="{{show}}"><div class="ui segment"><fieldset><div class="ui tabular menu"><div data-tab="tab-desc" class="active item">Description</div><div data-tab="tab-pedigree" class="item">Pedigree</div></div><div data-tab="tab-desc" class="ui active tab"><div class="markdown"><a name="desc">       </a><p>{{props.description}}</p></div></div><div data-tab="tab-pedigree" class="ui tab"><div class="ui list"><template is="dom-repeat" items="[[meta.pedigree]]"><div class="item"><div class="content"><a class="header">{{item.0}} : {{item.2}} </a><div class="description">{{item.1}} </div></div></div></template></div></div></fieldset></div></template><div id="labelsAndButtons" class="ui grid"> <div on-tap="desc" class="ui basic label"> 
 {{props.name}}</div><template is="dom-if" if="{{meta.node_count}}"><div class="ui label"> <i class="circle thin icon"></i>{{meta.node_count}}</div></template><template is="dom-if" if="{{meta.edge_count}}"><div class="ui label"> <i class="minus icon"></i>{{meta.edge_count}}</div></template><template is="dom-if" if="{{meta.star_count}}"><div class="ui label"> <i class="star thin icon"></i>{{meta.star_count}}</div></template><template is="dom-if" if="{{meta.owner}}"><div class="ui label">  <i class="user icon"></i>{{meta.owner}}</div></template><template is="dom-if" if="{{meta.date}}"><div class="ui label">  <i class="calendar icon"></i>{{meta.date}}</div></template><content></content></div></template></template><script>'use strict';
 
 require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backbone, $, S, Cello, Const) {
@@ -10839,6 +10846,7 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
       var _this = this;
 
       if (!app || !graph) return;
+
       graph.on('reset', function () {
         _this.meta = _this.graph.meta.attributes;
         _this.props = _this.graph.properties.attributes;
@@ -10846,8 +10854,12 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
     },
 
     desc: function desc() {
-      var $el = $(".markdown", this)[0];
-      $el.style.display = $el.style.display == "block" ? "none" : "block";
+      var _this2 = this;
+
+      this.show = !this.show;
+      this.async(function () {
+        $('.tabular.menu .item', _this2).tab();
+      });
     }
 
   });

@@ -419,9 +419,11 @@ def botimport(repo, padurl, gid, content_type):
                     
                     graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
                     graph['meta']['owner'] = None
+
                     graph['meta']['pedigree'] = pedigree.compute(graph)
           
                     graphdb.graphs[gid] = graph
+                                        
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                     
