@@ -9602,7 +9602,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                     _this._update_neighbors(data);
                 };
 
-                if (model.graph) model.fetch_neighbors(_this.mode, success);
+                if (model.fetch_neighbors) model.fetch_neighbors(_this.mode, success);
             };
 
             this._listener.listenTo(this.model.graph.vs, 'add', function (m) {

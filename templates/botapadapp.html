@@ -70,6 +70,11 @@
           margin: 0px 30px 10px 0px;
       }
       
+      code.log {
+          background: none;
+          white-space:pre-wrap;
+      }
+      
       form .ui.checkbox label {
           font-size: 24px;
           padding-left: 24px;
@@ -143,10 +148,11 @@
         position:absolute;
         bottom: 12px;
         padding:12px;
-        margin:12px;
+        margin:18px;
       }
-      .nofoot #labels {
-        //bottom: -30px;
+      #labels .segment {
+          margin-left: -14px;
+          margin-bottom: 24px;
       }
       
       padagraph-model-popup {
@@ -347,6 +353,16 @@
                 <li>Error while parsing <a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
                 <li>Parsing data failed in {{error.url}}</li>
                 <li>we used the character <code>{{error.separator}}</code> as a separator</li>
+              </ul>{% elif error.class == "BotapadParseError" %}
+              <ul class="list">
+                <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
+                <li>{{error.message}}</li>{%if error.line %}
+                <table class="ui padded celled table">
+                  <tr>{% for e in error.line %}
+                    <th>{{e}}</th>{%endfor%}
+                  </tr>
+                </table>{%endif%}
+                <li>parser log   </li><code class="log">{{error.log}}</code>
               </ul>{% else %}
               <ul class="list">
                 <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>

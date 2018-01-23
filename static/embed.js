@@ -727,7 +727,7 @@ function install_navigation_shortcuts(context, graph, prefix){
                 }
             }
         ],
-        [   'shift enter', "Explore", function(){
+        [   'shift+enter', "Explore", function(){
                 var vs = graph.vs.by_flag('selected');
                 if( vs.length == 1)
                 {

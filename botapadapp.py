@@ -45,7 +45,7 @@ except:
     KEY = "SHOULD BE ADDED in secret/key.txt"	
 
 # delete before import
-DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
+DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
 
 # app
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
@@ -248,18 +248,34 @@ def pad2pdg(gid, url):
 
 
 def pad2igraph(gid, url, format="csv"):
+
+    print ("format", gid, url, format )
     
     if format == 'csv':
-        description = "imported from %s" % url
-        bot = BotaIgraph(directed=True)
-        botapad = Botapad(bot , gid, description, delete=DELETE)
-        botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-        graph = bot.get_igraph()
-        return graph
         
+        try : 
+            description = "imported from %s" % url
+            bot = BotaIgraph(directed=True)
+            botapad = Botapad(bot , gid, description, delete=DELETE)
+            botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
+            graph = bot.get_igraph()
+
+            if graph.vcount() == 0 :
+                raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
+
+            return graph
+            
+        except BotapadParseError as e :
+            log = botapad.get_log()
+            e.log = log
+            raise e
+            
+        except OSError as e :
+            raise BotapadURLError( "No such File or Directory : %s " % url, url)
+            
         
     elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
-
+        content = None
         if url[0:4] == 'http':
             try :
                 url = convert_url(path)
@@ -276,6 +292,8 @@ def pad2igraph(gid, url, format="csv"):
             except Exception as err :
                 raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
 
+        print (" === reading  %s/%s.%s" % (STORE, url, format) )
+
         try :
             with named_temporary_file(text=False) as tmpf: 
                 outf = open(tmpf, "wt") 
@@ -287,11 +305,10 @@ def pad2igraph(gid, url, format="csv"):
             return graph
         
         except Exception as err :
-            raise
             raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err.message ))
 
-
-    raise BotapadError('%s : Unsuported format %s file at %s ' % ( gid, format, url ))
+    else :
+        raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
     
     
 
@@ -357,12 +374,17 @@ def botimport(repo, padurl, gid, content_type):
 
     #args
     args = request.args
+     
     color = "#" + args.get("color", "249999" )    
-    reader = args.get("format", "csv" )    
+    if content_type == "embed":
+        footer = False
+    else : 
+        footer = not(args.get('nofoot', 0) == "1") # default true
 
-    footer = not(args.get('nofoot', 0) == "1") # default true
+    reader = args.get("format", "csv")
 
-    if content_type == "embed": footer = False
+    args = dict(request.args)
+    args['s'] = padurl
 
     if padurl:
         
@@ -406,8 +428,6 @@ def botimport(repo, padurl, gid, content_type):
                     return redirect(data, code=302)
                     
             elif repo == "igraph":
-
-                
 
                 if content_type == "embed":
                     complete = True 
@@ -468,14 +488,16 @@ def botimport(repo, padurl, gid, content_type):
             }
         
         except BotapadParseError as err:
+            
             print "EXCEPT BotapadParseError" , err
             error = {
                 'class' : err.__class__.__name__,
                 'url' : err.path, 
+                'message'  : err.message.replace('\n', '<br/>'),
+                'line'  : err.line,
+                'log'  : err.log,
                 'separator' : "NONE",
-                'message'  : err.message
             }
-            raise
             
         except BotapadURLError as err:
             error = {
