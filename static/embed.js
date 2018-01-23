@@ -631,6 +631,7 @@ var GvizShortcuts = function(gviz){ return [
                 console.log("toggle image display", gviz.show_images)
             }
         ],
+       
         "* Rendering ",
         [
             'r', "toggles autorotate", function(){
@@ -710,8 +711,14 @@ function install_edit_shortcuts(context, graph, prefix){
                 }
             }
         ],
+    ];
+    bindAllKeyboardShortcuts(context, actions, prefix);
+}
+
+function install_navigation_shortcuts(context, graph, prefix){
+    var actions  = [
         [
-            'space', "Expands node relations",function(){
+            'enter', "Expands node relations",function(){
                 var vs = graph.vs.by_flag('selected');
                 if( vs.length == 1)
                 {
@@ -720,7 +727,7 @@ function install_edit_shortcuts(context, graph, prefix){
                 }
             }
         ],
-        [   'o', "Explore", function(){
+        [   'shift enter', "Explore", function(){
                 var vs = graph.vs.by_flag('selected');
                 if( vs.length == 1)
                 {
@@ -730,7 +737,7 @@ function install_edit_shortcuts(context, graph, prefix){
             }
         ],
         [
-            'r', "Removes node from view", function(){
+            'backspace', "Removes node from view", function(){
                 var vs = graph.vs.by_flag('selected');
                 if( vs.length == 1)
                 {
@@ -748,7 +755,7 @@ function install_edit_shortcuts(context, graph, prefix){
 function install_gviz_shortcuts(gviz, prefix){
 
     //- global no prefix
-    bindAllKeyboardShortcuts( gviz.$el, GvizShortcuts(gviz) , "");
+    bindAllKeyboardShortcuts( gviz.$el, GvizShortcuts(gviz) , prefix);
 
     
 };
@@ -1536,8 +1543,9 @@ App.Base = Backbone.View.extend({
 
         /** === Keyboard shortcuts === */
         install_shortcuts();
-        install_gviz_shortcuts(gviz, "!");
-        install_edit_shortcuts(this.$el, this.models.graph, ":");
+        install_gviz_shortcuts(gviz, "");
+        install_navigation_shortcuts(this.$el, this.models.graph, "");
+        install_edit_shortcuts(this.$el, this.models.graph, "");
         
         gviz.animate();
     },

@@ -108,7 +108,7 @@
                
                 "textAlign": "left",
                 "textVerticalAlign" : 'center',
-                'textPaddingY'  : -3,
+                'textPaddingY'  : -4,
                 'textPaddingX'  : 0.5,
                 
             } },
