@@ -99,6 +99,7 @@ graphdb = IGraphDB({})
 graphdb.open_database()
 
 STORE = "../application/src/sample"
+STORE = "./pads"
 
 
 def get_db():
@@ -255,6 +256,8 @@ def pad2igraph(gid, url, format="csv"):
         
         try : 
             description = "imported from %s" % url
+            if url[0:4] != 'http':
+                url = "%s/%s.%s" % (STORE, url, format) 
             bot = BotaIgraph(directed=True)
             botapad = Botapad(bot , gid, description, delete=DELETE)
             botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
