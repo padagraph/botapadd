@@ -1721,7 +1721,6 @@ gviz.ThreeViz = Backbone.View.extend({
             }, 5000);
         }
 
-        this.re
         return this;
     },
 

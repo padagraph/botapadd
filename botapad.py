@@ -19,8 +19,8 @@ EDGE = 0
 VERTEX = 1
 
 def norm_key(key):
-    s= re.sub('\W' , '', key, flags=re.UNICODE)
-    s = re.sub( "\(([0-9]?\.?[0-9]+)\)", "", s  )
+    w= re.sub('\W' , '', key.strip(), flags=re.UNICODE)
+    s = re.sub( "(^[0-9]*\.?[0-9]*)", "", w.strip() )
     return s.strip()
     
 def csv_rows(lines, start_col=None, end_col=None, separator=";"):
@@ -506,6 +506,7 @@ class Botapad(object):
             values = list(set(values))
             
             self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) " %( src , len(rows), tgt, len(values), iprop) )
+            #self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) %s" %( src , len(rows), tgt, len(values), iprop,) )
 
             nodeprops = { "label": Text() }
 
@@ -513,29 +514,28 @@ class Botapad(object):
                 self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False, 1. )]
                 self.nodetypes[tgt] = self.bot.post_nodetype(self.gid, tgt, tgt, nodeprops)
 
-                payload = []
-            
-                # is this a table ? @ prop0
-                for v in values:
-                    #key = "%s_%s" % ( tgt, v )
-                    key = "%s" % ( v )
+            payload = []
+        
+            # is this a table ? @ prop0
+            for v in values:
+                #key = "%s_%s" % ( tgt, v )
+                key = "%s" % ( v )
 
-                    if key not in self.idx :
-                        # if values[0][:1] == "*":
-                            #values[0] = values[0][1:]
-                            #starred.add(values[0])
- 
-                        payload.append( {
-                            'nodetype': self.nodetypes[tgt]['uuid'],
-                            'properties': dict(zip(['label'], [v] ))
-                          })
+                if key not in self.idx :
+                    # if values[0][:1] == "*":
+                        #values[0] = values[0][1:]
+                        #starred.add(values[0])
 
+                    payload.append( {
+                        'nodetype': self.nodetypes[tgt]['uuid'],
+                        'properties': dict(zip(['label'], [v] ))
+                      })
+            if len(payload):
                 self.log( " * [Projector] posting @ %s %s " % (len(payload), tgt ))
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     tgtid = '%s' % (node['properties']['label'])
                     self.idx[ tgtid ] = uuid
                     self.log(node)
-
                 
             etname = "%s_%s" % (src, tgt)
             if etname not in self.edgetypes:
@@ -585,8 +585,6 @@ class Botapad(object):
                                 'target': self.idx[tgtid],
                                 'properties': { "label" : etname, 'weight' : prop.weight, }
                             } )
-                            
-
                             
             self.log( "posting _ %s %s " % (len(cliqedges), cliqname ) )
             #print edges

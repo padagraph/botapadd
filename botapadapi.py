@@ -43,8 +43,10 @@ def explore_engine(graphdb):
         
         extract = ProxExtract()
         vs = []
+        
         for u in pz:
             s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
+            print u,  s
             vs = vs + s.keys()
 
         return graph.subgraph(vs)

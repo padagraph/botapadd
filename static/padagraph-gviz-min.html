@@ -9428,7 +9428,7 @@ require(['backbone', 'pdgconst'], function (Backbone, Const) {
 
         observe_id: function observe_id(graph, id, form) {
 
-            if (!graph || !lnid) return;
+            if (!graph || !id) return;
             if (id) {
                 var _this = this;
                 var vertex = this.graph.vs.filter(function (e) {
@@ -10039,7 +10039,7 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgcon
       this.completed = false;
 
       var isurl = function isurl(e) {
-        return _.isString(e);
+        return _.isString(e) && e.length > 4 && e.toLowerCase().substring(0, 4) == "http";
       };
 
       if (isurl(routes)) {
