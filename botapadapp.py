@@ -488,7 +488,8 @@ def botimport(repo, padurl, gid, content_type):
             error = {
                 'class' : err.__class__.__name__,
                 'url' : err.path, 
-                'separator' : err.separator, 
+                'separator' : err.separator,
+                'message' : err.message
             }
         
         except BotapadParseError as err:

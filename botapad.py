@@ -222,9 +222,12 @@ class Botapad(object):
         lines = [ line.strip() for line in lines ]
         lines = [ line.encode('utf8') for line in lines if len(line)]
         
+        if not len(lines):
+            raise BotapadCsvError(path, separator, "Table is empty %s lines" % (len(lines) )  )
+            
+
         if separator == 'auto':
             line = lines[0].strip()
-            print 'auto', lines[0].strip(), line[1:] == "!;"
             if line in ( '!;','!,'):
                 separator = line[1:]
             else: separator = ','
@@ -234,8 +237,6 @@ class Botapad(object):
         try : 
             reader = csv.reader(lines, delimiter=separator)
             rows = [ r for r in reader]
-            #start_col = 0 if start_col is None else start_col
-            #rows = [ r[start_col:end_col] for r in rows]
             rows = [ [ e.strip().decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
         except :
             raise BotapadCsvError(path, separator, "Error while parsing data %s lines with separator %s" % (len(lines), separator )  )
@@ -264,7 +265,6 @@ class Botapad(object):
     def _parse(self, path, rows, **kwargs):
         """ :param path : txt file path
 
-        handles special lines starting with [# @ _]
         for comments, node type, property names
         
         """

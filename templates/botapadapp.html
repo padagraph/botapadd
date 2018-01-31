@@ -352,6 +352,7 @@
               <ul class="list">
                 <li>Error while parsing <a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
                 <li>Parsing data failed in {{error.url}}</li>
+                <li>{{error.message}}</li>
                 <li>we used the character <code>{{error.separator}}</code> as a separator</li>
               </ul>{% elif error.class == "BotapadParseError" %}
               <ul class="list">
