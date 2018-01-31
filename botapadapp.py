@@ -42,7 +42,8 @@ PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 except:
-    KEY = "SHOULD BE ADDED in secret/key.txt"	
+    KEY = "SHOULD BE ADDED in secret/key.txt"
+
 
 # delete before import
 DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
@@ -65,7 +66,6 @@ login_manager.init_app(app)
 
 from flask_cors import CORS
 CORS(app)
-
 
 # Database 
 # ===
@@ -259,9 +259,10 @@ def pad2igraph(gid, url, format="csv"):
             if url[0:4] != 'http':
                 url = "%s/%s.%s" % (STORE, url, format) 
             bot = BotaIgraph(directed=True)
-            botapad = Botapad(bot , gid, description, delete=DELETE)
-            botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-            graph = bot.get_igraph()
+            botapad = Botapad(bot , gid, description, delete=DELETE, verbose=True, debug=False)
+            #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
+            botapad.parse(url, separator='auto', debug=False)
+            graph = bot.get_igraph(weight_prop=True)
 
             if graph.vcount() == 0 :
                 raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
@@ -282,7 +283,7 @@ def pad2igraph(gid, url, format="csv"):
         if url[0:4] == 'http':
             try :
                 url = convert_url(path)
-                if format in ( 'pickle', 'picklez') :
+                if format in ( 'pickle', 'picklez'):
                     raise ValueError('no pickle from HTTP : %s ' % url )
                 log( " * Downloading %s %s\n" % (url, separator))
                 content = requests.get(url).text

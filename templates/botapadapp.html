@@ -297,7 +297,7 @@
                   if ( app.gviz ) app.gviz.resize_rendering();
               }
               
-              $(window).on('resize', _window_resized );
+              window.onresize = _window_resized;
               
               document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
               

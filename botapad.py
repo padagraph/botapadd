@@ -18,12 +18,11 @@ DIRECTIONS = ('<<','--','>>')
 EDGE = 0  
 VERTEX = 1
 
-DEBUG = False
-VERBOSE = True
-
 def norm_key(key):
-    return re.sub('\W' , '', key, flags=re.UNICODE)
-   
+    s= re.sub('\W' , '', key, flags=re.UNICODE)
+    s = re.sub( "\(([0-9]?\.?[0-9]+)\)", "", s  )
+    return s.strip()
+    
 def csv_rows(lines, start_col=None, end_col=None, separator=";"):
     
     reader = csv.reader(lines, delimiter=separator)
@@ -86,11 +85,10 @@ def parse_url(url):
         return "https://hackmd.io/%s/download" % pad[0], pad[0], "md"
         
     # github
-    
     return url, None, ""
 
-#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , ! 
-Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj', 'iscliq', 'isignored'])
+#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float)
+Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight'])
 
 
 class BotapadError(Exception):
@@ -123,12 +121,14 @@ class BotapadURLError(Exception):
 
 class Botapad(object):
     
-    def __init__(self, bot, gid, description, delete=False, verbose=VERBOSE):
+    def __init__(self, bot, gid, description, delete=False, verbose=True, debug=False):
         # Bot creation & login 
             
+        self.verbose = verbose
+        self._debug = debug
         self._log = StringIO()
         self.log( "\n * Locating graph %s @ padagraph \n  " % (gid) )
-        self.verbose = verbose
+        
         self.gid = gid
         self.imports = set()
         
@@ -169,13 +169,13 @@ class Botapad(object):
     def log(self, *args):
         if len(args) == 1 and type(args) in (tuple,list):
             args = args[0]
-        if VERBOSE:
+        if self.verbose:
             self._log.write( args )
             self._log.write( "\n" )
             print(args)
 
     def debug(self, *args):
-        if DEBUG:
+        if self._debug:
             self._log.write( "DEBUG" )
             self._log.write( args )
             self._log.write( "\n" )
@@ -241,21 +241,38 @@ class Botapad(object):
             raise BotapadCsvError(path, separator, "Error while parsing data %s lines with separator %s" % (len(lines), separator )  )
 
         return rows
+
                     
     def parse(self, path, debug=False, **kwargs):
+        self._debug = debug
+        
+        rows = []
+        rows = self._parse(path, rows, **kwargs)
+        
+        self.post( self.current, rows )
+
+        self.log( " * Starring %s nodes" % len(list(self.starred)) )
+        self.bot.star_nodes(self.gid, [ self.idx[e] for e in self.starred ])
+        self.starred = set()
+        
+        self.log( " * [Parse] %s complete" % path )
+        self.log( self.bot.get_graph(self.gid) , self.imports)
+
+        return path , self.bot.get_graph(self.gid), self.imports
+
+            
+    def _parse(self, path, rows, **kwargs):
         """ :param path : txt file path
 
         handles special lines starting with [# @ _]
         for comments, node type, property names
         
         """
-        DEBUG = debug
-        print kwargs
+        self.log( "\n * _parse %s  : %s" % (len(rows), kwargs)  )
 
         self.imports.add(path)
         
         csv = self.read(path, **kwargs)
-        rows = []
         
         for row in csv:
             cell = row[0]
@@ -267,11 +284,10 @@ class Botapad(object):
             if cell[:1] == "&":
                 
                 url = cell[1:].strip()
-                                
                 # circular references
                 if url not in self.imports:
-                    self.log("=== Importing === '%s'" % url)
-                    self.parse(url, debug=debug)
+                    self.log("  === Import === '%s'" % url)
+                    rows = self._parse(url, rows)
                 else :
                     raise BotapadParseError(path, "Same file is imported multiple times  ! ", row )
                     
@@ -279,6 +295,7 @@ class Botapad(object):
             elif cell[:1] in ("@", "_"):
         
                 self.post(self.current, rows)
+                rows = []
                 
                 # processing directiv
                 line = ";".join(row)
@@ -288,17 +305,30 @@ class Botapad(object):
                 label = cols[0] # @Something
                 
                 # ( name, type indexed, projection )
+                def _w(e):
+                    
+                    isproj="%" in e
+                    w =  re.findall( "\(([0-9]?\.?[0-9]+)\)", e  )
+                    if isproj and len(w) :
+                        w = float(w[0])
+                    elif isproj :
+                        w = 1.
+                    else  :
+                        w = None
+
+                    return w
+
+
                 props = [ Prop( name=norm_key(e), type=Text(multi="+" in e),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
                     isproj="%" in e, iscliq="+" in e and "=" in e ,
-                    isignored="!" in e) for e in  cols[1:] ]
+                    isignored="!" in e, weight=_w(e) ) for e in cols[1:] ]
 
                 def get_prop(name):
                     for e in props :
                         if e.name == name :
                             return e
                     return None
-                
                 start = 0
                 end   = None
                 props = props[start: end]
@@ -308,7 +338,6 @@ class Botapad(object):
                 indexes = [ k.name for k in props if k.isindex ]
 
                 typeprops = { p.name : p.type for p in props }
-
                     
                 if cell[:1] == "@": # nodetype def
                     # raise error if no label & index
@@ -320,7 +349,6 @@ class Botapad(object):
                     if len(indexes) == 0:
                         indexes = ['label']
                         
-                    rows = []
                     for prop in props:
                         if len(prop.name) == 0:
                             message = "Property error %s " % prop
@@ -330,9 +358,7 @@ class Botapad(object):
                         message = "no `index` properties to create edge %s " % self.current
                         raise BotapadParseError(path, 'Parse error :  %s\n  ' % ( message), row )
 
-
                     self.current = (VERTEX, label, props)
-                
 
                     if not label in self.nodetypes:
                         self.log( "* posting @ %s [%s]" % (label, ", ".join(names)) , indexes, projs)
@@ -356,27 +382,17 @@ class Botapad(object):
                         for i, v in enumerate(row[1:]):
                             if i >= len(props): break
                             if props[i].ismulti :
-                                row[i+1] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) if e.strip() != "" ]
+                                row[i+1] = [  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]
                     elif self.current[0] == VERTEX:
                         for i, v in enumerate(row):
                             if i >= len(props): break
                             if props[i].ismulti :
-                                row[i] = [  e.strip() for e in re.split("[_,;]", v.strip(), ) if e.strip() != "" ]
+                                row[i] = [  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]
                             
                 rows.append(row)
+                
+        return rows
 
-        self.post( self.current, rows)
-
-        self.log( " * Starring %s nodes" % len(list(self.starred)) )
-        self.bot.star_nodes(self.gid, [ self.idx[e] for e in self.starred ])
-        self.starred = set()
-        
-        self.log( " * [Parse] %s complete" % path )
-        self.log( self.bot.get_graph(self.gid) , self.imports)
-
-        return path , self.bot.get_graph(self.gid), self.imports
-
-            
     def post(self, current, rows):
         
         if not len(rows) or not len(current): return
@@ -451,8 +467,7 @@ class Botapad(object):
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
                     self.idx[ key ] = uuid
-                    if self.verbose : 
-                        self.log(key , uuid)
+                    self.debug(key , uuid)
 
             except KeyError as e:
                 print(e)
@@ -490,12 +505,12 @@ class Botapad(object):
                         values.extend( [ k.strip() for k in r[iprop]] )
             values = list(set(values))
             
-            self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) %s" %( src , len(rows), tgt, len(values), iprop, values ) )
+            self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) " %( src , len(rows), tgt, len(values), iprop) )
 
             nodeprops = { "label": Text() }
 
             if tgt not  in self.node_headers:
-                self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False )]
+                self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False, 1. )]
                 self.nodetypes[tgt] = self.bot.post_nodetype(self.gid, tgt, tgt, nodeprops)
 
                 payload = []
@@ -515,7 +530,7 @@ class Botapad(object):
                             'properties': dict(zip(['label'], [v] ))
                           })
 
-                self.log( "* [Projector] posting @ %s %s " % (len(payload), tgt ))
+                self.log( " * [Projector] posting @ %s %s " % (len(payload), tgt ))
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     tgtid = '%s' % (node['properties']['label'])
                     self.idx[ tgtid ] = uuid
@@ -551,6 +566,7 @@ class Botapad(object):
                                         'edgetype': self.edgetypes[cliqname]['uuid'],
                                         'source': self.idx['%s' % (t)],
                                         'target': self.idx['%s' % (t2)],
+                                        'weight' : prop.weight,
                                         'properties': {"label" : cliqname}
                                     } )
                                     cliqset.add(cliqe)
@@ -567,8 +583,9 @@ class Botapad(object):
                                 'edgetype': self.edgetypes[etname]['uuid'],
                                 'source': self.idx[srcid],
                                 'target': self.idx[tgtid],
-                                'properties': {"label" : etname}
+                                'properties': { "label" : etname, 'weight' : prop.weight, }
                             } )
+                            
 
                             
             self.log( "posting _ %s %s " % (len(cliqedges), cliqname ) )
