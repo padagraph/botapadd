@@ -4,7 +4,7 @@ import os
 import sys
 import argparse
 from botapi import Botagraph, BotApiError
-from reliure.types import Text 
+from reliure.types import Text , Numeric
 
 from collections import namedtuple
 import codecs
@@ -564,7 +564,7 @@ class Botapad(object):
                     self.log(node)
                 
             etname = "%s_%s" % (src, tgt)
-            edgeprops = { "label": Text(),  }
+            edgeprops = { "label": Text(), 'weight' :Numeric( vtype=float, default=1. ) }
             if etname not in self.edgetypes:
                 self.edgetypes[etname] = self.bot.post_edgetype(self.gid, etname, etname, edgeprops)
 
@@ -583,7 +583,7 @@ class Botapad(object):
                     if prop.iscliq :
                         cliqname = "%s_clique" % (prop.name)
                         if cliqname not in self.edgetypes:
-                            self.edgetypes[cliqname] = self.bot.post_edgetype(self.gid, cliqname, cliqname, nodeprops)
+                            self.edgetypes[cliqname] = self.bot.post_edgetype(self.gid, cliqname, cliqname, edgeprops)
                         
                         for e, t in enumerate(targets):
                             for t2 in targets[e+1:]:
@@ -610,6 +610,7 @@ class Botapad(object):
                                 'edgetype': self.edgetypes[etname]['uuid'],
                                 'source': self.idx[srcid],
                                 'target': self.idx[tgtid],
+                                'weight' : prop.weight,
                                 'properties': { "label" : etname, 'weight' : prop.weight, }
                             } )
                             

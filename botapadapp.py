@@ -262,7 +262,7 @@ def pad2igraph(gid, url, format="csv"):
             botapad = Botapad(bot , gid, description, delete=DELETE, verbose=False, debug=False)
             #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
             botapad.parse(url, separator='auto', debug=False)
-            graph = bot.get_igraph(weight_prop=True)
+            graph = bot.get_igraph(weight_prop="weight")
 
             if graph.vcount() == 0 :
                 raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
@@ -394,7 +394,11 @@ def botimport(repo, padurl, gid, content_type):
         
         promote = 1 if request.form.get('promote', 0)  else 0    
         graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
-        graphurl = "?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in  args.keys()])
+        graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
+
+        for k in  request.args:
+            print "KEY", k, request.args.get(k)
+        
         
         options = {
             #
