@@ -2222,26 +2222,32 @@ gviz.ThreeVizHelpers = {
                 // text scale
                 context.scale(material.fontScale, material.fontScale);
 
+                var token = text_lines[0][0];
+                var css = _this.node_materials[token.css];
+
+                // position & draw
+                var font = get_font(css.font, viz.user_font_size)
+                var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
+                context.font = font ;
+        
+                var dimension = context.measureText("token.form");
+                var text_width = dimension.width;
+                var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
+
+                //y = (text_height * text_lines.length) / 2
+                //console.log(y, text_height , text_lines.length)
+
                 _.each(text_lines[i], function (token, j){
-
-                    var css = _this.node_materials[token.css];
-
-                    // position & draw
-                    var font = get_font(css.font, viz.user_font_size)
-                    var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
-                    context.font = font ;
                     
                     var paddingRelX = css.paddingRelX | 0;
                     var paddingRelY = css.paddingRelY | 0;
-
-                    var dimension = context.measureText(token.form);
-                    var text_width = dimension.width;
-                    var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
-
                     //update of padding
                     var xi = x + userPaddingX + paddingRelX;
                     var yi = y - userPaddingY - paddingY - (i)*(  paddingRelY + (text_height | 0));
 
+                    var dimension = context.measureText(token.form);
+                    var text_width = dimension.width;
+                    var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
                     /* : TODO : text background */  
                     //maxX = Math.max(maxX, dimension.width + letter_width/2);
                     //context.fillStyle = "#F00";

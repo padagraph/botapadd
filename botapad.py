@@ -19,8 +19,10 @@ EDGE = 0
 VERTEX = 1
 
 def norm_key(key):
-    w= re.sub('\W' , '', key.strip(), flags=re.UNICODE)
-    s = re.sub( "(^[0-9]*\.?[0-9]*)", "", w.strip() )
+    s = re.sub( "(\[.*\])", "", key.strip() )
+    s = re.sub('\W' , '', s.strip(), flags=re.UNICODE)
+    s = re.sub( "(^[0-9]*\.?[0-9]*)", "", s.strip() )
+    
     return s.strip()
     
 def csv_rows(lines, start_col=None, end_col=None, separator=";"):
@@ -87,8 +89,8 @@ def parse_url(url):
     # github
     return url, None, ""
 
-#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float)
-Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight'])
+#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float) ,[default]
+Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight','value'  ])
 
 
 class BotapadError(Exception):
@@ -319,10 +321,20 @@ class Botapad(object):
                     return w
 
 
+                def _v(e):
+                    
+                    isproj="%" in e
+                    w =  "".join( re.findall( "\[(.*)\]", e  ))
+                    if not isproj : 
+                        return w if len(w) else None 
+                    elif isproj :
+                        return None
+
+
                 props = [ Prop( name=norm_key(e), type=Text(multi="+" in e),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
                     isproj="%" in e, iscliq="+" in e and "=" in e ,
-                    isignored="!" in e, weight=_w(e) ) for e in cols[1:] ]
+                    isignored="!" in e, weight=_w(e), value=_v(e) ) for e in cols[1:] ]
 
                 def get_prop(name):
                     for e in props :
@@ -448,6 +460,8 @@ class Botapad(object):
                     if values[0][:1] == "*":
                         values[0] = values[0][1:]
                         self.starred.add(values[0])
+
+                    values = [ e.value  if e.value and v == "" else v for e,v in zip(props, values) ]
                         
                     postdata = {
                         'nodetype': self.nodetypes[label]['uuid'],
@@ -475,6 +489,7 @@ class Botapad(object):
                 message = "Cannot find column `%s` in : \n %s" % ( e, payload )
                 raise BotapadParseError("", message, payload)
             except Exception as e:
+                raise
                 raise BotapadError(e.message)
                 
             self.apply_projectors(rows, label )
@@ -505,13 +520,14 @@ class Botapad(object):
                         values.extend( [ k.strip() for k in r[iprop]] )
             values = list(set(values))
             
-            self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) " %( src , len(rows), tgt, len(values), iprop) )
-            #self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) %s" %( src , len(rows), tgt, len(values), iprop,) )
+            self.log( "\n * [Projector] : %s(%s) -- %s(%s) (%s) " %( src , len(rows), tgt, len(values), prop.name) )
 
-            nodeprops = { "label": Text() }
+            if tgt in self.node_headers:
+                nodeprops = { prop.name: Text(default= prop.value ) for prop in self.node_headers[tgt] }
 
-            if tgt not  in self.node_headers:
-                self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False, 1. )]
+            elif tgt not in self.node_headers:
+                nodeprops = { "label": Text(),  }
+                self.node_headers[tgt] = [ Prop('label', Text(),False, False, False, False, False, False, 1., None )]
                 self.nodetypes[tgt] = self.bot.post_nodetype(self.gid, tgt, tgt, nodeprops)
 
             payload = []
@@ -520,16 +536,26 @@ class Botapad(object):
             for v in values:
                 #key = "%s_%s" % ( tgt, v )
                 key = "%s" % ( v )
-
+                print key
                 if key not in self.idx :
                     # if values[0][:1] == "*":
                         #values[0] = values[0][1:]
                         #starred.add(values[0])
 
+                    # defaults values
+                    _k = [ p.name for p in self.node_headers[tgt] if p.value ]
+                    _v = [ p.value for p in self.node_headers[tgt] if p.value  ]
+                    properties = dict( zip(_k,_v) )
+                    properties['label'] = v
+
+                    
                     payload.append( {
                         'nodetype': self.nodetypes[tgt]['uuid'],
-                        'properties': dict(zip(['label'], [v] ))
+                        'properties': properties
                       })
+                      
+                    print payload[-1]
+                      
             if len(payload):
                 self.log( " * [Projector] posting @ %s %s " % (len(payload), tgt ))
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
@@ -538,8 +564,9 @@ class Botapad(object):
                     self.log(node)
                 
             etname = "%s_%s" % (src, tgt)
+            edgeprops = { "label": Text(),  }
             if etname not in self.edgetypes:
-                self.edgetypes[etname] = self.bot.post_edgetype(self.gid, etname, etname, nodeprops)
+                self.edgetypes[etname] = self.bot.post_edgetype(self.gid, etname, etname, edgeprops)
 
             # label -- property edge
             edges = []
@@ -548,6 +575,7 @@ class Botapad(object):
             cliqedges = [] 
             cliqname = ""
             
+            self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
             for r in rows:                
                 if iprop < len(r):
                     targets = r[iprop] if prop.ismulti else [r[iprop]]
@@ -566,8 +594,7 @@ class Botapad(object):
                                         'edgetype': self.edgetypes[cliqname]['uuid'],
                                         'source': self.idx['%s' % (t)],
                                         'target': self.idx['%s' % (t2)],
-                                        'weight' : prop.weight,
-                                        'properties': {"label" : cliqname}
+                                        'properties': {"label" : cliqname, 'weight' : prop.weight}
                                     } )
                                     cliqset.add(cliqe)
                                     
@@ -586,12 +613,12 @@ class Botapad(object):
                                 'properties': { "label" : etname, 'weight' : prop.weight, }
                             } )
                             
-            self.log( "posting _ %s %s " % (len(cliqedges), cliqname ) )
+            self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
             #print edges
             for e in self.bot.post_edges(self.gid, iter(cliqedges)) : 
                 self.debug(e)
                 
-            self.log( "posting _ %s %s " % (len(edges), etname ) )
+            self.log( " * [Projector] posting _ %% %s %s " % (len(edges), etname ) )
             #print edges
             for e in self.bot.post_edges(self.gid, iter(edges)) : 
                 self.debug(e)
@@ -618,20 +645,18 @@ def main():
 
     args = parser.parse_args()
 
-    global VERBOSE, DEBUG
-    VERBOSE = args.verbose
-    DEBUG = args.debug
-
+    verbose = args.verbose
+    debug = args.debug
 
     if args.host and args.key and args.name and args.path:
         description = "imported from %s . " % args.path
         bot = Botagraph(args.host, args.key)
-        pad = Botapad(bot, args.name, description, delete=args.delete)
+        pad = Botapad(bot, args.name, description, delete=args.delete, verbose=verbose, debug=debug )
         pad.log( "VERBOSE", args.verbose, "DEBUG", args.debug )
         pprint( pad.parse(args.path, separator=args.separator) )
 
         pad.log(" * Visit %s/graph/%s" % ( args.host, args.name, ) )
-    
+
     
 if __name__ == '__main__':
     sys.exit(main())
