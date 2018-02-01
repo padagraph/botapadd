@@ -536,7 +536,6 @@ class Botapad(object):
             for v in values:
                 #key = "%s_%s" % ( tgt, v )
                 key = "%s" % ( v )
-                print key
                 if key not in self.idx :
                     # if values[0][:1] == "*":
                         #values[0] = values[0][1:]
@@ -553,8 +552,6 @@ class Botapad(object):
                         'nodetype': self.nodetypes[tgt]['uuid'],
                         'properties': properties
                       })
-                      
-                    print payload[-1]
                       
             if len(payload):
                 self.log( " * [Projector] posting @ %s %s " % (len(payload), tgt ))
@@ -615,12 +612,10 @@ class Botapad(object):
                             } )
                             
             self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
-            #print edges
             for e in self.bot.post_edges(self.gid, iter(cliqedges)) : 
                 self.debug(e)
                 
             self.log( " * [Projector] posting _ %% %s %s " % (len(edges), etname ) )
-            #print edges
             for e in self.bot.post_edges(self.gid, iter(edges)) : 
                 self.debug(e)
         
