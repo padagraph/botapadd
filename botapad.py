@@ -558,7 +558,7 @@ class Botapad(object):
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     tgtid = '%s' % (node['properties']['label'])
                     self.idx[ tgtid ] = uuid
-                    self.log(node)
+                    self.debug(node)
                 
             etname = "%s_%s" % (src, tgt)
             edgeprops = { "label": Text(), 'weight' :Numeric( vtype=float, default=1. ) }
@@ -614,7 +614,7 @@ class Botapad(object):
             self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
             for e in self.bot.post_edges(self.gid, iter(cliqedges)) : 
                 self.debug(e)
-                
+                    
             self.log( " * [Projector] posting _ %% %s %s " % (len(edges), etname ) )
             for e in self.bot.post_edges(self.gid, iter(edges)) : 
                 self.debug(e)

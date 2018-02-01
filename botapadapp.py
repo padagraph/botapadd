@@ -259,7 +259,7 @@ def pad2igraph(gid, url, format="csv"):
             if url[0:4] != 'http':
                 url = "%s/%s.%s" % (STORE, url, format) 
             bot = BotaIgraph(directed=True)
-            botapad = Botapad(bot , gid, description, delete=DELETE, verbose=False, debug=False)
+            botapad = Botapad(bot , gid, description, delete=DELETE, verbose=True, debug=False)
             #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
             botapad.parse(url, separator='auto', debug=False)
             graph = bot.get_igraph(weight_prop="weight")
@@ -396,10 +396,6 @@ def botimport(repo, padurl, gid, content_type):
         graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
         graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
 
-        for k in  request.args:
-            print "KEY", k, request.args.get(k)
-        
-        
         options = {
             #
             'wait' : 4,
