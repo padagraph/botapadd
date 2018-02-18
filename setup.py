@@ -18,5 +18,6 @@ setup(
     author='ynnk, a-tsioh',
     author_email='contact@padagraph.io',
     url='www.padagraph.io',
+    packages=['botapad'], #+ ['botapad.%s' % submod for submod in find_packages('botapad')],
     install_requires=required
 )
