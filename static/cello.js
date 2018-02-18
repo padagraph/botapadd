@@ -1810,9 +1810,9 @@ var Vertex = Backbone.Model.extend({
 
         Cello.Flagable(this);
 
-        _.bindAll(this, 'degree', '_format_label', 'neighbors', 'strength');
+        _.bindAll(this, 'degree', 'format_label', 'neighbors', 'strength');
         
-        Cello.get(this, "formatted_label", this._format_label);
+        Cello.get(this, "formatted_label", this.format_label);
 
         this.on("sync", function(model, resp, options){
             //if (! (options || options.is_cancel) )
@@ -1826,8 +1826,12 @@ var Vertex = Backbone.Model.extend({
     },
     
     
-    _format_label : function(){
-        return [ {form : this.label, css : ".normal-font"} ];
+    format_label : function(length){
+        var label = this.label
+        if (length) {
+            label = label.substring(0,length)
+        }
+        return [ {form : label, css : ".normal-font"} ];
     },
     
     

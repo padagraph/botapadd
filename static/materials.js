@@ -111,6 +111,9 @@
                 'textPaddingY'  : -4,
                 'textPaddingX'  : 0.5,
                 
+                // text length
+                'textLength' : 20,
+                
             } },
 
 
@@ -149,6 +152,7 @@
                 'scale':1.2,
                 'opacity' : 1,
                 'line_max_length': 18,
+                'textLength' : 100,
 
             } },
 

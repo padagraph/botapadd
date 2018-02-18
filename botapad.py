@@ -108,6 +108,7 @@ class BotapadParseError(Exception):
         self.message = message
         self.line = line
         self.log = ""
+        print path, message, line
     
 class BotapadCsvError(Exception):
     def __init__(self, path, separator, message):
@@ -133,6 +134,7 @@ class Botapad(object):
         
         self.gid = gid
         self.imports = set()
+        self.path = None
         
         self.current = () # (VERTEX | EDGE, label, names, index_prop)
         
@@ -186,7 +188,9 @@ class Botapad(object):
 
 
     def read(self, path, separator='auto'):
-        
+        """
+        path : file path or url
+        """
         encoding = 'utf-8'
         path = path.strip()
 
@@ -201,7 +205,6 @@ class Botapad(object):
                     content = content[1:]
                 lines = content.split('\n')
             except :
-                raise
                 raise BotapadURLError("Can't download %s" % url, url)
 
         else:
@@ -263,6 +266,21 @@ class Botapad(object):
 
         return path , self.bot.get_graph(self.gid), self.imports
 
+    def parse_csvrows(self, rows, **kwargs):
+        
+        buff = []
+        rows = self._parse_csvrows(rows, buff, **kwargs)
+        self.post( self.current, rows )
+
+        self.log( " * Starring %s nodes" % len(list(self.starred)) )
+        self.bot.star_nodes(self.gid, [ self.idx[e] for e in self.starred ])
+        self.starred = set()
+        
+        self.log( " * [Parse] %s rows  complete" % len(rows) )
+        self.log( self.bot.get_graph(self.gid) , self.imports)
+
+        return self.bot.get_graph(self.gid), self.imports
+
             
     def _parse(self, path, rows, **kwargs):
         """ :param path : txt file path
@@ -270,12 +288,16 @@ class Botapad(object):
         for comments, node type, property names
         
         """
-        self.log( "\n * _parse %s  : %s" % (len(rows), kwargs)  )
-
+        self.log( "\n * _parse %s %s + %s" % (path, len(rows), kwargs)  )
         self.imports.add(path)
-        
+        self.path = path
         csv = self.read(path, **kwargs)
         
+        return self._parse_csvrows(csv, rows, **kwargs)
+
+        
+
+    def _parse_csvrows(self, csv, rows, **kwargs):
         for row in csv:
             cell = row[0]
             # ! comment
@@ -291,11 +313,11 @@ class Botapad(object):
                     self.log("  === Import === '%s'" % url)
                     rows = self._parse(url, rows)
                 else :
-                    raise BotapadParseError(path, "Same file is imported multiple times  ! ", row )
+                    raise BotapadParseError(self.path, "Same file is imported multiple times  ! ", row )
                     
             # @ Nodetypes, _ Edgetypes
             elif cell[:1] in ("@", "_"):
-        
+
                 self.post(self.current, rows)
                 rows = []
                 
@@ -350,13 +372,14 @@ class Botapad(object):
                 indexes = [ k.name for k in props if k.isindex ]
 
                 typeprops = { p.name : p.type for p in props }
-                    
+                print "props", props
                 if cell[:1] == "@": # nodetype def
                     # raise error if no label & index
                     pl = get_prop('label')
+                    
                     if len(indexes) == 0 and pl is None:
                         message = 'No `index` nor `label` set for @%s ' % (label )
-                        raise BotapadParseError(path,message, row )
+                        raise BotapadParseError(self.path, message, row )
 
                     if len(indexes) == 0:
                         indexes = ['label']
@@ -364,11 +387,11 @@ class Botapad(object):
                     for prop in props:
                         if len(prop.name) == 0:
                             message = "Property error %s " % prop
-                            raise BotapadParseError(path, 'Parse error : %s ' % message, row )
+                            raise BotapadParseError(self.path, 'Parse error : %s ' % message, row )
                     
                     if len(projs) > 0 and len(indexes) == 0 :
                         message = "no `index` properties to create edge %s " % self.current
-                        raise BotapadParseError(path, 'Parse error :  %s\n  ' % ( message), row )
+                        raise BotapadParseError(self.path, 'Parse error :  %s\n  ' % ( message), row )
 
                     self.current = (VERTEX, label, props)
 
@@ -394,7 +417,7 @@ class Botapad(object):
                         for i, v in enumerate(row[1:]):
                             if i >= len(props): break
                             if props[i].ismulti :
-                                row[i+1] = [  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]
+                                row[i+1] = list(set([  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]))
                     elif self.current[0] == VERTEX:
                         for i, v in enumerate(row):
                             if i >= len(props): break
@@ -461,11 +484,12 @@ class Botapad(object):
                         values[0] = values[0][1:]
                         self.starred.add(values[0])
 
-                    values = [ e.value  if e.value and v == "" else v for e,v in zip(props, values) ]
+                    values = [ e.value  if e.value and v == "" else v for e,v in zip(props, values) if e.isproj == False ]
+                    _names = [ e.name for e in props if e.isproj == False ]
                         
                     postdata = {
                         'nodetype': self.nodetypes[label]['uuid'],
-                        'properties': dict(zip(names, values))
+                        'properties': dict(zip(_names, values))
                       }
                       
                     if 'label' not in names:
@@ -563,6 +587,7 @@ class Botapad(object):
             etname = "%s_%s" % (src, tgt)
             edgeprops = { "label": Text(), 'weight' :Numeric( vtype=float, default=1. ) }
             if etname not in self.edgetypes:
+                self.log( " * [Projector] POST edgetype %s %s " % (etname, edgeprops ) )
                 self.edgetypes[etname] = self.bot.post_edgetype(self.gid, etname, etname, edgeprops)
 
             # label -- property edge
@@ -596,8 +621,7 @@ class Botapad(object):
                                     cliqset.add(cliqe)
                                     
                     if prop.isproj :
-                        #if len(indexes) == 0 :
-                            #raise BotapadParseError()
+
                         for t in targets:
                             st = self.node_headers[label]
                             srcid = "".join([ r[i] for i in indexes  ])

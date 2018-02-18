@@ -786,8 +786,11 @@ var get_text_lines = function(node, material){
         token = {},
         form = "",
         end_line = false,
-        label = node.formatted_label;
+        label = [ {form : node.label, css : ".normal-font"} ];
 
+    if ( node.format_label)
+        label = node.format_label(material.textLength);
+        
     if ( label === undefined ) return [];
 
     //init of the first token and form if next token exists
@@ -1404,7 +1407,7 @@ gviz.ThreeViz = Backbone.View.extend({
 
         var flags = obj.flags || {};
         var names = _.filter(_.keys(materials), function(name) { return name.substring(0,1) == "." });
-        var material = _.extend({},materials.default);
+        var material = _.extend({}, materials.default );
         var apply = true;
 
         // sort names from the more generic to the more specific
@@ -1448,7 +1451,8 @@ gviz.ThreeViz = Backbone.View.extend({
         }
 
         // precomputed text lines
-        material.text_lines = get_text_lines( obj, material);
+        if (obj.nodetype)
+            material.text_lines = get_text_lines( obj, material );
         
         if (material.shape == null) material.shape='circle';
         
@@ -2332,8 +2336,11 @@ node_materials : [
         //'strokeStyle': "gradient:#AAAAAA" ,
         'lineWidth'  : 0.1,
 
+        // text length
+        'textLength' : 20,
+
         // font properties
-        'textAlign'  : 'center', 
+        'textAlign'  : 'center',
         'textVerticalAlign'  : 'center', 
         'fontScale'  :  0.1,
         'font' : 'normal 10px Arial',

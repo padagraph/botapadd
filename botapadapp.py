@@ -20,11 +20,11 @@ from cello.graphs import pedigree
 from cello.graphs.prox import ProxSubgraph
 from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
 
-from reliure.utils.log import get_app_logger_color
 
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 
 
+from reliure.utils.log import get_app_logger_color
 log_level = logging.INFO if DEBUG else logging.WARN
 logger = get_app_logger_color("botapad", app_log_level=log_level, log_level=log_level)
 

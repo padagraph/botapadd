@@ -8581,7 +8581,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
     },
 
     select_component: function select_component(e, detail) {
-      if (this.comp.get("selected") == false) this.play();
+      if (this.comp.get("selected") == false) this.block.select(this.comp);
     },
 
     play: function play() {
@@ -9567,7 +9567,7 @@ require(['backbone', 'pdgconst'], function (Backbone, Const) {
 
     });
 });</script></dom-module><dom-module id="padagraph-vtx-neighbors" assetpath="./"><style>h4 { color : #333; }
-</style><template><div id="neighbourhood" class="item"><h4>neighbors   </h4><template is="dom-repeat" items="[[by_edgetypes]]" as="item"><template is="dom-if" if="[[ item.neighbors.length ]]"><div class="content"><padagraph-edge-type model="[[item.edgetype]]"></padagraph-edge-type><div class="neighbors"><template is="dom-repeat" items="[[item.neighbors]]" as="neighbor"><div class="neighbor"><i class$="[[neighbor.icon]]" title="{{neighbor.direction}}"></i><padagraph-vertex-xs graph="[[graph]]" model="{{neighbor.node}}"></padagraph-vertex-xs></div></template></div></div></template></template></div></template><script>'use strict';
+</style><template><div id="neighbourhood" class="item"><template is="dom-repeat" items="[[by_edgetypes]]" as="item"><template is="dom-if" if="[[ item.neighbors.length ]]"><div class="content"><padagraph-edge-type model="[[item.edgetype]]"></padagraph-edge-type><div class="neighbors"><template is="dom-repeat" items="[[item.neighbors]]" as="neighbor"><div class="neighbor"><i class$="[[neighbor.icon]]" title="{{neighbor.direction}}"></i><padagraph-vertex-xs graph="[[graph]]" model="{{neighbor.node}}"></padagraph-vertex-xs></div></template></div></div></template></template></div></template><script>'use strict';
 
 var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
 
@@ -9599,7 +9599,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             var fetch = function fetch() {
 
                 var success = function success(data) {
-                    _this._update_neighbors(data);
+                    _this._update_neighbors();
                 };
 
                 if (model.fetch_neighbors) model.fetch_neighbors(_this.mode, success);
@@ -9612,12 +9612,11 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             fetch(model);
         },
 
-        _update_neighbors: function _update_neighbors(data) {
+        _update_neighbors: function _update_neighbors() {
 
             if (this.model == null || this.model.graph == null) return;
-            if (data == null || data.neighbors == null) return;
 
-            var neighbors = data.neighbors;
+            var neighbors = this.model._neighbors;
             var nodetypes = _.chain(neighbors).map(function (d) {
                 return d[2].nodetype;
             }).uniq().map(function (d) {
@@ -9753,7 +9752,7 @@ span.name {
    //overflow-y: auto;
    //z-index:1;
 //}
-</style><template><template is="dom-if" if="{{ model }}"> <div class="ui card"><template is="dom-if" if="{{ is_edge }}"><div class="item"><padagraph-edge-card-xl model="{{model}}"></padagraph-edge-card-xl></div></template><template is="dom-if" if="{{ is_vertex }}"> <div class="intersected"><padagraph-vertex-card-m model="{{model}}"></padagraph-vertex-card-m><div style="overflow-y:auto;" class="content"><template is="dom-if" if="{{image}}"> <img src="{{image}}" class="ui small centered image"><div class="ui divider"></div></template><template is="dom-repeat" items="[[props]]"> <div class="comment"><div class="content"><span class="name">{{item.name}}</span><padagraph-card-property prop="{{item}}" class="value"></padagraph-card-property></div></div></template><padagraph-vtx-neighbors graph="{{graph}}" model="{{model}}"></padagraph-vtx-neighbors></div></div></template></div></template></template><script>'use strict';
+</style><template><template is="dom-if" if="{{ model }}"> <div class="ui card"><template is="dom-if" if="{{ is_edge }}"><div class="item"><padagraph-edge-card-xl model="{{model}}"></padagraph-edge-card-xl></div></template><template is="dom-if" if="{{ is_vertex }}"> <div class="intersected"><padagraph-vertex-card-m model="{{model}}"></padagraph-vertex-card-m><div class="sub header"><a href="#expand" on-click="expand" class="ui label">+10 </a><a href="{{ geturl(model) }}/neighbors" target="_blank" class="ui label">neighbors</a><a href="{{ geturl(model) }}" target="_blank" title="{{ model.id }}" class="ui label">{{ short(model.id) }}</a></div><div style="overflow-y:auto;" class="content"><template is="dom-if" if="{{image}}"> <img src="{{image}}" class="ui small centered image"><div class="ui divider"></div></template><template is="dom-repeat" items="[[props]]"> <div class="comment"><div class="content"><span class="name">{{item.name}}</span><padagraph-card-property prop="{{item}}" class="value"></padagraph-card-property></div></div></template><padagraph-vtx-neighbors graph="{{graph}}" model="{{model}}"></padagraph-vtx-neighbors></div></div></template></div></template></template><script>'use strict';
 
 require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
   Polymer({
@@ -9769,6 +9768,10 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
     created: function created() {
       this._listener = {};
       _.extend(this._listener, Backbone.Events);
+    },
+
+    geturl: function geturl() {
+      return this.model ? this.model.url() : "";
     },
 
     graph_changed: function graph_changed(graph) {
@@ -9833,6 +9836,16 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 
     rmflag: function rmflag(model) {
       this.model = null;
+    },
+
+    expand: function expand() {
+      var graph = this.model.graph;
+      var params = { graph: graph.id, nodes: [this.model.id], weights: [] };
+      Backbone.trigger('engine:expand_prox', params);
+    },
+
+    short: function short(uuid) {
+      return !uuid ? null : uuid.substring(0, 6) + '...' + uuid.substring(uuid.length - 4);
     }
 
   });
@@ -10110,7 +10123,7 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgcon
 
         if (sync) {
           graph.on('sync', reset);
-          graph.fetch({ parse: false });
+          graph.fetch({ parse: true });
         } else reset();
 
         parse.completed = true;
@@ -10127,9 +10140,8 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgcon
       var _window_resized = function _window_resized() {
         if (app.gviz) app.gviz.resize_rendering();
       };
-      $(window).on('resize', _window_resized);
 
-      // setuo callback
+      $(window).on('resize', _window_resized);
     }
   });
 });</script></dom-module><dom-module id="padagraph-gviz" assetpath="./"><template><div id="gviz_model_imgs" style="display:none"></div><canvas id="gviz_imgs_cache_canvas" style="display:none"></canvas><content> </content></template><script>'use strict';
@@ -10827,8 +10839,8 @@ fieldset {
 fieldset .segment{
     margin-left: -16px;
     margin-bottom: 20px;}
-  </style><template is="dom-if" if="{{props.name}}"><template is="dom-if" if="{{show}}"><div class="ui segment"><fieldset><div class="ui tabular menu"><div data-tab="tab-desc" class="active item">Description</div><div data-tab="tab-pedigree" class="item">Pedigree</div><div on-tap="desc" class="right floated item"><i class="close icon"></i></div></div><div data-tab="tab-desc" class="ui active tab"><div class="markdown"><a name="desc">       </a><p>{{props.description}}</p></div></div><div data-tab="tab-pedigree" class="ui tab"><div class="ui list"><template is="dom-repeat" items="[[meta.pedigree]]"><div class="item"><div class="content"><a class="header">{{item.0}} : {{item.2}} </a><div class="description">{{item.1}} </div></div></div></template></div></div></fieldset></div></template><div id="labelsAndButtons" class="ui grid"> <div on-tap="desc" class="ui basic label"> 
-{{props.name}}</div><template is="dom-if" if="{{meta.node_count}}"><div class="ui label"> <i class="circle thin icon"></i>{{meta.node_count}}</div></template><template is="dom-if" if="{{meta.edge_count}}"><div class="ui label"> <i class="minus icon"></i>{{meta.edge_count}}</div></template><template is="dom-if" if="{{meta.star_count}}"><div class="ui label"> <i class="star thin icon"></i>{{meta.star_count}}</div></template><template is="dom-if" if="{{meta.owner}}"><div class="ui label">  <i class="user icon"></i>{{meta.owner}}</div></template><template is="dom-if" if="{{meta.date}}"><div class="ui label">  <i class="calendar icon"></i>{{meta.date}}</div></template><content></content></div></template></template><script>'use strict';
+  </style><template is="dom-if" if="{{props}}"><template is="dom-if" if="{{show}}"><div class="ui segment"><fieldset><div class="ui tabular menu"><div data-tab="tab-desc" class="active item">Description</div><div data-tab="tab-pedigree" class="item">Pedigree</div><div on-tap="desc" class="right floated item"><i class="close icon"></i></div></div><div data-tab="tab-desc" class="ui active tab"><div class="markdown"><a name="desc">       </a><p>{{props.description}}</p></div></div><div data-tab="tab-pedigree" class="ui tab"><div class="ui list"><template is="dom-repeat" items="[[meta.pedigree]]"><div class="item"><div class="content"><a class="header">{{item.0}} : {{item.2}} </a><div class="description">{{item.1}} </div></div></div></template></div></div></fieldset></div></template><div id="labelsAndButtons" class="ui grid"> <div on-tap="desc" class="ui basic label"> 
+{{props.name}}</div><div class="ui label"> <i class="circle thin icon"></i>{{meta.node_count}}</div><div class="ui label"> <i class="minus icon"></i>{{meta.edge_count}}</div><template is="dom-if" if="{{meta.star_count}}"><div class="ui label"> <i class="star thin icon"></i>{{meta.star_count}}</div></template><template is="dom-if" if="{{meta.owner}}"><div class="ui label">  <i class="user icon"></i>{{meta.owner}}</div></template><template is="dom-if" if="{{meta.date}}"><div class="ui label">  <i class="calendar icon"></i>{{meta.date}}</div></template><content></content></div></template></template><script>'use strict';
 
 require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backbone, $, S, Cello, Const) {
   Polymer({
@@ -10850,9 +10862,12 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
 
       if (!app || !graph) return;
 
-      graph.on('reset', function () {
-        _this.meta = _this.graph.meta.attributes;
-        _this.props = _this.graph.properties.attributes;
+      for (var event in { 'reset': 1, 'merge': 1 }) graph.on(event, function () {
+        _this.set("meta", graph.meta.attributes);
+        for (var k in graph.meta.attributes) _this.notifyPath("meta." + k, _this.meta[k]);
+
+        _this.set("props", graph.properties.attributes);
+        for (var k in _this.graph.properties.attributes) _this.notifyPath("props." + k, _this.props[k]);
       });
     },
 

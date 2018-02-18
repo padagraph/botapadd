@@ -139,6 +139,9 @@ Models.Vertex = Cello.Vertex.extend({
         this.on("change:cl_color", function(vtx){
             vtx.set('color', vtx.get('cl_color')) ;
         });
+        this.on("change", function(vtx){
+            vtx._neighbors = null;
+        });
     },
     
     defaults: {
@@ -179,11 +182,14 @@ Models.Vertex = Cello.Vertex.extend({
         
     },
 
-    
-     _format_label : function(){
+    format_label : function(length){
          // css should be in materials
         var font = ".form"
-        return [ {form : this.label, css : font} ];
+        var label = this.label
+        if (length) {
+            label = label.substring(0,length)
+        }
+        return [ {form : label, css : font} ];
     },
 
     to_str : function(){
@@ -250,8 +256,21 @@ Models.Vertex = Cello.Vertex.extend({
           contentType:"application/json; charset=utf-8",
           dataType:"json",
           success: function(data){
-            self._neighbors = data;
-            success(data);    
+
+            var es = {};
+            if ( data.neighbors ) {
+                for ( var i in data.neighbors ){
+                    var neighbor = data.neighbors[i]
+                    var eid = neighbor[0].uuid;
+                    es[eid] = neighbor
+                }
+                var vs = [];
+                for ( var k in es )
+                    vs.push(es[k])
+                self._neighbors =  vs ; 
+            }
+            
+            success(self._neighbors);    
           }
         })
 
@@ -958,6 +977,7 @@ App.Base = Backbone.View.extend({
         this.ALLOW_AUTO_COMPUTE = true;
         this._auto_compute_delay = false
 
+        this.Models = Models;
         this.models  = _.clone({});
         this.engines = _.clone({});
     },
@@ -1064,8 +1084,6 @@ App.Base = Backbone.View.extend({
             graph.vs.set([]);
             app.set_auto_compute(true);
         });
-        
-
     },
 
     create_clustering_model: function(){
@@ -1207,11 +1225,18 @@ App.Base = Backbone.View.extend({
 
                 clustering.play();
             });
-            
         
             app.listenTo(clustering, 'play:success', app.apply_clustering);
             app.engines.clustering = clustering;
         }
+
+        // extra routes
+        for (var k in routes){
+            if (app.engines[k]) continue;
+            var e = Engine({url: routes[k].url});
+            app.engines[k] = e;
+        }
+
         //when engine failed
         app.listenTo(Backbone, 'play:error', app.engine_play_error);
         app.on('engine:auto_compute', app.auto_compute);
@@ -1301,19 +1326,13 @@ App.Base = Backbone.View.extend({
         }});
 
 
-        if (app.engines.additive_nodes)
-          app.engines.additive_nodes.fetch({ success: engine_fetched });
-          
-        if (app.engines.starred)
-          app.engines.starred.fetch({ success: engine_fetched });
-          
-        if (app.engines.expand_prox)
-          app.engines.expand_prox.fetch({ success: engine_fetched });
-        
-        if (app.engines.explore)
-          app.engines.explore.fetch({ success: function(){
-            engine_fetched();
-        }});
+        for ( var k in app.engines){
+            console.log(" FETCH ENGINES "+ k);
+            if ( k == "clustering" || k == "layout"  ) continue;
+            app.engines[k].fetch({ success: engine_fetched });
+            
+        }
+              
     },
 
 /* engines callbalcks */
@@ -1331,7 +1350,7 @@ App.Base = Backbone.View.extend({
         if(this.engines.layout) this.engines.layout.play();
     },
 
-
+    noop: function(){},
 
     additive_nodes: function(uuids, options){
         this._additive_nodes_uuids = _.union(this._additive_nodes_uuids , uuids)
@@ -1352,7 +1371,6 @@ App.Base = Backbone.View.extend({
     explore_reset: function(response){
         Backbone.trigger(Const.unselect_nodes);
         Backbone.trigger(Const.unselect_edges);
-
         
         var app = this;
         app.response = response;
@@ -1363,6 +1381,7 @@ App.Base = Backbone.View.extend({
         // parse and reset graph
         if (response.results.graph){
             app.models.graph.reset(response.results.graph);
+            app.models.graph.set("gid", response.results.graph.properties.name )
 
             app.models.graph.vs.each(function(vtx){
                 vtx.add_flag("form");
@@ -1426,12 +1445,9 @@ App.Base = Backbone.View.extend({
         if ( options.callback )
             options.callback();
 
-        this.set_auto_compute( true );
         // and compute layout & clustering
-          
-
+        this.set_auto_compute( true );
         this.auto_compute();
-        
         
     },
 
@@ -1502,20 +1518,16 @@ App.Base = Backbone.View.extend({
             var text;
 
             if(!_.isEmpty(response)){
-                // There is a cello response
-                // so we can get the error messages
                 text = response.meta.errors.join("<br />");
             } else {
                 // HTTP error, just map the anwser
                 text = $(xhr.responseText);
                 // HACK:
-                $("body").css("margin", "0"); //note: the Flask debug has some css on body that fucked the layout
+                $("body").css("margin", "0"); 
             }
 
             $("body").after(text);
         }
-
-        //stop waiting
 
     },
 
