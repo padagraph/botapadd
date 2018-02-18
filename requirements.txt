@@ -3,11 +3,15 @@
 flask
 flask-runner
 Flask-Markdown
+flask_login
+flask_cors
 
 # cello reliure Botagraph & BotaIgraph
 reliure
 https://github.com/ynnk/cello/archive/master.zip
 https://github.com/padagraph/botapi/archive/master.zip
+https://github.com/padagraph/pdgapi/archive/master.zip
+https://github.com/padagraph/pdglib/archive/master.zip
 
 # padagraph screenshot
 # selenium

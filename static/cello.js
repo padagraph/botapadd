@@ -681,8 +681,9 @@ Cello.Doc = Backbone.Model.extend({
             Cello.get(this, 'otype');
             Cello.get(this, 'value');
             Cello.set(this, 'value', function(val){
-                _this.validate(val);
-                _this.set('value', val);
+                var _val = _this.validate(val);
+                if (_this.value != _val)
+                    _this.set('value', _val);
             });
             // check data
             Cello.assert(this.name !== null, "Option should have a name");
@@ -700,12 +701,25 @@ Cello.Doc = Backbone.Model.extend({
 
         /** Validate one value
         */
-        _validate_one: function(val){
-            if(this.otype.type === "Boolean"){
-                val = [true, "true", "True", "TRUE", "1", "yes"].indexOf(val) >= 0;
-                //console.log(this.otype.type, val);
+        parse: function(val){
+            if (this.otype) {
+                if(this.otype.type === "Boolean"){
+                    val = [1, true, "true", "True", "TRUE", "1", "yes"].indexOf(val) >= 0;
+                }
+                if(this.otype.vtype === "float"){
+                    val = parseFloat(val);
+                }
+                if(this.otype.vtype === "int"){
+                    val = parseInt(val);
+                }
             }
+            return val;
+        },    
             
+        /** Validate one value
+        */
+        _validate_one: function(val){
+            val = this.parse(val)
             // check enum
             var choices = this.otype.choices;
             if(choices && _.indexOf(choices, val) < 0){
@@ -721,8 +735,7 @@ Cello.Doc = Backbone.Model.extend({
         validate: function(val){
             var _this = this;
             // TODO; run validators !
-            var multi = _this.otype.multi;
-            if(multi){
+            if(this.is_multi()){
                 var nval = [];
                 _.each(val, function(one_val){
                     nval.push(_this._validate_one(one_val));
@@ -775,7 +788,7 @@ Cello.Doc = Backbone.Model.extend({
 
         set_option: function(name, new_value){
             var opt = this.get_option(name);
-            opt.value = new_value;
+            opt.value = new_value;  
         },
 
         parse: function(data, options){ 
@@ -1797,9 +1810,9 @@ var Vertex = Backbone.Model.extend({
 
         Cello.Flagable(this);
 
-        _.bindAll(this, 'degree', '_format_label', 'neighbors', 'strength');
+        _.bindAll(this, 'degree', 'format_label', 'neighbors', 'strength');
         
-        Cello.get(this, "formatted_label", this._format_label);
+        Cello.get(this, "formatted_label", this.format_label);
 
         this.on("sync", function(model, resp, options){
             //if (! (options || options.is_cancel) )
@@ -1813,8 +1826,12 @@ var Vertex = Backbone.Model.extend({
     },
     
     
-    _format_label : function(){
-        return [ {form : this.label, css : ".normal-font"} ];
+    format_label : function(length){
+        var label = this.label
+        if (length) {
+            label = label.substring(0,length)
+        }
+        return [ {form : label, css : ".normal-font"} ];
     },
     
     

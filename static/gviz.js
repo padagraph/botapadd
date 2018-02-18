@@ -786,8 +786,11 @@ var get_text_lines = function(node, material){
         token = {},
         form = "",
         end_line = false,
-        label = node.formatted_label;
+        label = [ {form : node.label, css : ".normal-font"} ];
 
+    if ( node.format_label)
+        label = node.format_label(material.textLength);
+        
     if ( label === undefined ) return [];
 
     //init of the first token and form if next token exists
@@ -930,9 +933,9 @@ gviz.DEFAULTS = {
     show_text  : true,
     show_images  : true,
 
-    background_color : 0xFF11FF,
-    user_font_size : 0, // range -5,5
-    user_vtx_size : 0, // range -5,5
+    background_color : 0xAAAAAA,
+    user_font_size : 3, //[0, 25]
+    user_vtx_size : 1, // 
     initial_size : 10, // 
     initial_z    : 1400,
 
@@ -1404,7 +1407,7 @@ gviz.ThreeViz = Backbone.View.extend({
 
         var flags = obj.flags || {};
         var names = _.filter(_.keys(materials), function(name) { return name.substring(0,1) == "." });
-        var material = _.extend({},materials.default);
+        var material = _.extend({}, materials.default );
         var apply = true;
 
         // sort names from the more generic to the more specific
@@ -1448,7 +1451,8 @@ gviz.ThreeViz = Backbone.View.extend({
         }
 
         // precomputed text lines
-        material.text_lines = get_text_lines( obj, material);
+        if (obj.nodetype)
+            material.text_lines = get_text_lines( obj, material );
         
         if (material.shape == null) material.shape='circle';
         
@@ -1596,6 +1600,26 @@ gviz.ThreeViz = Backbone.View.extend({
         }
     },
 
+    increase_vertex_size :  function(){
+                this.user_vtx_size = Math.min(25 , this.user_vtx_size * 1.5 );
+                this.request_animation(100);
+    },
+
+    decrease_vertex_size :  function(){
+                this.user_vtx_size = Math.max(0.1 , this.user_vtx_size / 1.5 );
+                this.request_animation(100);
+    },
+        
+    increase_font_size : function(){
+        this.user_font_size = Math.min(25, this.user_font_size + 1 );
+        this.request_animation(100);
+    },
+    
+    decrease_font_size : function(){
+        this.user_font_size = Math.max(-5, this.user_font_size - 1 );
+        this.request_animation(100);
+    },
+
     collapse : function(delay, easing, complete){
         /**
          * tween back vertices and edges to 0
@@ -1701,7 +1725,6 @@ gviz.ThreeViz = Backbone.View.extend({
             }, 5000);
         }
 
-        this.re
         return this;
     },
 
@@ -1968,7 +1991,7 @@ gviz.ThreeVizHelpers = {
     wnode_scale : function(vtx){
         
         var v = vtx.get('SIZE'); // [0,1]
-        return  ( 3 + this.user_vtx_size  ) * v ; 
+        return  ( this.user_vtx_size  ) * v ; 
     },
         
     // optimizations
@@ -2152,12 +2175,14 @@ gviz.ThreeVizHelpers = {
                 context.save();
 
                 var x = 0,
-                y = 0,
-                
-                text_width = 0, //compute the text width
-                paddingX = material.textPaddingX | 0,
-                paddingY1 = (material.textPaddingY | 0) +  ((text_lines.length-1) * -12)/text_lines.length + 9 * (i);
-                
+                    y = 0,
+                    
+                    text_width = 0, //compute the text width
+                    userPaddingX = material.textPaddingX | 0,
+                    userPaddingY = material.textPaddingY | 0,
+                    paddingX = 0, paddingY = 0;
+                    
+                    
                 var fontsize = 1;
                 _.each(text_lines[i], function (token){
                     var font = _this.node_materials[token.css].font;
@@ -2201,26 +2226,32 @@ gviz.ThreeVizHelpers = {
                 // text scale
                 context.scale(material.fontScale, material.fontScale);
 
+                var token = text_lines[0][0];
+                var css = _this.node_materials[token.css];
+
+                // position & draw
+                var font = get_font(css.font, viz.user_font_size)
+                var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
+                context.font = font ;
+        
+                var dimension = context.measureText("token.form");
+                var text_width = dimension.width;
+                var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
+
+                //y = (text_height * text_lines.length) / 2
+                //console.log(y, text_height , text_lines.length)
+
                 _.each(text_lines[i], function (token, j){
-
-                    var css = _this.node_materials[token.css];
-
-                    // position & draw
-                    var font = get_font(css.font, viz.user_font_size)
-                    var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
-                    context.font = font ;
                     
                     var paddingRelX = css.paddingRelX | 0;
                     var paddingRelY = css.paddingRelY | 0;
+                    //update of padding
+                    var xi = x + userPaddingX + paddingRelX;
+                    var yi = y - userPaddingY - paddingY - (i)*(  paddingRelY + (text_height | 0));
 
                     var dimension = context.measureText(token.form);
                     var text_width = dimension.width;
                     var text_height = dimension.actualBoundingBoxDescent - dimension.actualBoundingBoxAscent;
-
-                    //update of padding
-                    var xi = x + paddingRelX;
-                    var yi = y - paddingY - (i)*(  paddingRelY + (text_height | 0));
-
                     /* : TODO : text background */  
                     //maxX = Math.max(maxX, dimension.width + letter_width/2);
                     //context.fillStyle = "#F00";
@@ -2305,8 +2336,11 @@ node_materials : [
         //'strokeStyle': "gradient:#AAAAAA" ,
         'lineWidth'  : 0.1,
 
+        // text length
+        'textLength' : 20,
+
         // font properties
-        'textAlign'  : 'center', 
+        'textAlign'  : 'center',
         'textVerticalAlign'  : 'center', 
         'fontScale'  :  0.1,
         'font' : 'normal 10px Arial',

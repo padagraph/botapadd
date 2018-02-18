@@ -15,58 +15,30 @@
     -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
     <style type="text/css">
-      body, .ui.inverted.segment {
+      body, .pusher .ui.segment {
           background: #127777;
       }
       
-      .masthead.segment {
-        min-height: 700px;
-        padding: 5px;
-      }
-      .masthead .logo.item img {
-        margin-right: 1em;
-      }
-      .masthead .ui.menu .ui.button {
-        margin-left: 0.5em;
-      }
-      .masthead h1.ui.header {
-        margin-top: 1rem;
-        margin-bottom: 0em;
-        font-size: 4em;
-        font-weight: normal;
-      }
-      .masthead h2 {
-        font-size: 1.7em;
-        font-weight: normal;
-        padding-bottom: 1em;
+              
+      #keb {
+          min-width:350px;
       }
       
-      .ui.vertical.stripe {
-        padding: 4em 0em;
-      }
-      .ui.vertical.stripe h3 {
-        font-size: 2em;
-      }
-      .ui.vertical.stripe .button + h3,
-      .ui.vertical.stripe p + h3 {
-        margin-top: 3em;
-      }
-      .ui.vertical.stripe .floated.image {
-        clear: both;
-      }
-      .ui.vertical.stripe p {
-        font-size: 1.33em;
-      }
-      .ui.vertical.stripe .horizontal.divider {
-        margin: 3em 0em;
+      #keb .close{
+          background: #FFF;
+          text-align:right;
+          padding: 4px ;
       }
       
-      .quote.stripe.segment {
-        padding: 0em;
+      a.ui.active.refresh.button {
+          position:absolute;
+          right: 56px;
+          bottom: 22px;
       }
-      .quote.stripe.segment .grid .column {
-        padding-top: 5em;
-        padding-bottom: 5em;
+      
+      padagraph-node-search {
+          position: absolute;
+          bottom: 22px;
       }
       
       .footer.segment {
@@ -84,17 +56,6 @@
         .secondary.pointing.menu .toc.item {
           display: block;
         }
-        .masthead.segment {
-          min-height: 350px;
-        }
-        .masthead h1.ui.header {
-          font-size: 2em;
-          margin-top: 1.5em;
-        }
-        .masthead h2 {
-          margin-top: 0.5em;
-          font-size: 1.5em;
-        }
       }
       
       a.inverted { color:white;}
@@ -107,6 +68,11 @@
           background: darkcyan;
           padding: 6px;
           margin: 0px 30px 10px 0px;
+      }
+      
+      code.log {
+          background: none;
+          white-space:pre-wrap;
       }
       
       form .ui.checkbox label {
@@ -152,6 +118,8 @@
         top: 176px;
       }
       
+      #menu .divider { margin:3px }
+      
       .nofoot #menu {
         top: 24px;
       }
@@ -168,7 +136,7 @@
           
           text-align:left;
           width:100%;
-          height:calc(100%);
+          height:100%;
       }
       
       #viz {
@@ -180,14 +148,11 @@
         position:absolute;
         bottom: 12px;
         padding:12px;
-        margin:12px;
+        margin:18px;
       }
-      .nofoot #labels {
-        bottom: -30px;
-      }
-      .markdown {
-        position:absolute;
-        bottom: 20px;
+      #labels .segment {
+          margin-left: -14px;
+          margin-bottom: 24px;
       }
       
       padagraph-model-popup {
@@ -210,8 +175,15 @@
   </head>
   <body>
     <!-- Page Contents-->
+    <div id="keb" style="background:#FAFAFA" class="ui left vertical sidebar"><a name="kebup"></a>
+      <div class="close"><a class="ui link icon"><i class="close icon"></i></a></div>
+      <div id="kebcontent">
+        <padagraph-gviz-control></padagraph-gviz-control>
+      </div>
+      <div class="close"><a href="#kebup" class="ui link icon"><i class="caret up icon"></i></a></div>
+    </div>
     <div class="pusher">
-      <div class="ui inverted vertical center aligned segment">{% if footer %}  
+      <div class="ui vertical center aligned segment">{% if footer %}  
         <div class="ui text container">
           <h1 class="ui inverted header">padagraph.io</h1>
           <h2>Open a pad and a graph will follow </h2>
@@ -299,15 +271,18 @@
           <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
           <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
           <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
-            <padagraph-gviz-json routes="{{routes}}" data="{{data}}">
+            <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
               <padagraph-gviz options="{{options}}">
                 <div id="viz"></div>
                 <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
-                <div id="menu" class="ui icon vertical borderless menu">
+                <div id="menu" class="ui icon borderless vertical menu">
                   <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
                   <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                  <div class="ui divider">         </div>
                   <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
-                  <padagraph-engine-control engine="clustering" asitem="asitem"></padagraph-engine-control>
+                  <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
+                  <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
+                  <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
                 </div>
                 <div id="labels">
                   <padagraph-labels-control></padagraph-labels-control>
@@ -315,12 +290,49 @@
               </padagraph-gviz>
             </padagraph-gviz-json>
             <script>
-              e = document.getElementById('gviz');
-              e.style.height = ( window.innerHeight - 62 )+ "px";
+              var _window_resized = function(){
+                  var e = document.getElementById('gviz');
+                  e.style.height = ( window.innerHeight - 32 )+ "px";
+                  var app = document.querySelector('padagraph-gviz').app
+                  if ( app.gviz ) app.gviz.resize_rendering();
+              }
+              
+              window.onresize = _window_resized;
+              
+              document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
+              
+                      console.log(e.detail.app); // true
+                      var app = e.detail.app;
+                      
+                      var engines = [];
+                      var app_engines = {
+                          'explore':app.engines.explore,
+                          'layout':app.engines.layout,
+                          'clustering':app.engines.clustering,
+                      };
+                      
+                      for (var k in app_engines){
+                          var engine = app_engines[k]
+                          engine.name = k;
+                          engines.push(engine);
+                      }
+                      
+                      var keb = document.createElement("padagraph-keb")
+                      keb.engines = engines;
+                      $("#keb")
+                          .sidebar('setting', 'dimPage', false)
+                          .sidebar('setting', 'transition', 'overlay')
+                      $("#kebcontent").append(keb)
+              
+                      $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+                      $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+              
+                      _window_resized();
+                  })
               
             </script>
-          </div>{% if graphurl %}   <a href="{{graphurl}}" class="ui active right floated button">refresh</a>
-          <!--a.ui.active.primary.button(href="{{padurl}}") edit-->{% endif %}
+          </div>
+          <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui active refresh button">refresh</a>{% endif %}
         </div>{% elif error %}
         <div class="ui text container">
           <h3 class="ui inverted horizontal divider">Import error </h3>
@@ -339,7 +351,18 @@
               <ul class="list">
                 <li>Error while parsing <a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
                 <li>Parsing data failed in {{error.url}}</li>
+                <li>{{error.message}}</li>
                 <li>we used the character <code>{{error.separator}}</code> as a separator</li>
+              </ul>{% elif error.class == "BotapadParseError" %}
+              <ul class="list">
+                <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>
+                <li>{{error.message}}</li>{%if error.line %}
+                <table class="ui padded celled table">
+                  <tr>{% for e in error.line %}
+                    <th>{{e}}</th>{%endfor%}
+                  </tr>
+                </table>{%endif%}
+                <li>parser log   </li><code class="log">{{error.log}}</code>
               </ul>{% else %}
               <ul class="list">
                 <li><a href="{{error.url}}" target="_blank">{{error.url}}</a></li>

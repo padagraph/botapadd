@@ -7,7 +7,6 @@ import datetime
 import logging
 import codecs
 import json
-import pickle
 from functools import wraps
 
 from flask import Flask, Response, make_response, g, current_app, request
@@ -17,35 +16,37 @@ from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 
 from cello.graphs import IN, OUT, ALL
+from cello.graphs import pedigree
 from cello.graphs.prox import ProxSubgraph
 from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
 
-from reliure.utils.log import get_app_logger_color
 
 DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 
 
+from reliure.utils.log import get_app_logger_color
 log_level = logging.INFO if DEBUG else logging.WARN
-logger = get_app_logger_color("cillex", app_log_level=log_level, log_level=log_level)
-
-
+logger = get_app_logger_color("botapad", app_log_level=log_level, log_level=log_level)
 
 RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
+
+
 
 # padagraph host valid token
 PATH = "./static/images" # images storage
 
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
-ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://padagraph.io")
+ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
 PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
 
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 except:
-    KEY = "SHOULD BE ADDED in secret/key.txt"	
+    KEY = "SHOULD BE ADDED in secret/key.txt"
+
 
 # delete before import
-DELETE = os.environ.get('BOTAPAD_DELETE', "True").lower() == "true"
+DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
 
 # app
 print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
@@ -55,11 +56,17 @@ print( "== engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PA
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
 
-# Allow origin
+socketio = None
+
+# Flask-Login
+from flask_login import LoginManager, current_user, login_user, login_required
+   
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 from flask_cors import CORS
 CORS(app)
 
-# ===
 # Database 
 # ===
 
@@ -79,6 +86,21 @@ create table imports (
     imported_on    TIMESTAMP
 );
 """
+
+
+import igraph
+from igraph.utils import named_temporary_file 
+import pickle
+import StringIO
+from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
+from pdglib.graphdb_ig import IGraphDB, engines
+
+graphdb = IGraphDB({})
+graphdb.open_database()
+
+STORE = "../application/src/sample"
+STORE = "./pads"
+
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -219,53 +241,78 @@ def readme():
     md = codecs.open('README.md', 'r', encoding='utf8').read()
     return render_template('botapadapp.html', readme=md )
     
-    
-@app.route('/decalcograph/<string:gid>', methods=['GET'])
-def decalcograph(gid):
-    padurl = "https://ethercalc.org/%s" % gid
-    graphurl = "/import/igraph.html?s=ethercalc&gid=%s&nofoot=1" % gid
-
-    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
-
-
-@app.route('/framagraph/<string:gid>', methods=['GET'])
-def live(gid):
-    padurl = "https://annuel2.framapad.org/p/%s" % gid
-    graphurl = "/import/igraph.html?s=framapad&gid=%s&nofoot=1" % gid
-
-    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
-    
-@app.route('/googledoc', methods=['GET'])
-@app.route('/googledoc/<string:gid>', methods=['GET'])
-def googledoc(gid=None):
-    if gid:
-        padurl = "https://docs.google.com/document/d/%s?embedded=true" % gid
-    else:
-        padurl = "https://docs.google.com/document/u/0/"
-        
-    graphurl = "/import/igraph.html?s=google&gid=%s&nofoot=1" % gid
-
-    return render_template('framagraph.html', graphurl=graphurl, padurl=padurl )
-    
-
-
-    
-
-
 def pad2pdg(gid, url):
     description = "imported from %s" % url
     bot = Botagraph(PADAGRAPH_HOST, KEY)
     botapad = Botapad(bot, gid, description, delete=DELETE)
     return botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
 
-def pad2igraph(gid, url):
+
+def pad2igraph(gid, url, format="csv"):
+
+    print ("format", gid, url, format )
     
-    description = "imported from %s" % url
-    bot = BotaIgraph(directed=True)
-    botapad = Botapad(bot , gid, description, delete=DELETE)
-    botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-    graph = bot.get_igraph()
-    return graph
+    if format == 'csv':
+        
+        try : 
+            description = "imported from %s" % url
+            if url[0:4] != 'http':
+                url = "%s/%s.%s" % (STORE, url, format) 
+            bot = BotaIgraph(directed=True)
+            botapad = Botapad(bot , gid, description, delete=DELETE, verbose=True, debug=False)
+            #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
+            botapad.parse(url, separator='auto', debug=False)
+            graph = bot.get_igraph(weight_prop="weight")
+
+            if graph.vcount() == 0 :
+                raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
+
+            return graph
+            
+        except BotapadParseError as e :
+            log = botapad.get_log()
+            e.log = log
+            raise e
+            
+        except OSError as e :
+            raise BotapadURLError( "No such File or Directory : %s " % url, url)
+            
+        
+    elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
+        content = None
+        if url[0:4] == 'http':
+            try :
+                url = convert_url(path)
+                if format in ( 'pickle', 'picklez'):
+                    raise ValueError('no pickle from HTTP : %s ' % url )
+                log( " * Downloading %s %s\n" % (url, separator))
+                content = requests.get(url).text
+            except :
+                raise BotapadURLError("Can't download %s" % url, url)
+
+        elif DEBUG : 
+            try : 
+                content = open("%s/%s.%s" % (STORE, url, format) , 'rb').read()
+            except Exception as err :
+                raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
+
+        print (" === reading  %s/%s.%s" % (STORE, url, format) )
+
+        try :
+            with named_temporary_file(text=False) as tmpf: 
+                outf = open(tmpf, "wt") 
+                outf.write(content) 
+                outf.close() 
+            
+                graph =  igraph.read(tmpf, format=format) 
+  
+            return graph
+        
+        except Exception as err :
+            raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err.message ))
+
+    else :
+        raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
     
     
 
@@ -275,7 +322,15 @@ def embed():
     graphurl = "/import/igraph.html?s=%s&gid=graph&nofoot=1" % (padurl)
     return botimport('igraph', padurl, "graph", "embed")
     
-    
+
+FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else "" )  for k,v in igraph.Graph._format_mapping.iteritems()]
+
+
+FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
+FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
+
+
+
 @app.route('/import', methods=['GET'])
 @app.route('/import/', methods=['GET'])
 @app.route('/import/<string:repo>', methods=['GET', 'POST'])
@@ -319,21 +374,28 @@ def botimport(repo, padurl, gid, content_type):
     error = None
     options = ""
     graphurl = ""
+    sync=""
 
     #args
     args = request.args
+     
     color = "#" + args.get("color", "249999" )    
+    if content_type == "embed":
+        footer = False
+    else : 
+        footer = not(args.get('nofoot', 0) == "1") # default true
 
-    footer = not(args.get('nofoot', 0) == "1") # default true
+    reader = args.get("format", "csv")
 
-    if content_type == "embed": footer = False
+    args = dict(request.args)
+    args['s'] = padurl
 
     if padurl:
         
         promote = 1 if request.form.get('promote', 0)  else 0    
         graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
-        graphurl = "?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in  args.keys()])
-                    
+        graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
+
         options = {
             #
             'wait' : 4,
@@ -345,6 +407,8 @@ def botimport(repo, padurl, gid, content_type):
             'el': "#viz",
             'background_color' : color,
             'initial_size' : 16,
+            'user_font_size' : 2,
+            'user_vtx_size' : 3,
             'vtx_size' : args.get("vertex_size", 2 ),
             'show_text'  : 0 if args.get("no_text"  , None ) else 1,     # removes vertex text 
             'show_nodes' : 0 if args.get("no_nodes" , None ) else 1,   # removes vertex only 
@@ -361,6 +425,7 @@ def botimport(repo, padurl, gid, content_type):
                 pad2pdg(gid, padurl)
                 
                 data = "%s/xplor/%s.json" % (ENGINES_HOST, gid) 
+                sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                 complete = True 
 
                 if content_type == "json":
@@ -373,20 +438,26 @@ def botimport(repo, padurl, gid, content_type):
                     data = "%s/import/igraph.json?s=%s" % (ENGINES_HOST, padurl)
 
                 else :
-                    graph = pad2igraph(gid, padurl)
-
-
+                    graph = pad2igraph( gid, padurl, reader )
+                    graph = prepare_graph(graph)
                     
-                    if graph.vcount() > 300 : 
+                    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+                    graph['meta']['owner'] = None
 
+                    graph['meta']['pedigree'] = pedigree.compute(graph)
+          
+                    graphdb.graphs[gid] = graph
+                                        
+                                        
+                    sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+                    
+                    if graph.vcount() > 300: 
                         
                         LENMIN = graph.vcount() / 100 - 5
                         LENMIN = 10
                         vfilter = lambda v : False
-                        subgraph = ProxSubgraph() | RemoveNotConnected() | GenericVertexFilter(vfilter) # | composable()
+                        subgraph = ProxSubgraph() | GenericVertexFilter(vfilter)
                         
-                        #for v in graph.vs : print vfilter(v)
-
                         length = int(args.get("length" , 3 ) )
                         cut = int(args.get("cut" , 50 ) )
                         mode = int(args.get("mode" , ALL ))
@@ -394,11 +465,13 @@ def botimport(repo, padurl, gid, content_type):
                         pzeros = args.get("pz" , "" )
                         pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
                         print pzeros , graph.summary()
+                        
                         graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
                         print LENMIN , graph.summary()
+                                                 
                     
-                    graph = prepare_graph(graph)
-                    data = export_graph(graph, id_attribute='uuid')                    
+                    data = export_graph(graph, id_attribute='uuid')
+                                     
                     complete = True 
 
                 if content_type == "json":
@@ -415,18 +488,21 @@ def botimport(repo, padurl, gid, content_type):
             error = {
                 'class' : err.__class__.__name__,
                 'url' : err.path, 
-                'separator' : err.separator, 
+                'separator' : err.separator,
+                'message' : err.message
             }
         
         except BotapadParseError as err:
+            
             print "EXCEPT BotapadParseError" , err
             error = {
                 'class' : err.__class__.__name__,
                 'url' : err.path, 
+                'message'  : err.message.replace('\n', '<br/>'),
+                'line'  : err.line,
+                'log'  : err.log,
                 'separator' : "NONE",
-                'message'  : err.message
             }
-            raise
             
         except BotapadURLError as err:
             error = {
@@ -456,132 +532,17 @@ def botimport(repo, padurl, gid, content_type):
             """ , ( today, gid, padurl, 1 if complete else 0 , promote ) )
             db.commit()
         
-        #snapshot(gid, **params)D
+        #snapshot(gid, **params)
+
+    print graphurl, gid
 
     return render_template('botapadapp.html',
         static_host=STATIC_HOST, color=color,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
-        padurl=padurl, graphurl = graphurl,
+        padurl=padurl, graphurl = graphurl, sync=sync,
         footer=footer
         )
-
-# =====
-# igraph specific transformation functions
-# copied from  padagraph application api/explore to avoid dependency
-# =====
-
-import igraph
-
-def igraph2dict(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[], id_attribute=None):
-    """ Transform a graph (igraph graph) to a dictionary
-    to send it to template (or json)
-    
-    :param graph: the graph to transform
-    :type graph: :class:`igraph.Graph`
-    :param exclude_gattrs: graph attributes to exclude (TODO)
-    :param exclude_vattrs: vertex attributes to exclude (TODO)
-    :param exclude_eattrs: edges attributes to exclude (TODO)
-    """
-    
-    # some check
-    assert isinstance(graph, igraph.Graph)
-    if 'id' in graph.vs.attributes():
-        raise ValueError("The graph already have a vertex attribute 'id'")
-
-    # create the graph dict
-    attrs = { k : graph[k] for k in graph.attributes()}
-    d = {}
-    d['vs'] = []
-    d['es'] = []
-    
-    # attributs of the graph
-    if 'nodetypes' in attrs : 
-        d['nodetypes']  = attrs.pop('nodetypes')
-    if 'edgetypes' in attrs : 
-        d['edgetypes']  = attrs.pop('edgetypes')
-    
-    if 'properties' in attrs:
-        d['properties'] = attrs.pop('properties', {})
-
-    if 'meta' in attrs:
-        d['meta'] = attrs.pop('meta', {})
-        d['meta'].update( {
-            'directed' : graph.is_directed(), 
-            'bipartite' : 'type' in graph.vs and graph.is_bipartite(),
-            'e_attrs' : sorted(graph.es.attribute_names()),
-            'v_attrs' : sorted( [ attr for attr in graph.vs.attribute_names() if not attr.startswith('_')])
-            })
-
-    # vertices
-    v_idx = { }
-    for vid, vtx in enumerate(graph.vs):
-        vertex = vtx.attributes()
-        vertex['__index'] = vtx.index
-        if id_attribute is not None:
-            v_idx[vid] = vertex[id_attribute]
-        else:
-            v_idx[vid] = vid
-            vertex["id"] = vid
-
-        d['vs'].append(vertex)
-
-    # edges
-    _getvid = lambda vtxid : v_idx[vtxid] if id_attribute else vtxid 
-
-    for edg in graph.es:
-        edge = edg.attributes() # recopie tous les attributs
-        edge["source"] = v_idx[edg.source] # match with 'id' vertex attributs
-        edge["target"] = v_idx[edg.target]
-        #TODO check il n'y a pas de 's' 't' dans attr
-        d['es'].append(edge)
-
-    return d
-
-def prepare_graph(graph):
-
-    if 'nodetype' not in graph.vs.attribute_names():
-        graph.vs['nodetype'] = [ "T" for e in graph.vs ]
-    if 'uuid' not in graph.vs.attribute_names():
-        graph.vs['uuid'] = range(len(graph.vs))
-    if 'properties' not in graph.vs.attribute_names():
-        props = [ {  }  for i in range(len(graph.vs))]
-        attrs = graph.vs.attribute_names()
-        
-        for p,v  in zip(props, graph.vs):
-            for e in attrs:
-                if e not in ['nodetype', 'uuid', 'properties' ]  :
-                    p[e] = v[e]
-            if 'label' not in attrs:
-                p['label']  = v.index
-                
-        graph.vs['properties'] = props
-            
-
-    if 'edgetype' not in graph.es.attribute_names():
-        graph.es['edgetype'] = [ "T" for e in graph.es ]
-    if 'uuid' not in graph.es.attribute_names():
-        graph.es['uuid'] = range(len(graph.es))
-    if 'weight' not in graph.es.attribute_names():
-        graph.es['weight'] = [1. for e in graph.es ]
-    if 'properties' not in graph.es.attribute_names():
-        props = [ {  }  for i in range(len(graph.es))]
-        attrs = graph.es.attribute_names()
-        
-        for p,v  in zip(props, graph.es):
-            for e in attrs:
-                if e not in ['edgetype', 'uuid', 'properties' ]  :
-                    p[e] = v[e]
-            if 'label' not in attrs:
-                p['label']  = v.index
-                
-        graph.es['properties'] = props
-
-    return graph
-
-
-def export_graph(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[], id_attribute=None):
-    return  igraph2dict(graph, exclude_gattrs, exclude_vattrs, exclude_eattrs, id_attribute)    
 
 
 # === layout ===
@@ -592,18 +553,6 @@ from reliure.types import GenericType
 from reliure.engine import Engine
 from reliure.utils.log import get_basic_logger
 
-
-class EdgeList(GenericType):
-    def parse(self, data):
-        gid = data.get('graph', None)
-        edgelist = data.get('edgelist', None)
-
-        if gid is None :
-            raise ValueError('graph should not be null')
-        if edgelist is None :
-            raise ValueError('edgelist should not be null')
-
-        return data
         
 def edge_subgraph( data ):
     _format  = data['format']
@@ -627,133 +576,45 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
     return graph
 
         
+#@app.route('/engines', methods=['GET'])
+#def engines():
+    #r = request.path
+    #return jsonify({'routes': {
+            #'layout' : "%s/engines/layout" % ENGINES_HOST,
+            #'clustering' : "%s/engines/clustering" % ENGINES_HOST ,
+        #}})
+
+
+
+
+
+
+
+from pdgapi import graphedit
+ 
+edit_api = graphedit.graphedit_api("graphs", app, graphdb, login_manager, socketio )
+app.register_blueprint(edit_api)
+
+from botapadapi import explore_api
+from pdglib.graphdb_ig import engines
+api = explore_api(engines, graphdb)
+
+app.register_blueprint(api)
+
+
+from pdgapi import get_engines_routes
+    
 @app.route('/engines', methods=['GET'])
-def engines():
-    r = request.path
-    return jsonify({'routes': {
-            'layout' : "%s/engines/layout" % ENGINES_HOST,
-            'clustering' : "%s/engines/clustering" % ENGINES_HOST ,
-        }})
-
-
-# Layout functions
-
-
-def export_layout(graph, layout):
-    uuids = graph.vs['uuid']
-    coords = { uuid: layout[i] for i,uuid in enumerate(uuids)  }
-    return {
-        "desc"  : str(layout),
-        "coords": coords
-    }
-
-
-
-def layout_engine():
-    # setup
-    engine = Engine("gbuilder", "layout", "export")
-    engine.gbuilder.setup(in_name="request", out_name="graph", hidden=True)
-    engine.layout.setup(in_name="graph", out_name="layout")
-    engine.export.setup(in_name=["graph", "layout"], out_name="layout", hidden=True)
-    
-    engine.gbuilder.set(edge_subgraph) 
-
-    from cello.layout.simple import KamadaKawaiLayout, GridLayout, FruchtermanReingoldLayout
-    #from cello.layout.simple import DrlLayout
-    from cello.layout.proxlayout import ProxLayoutPCA, ProxLayoutRandomProj, ProxLayoutMDS, ProxMDSSugiyamaLayout, ProxLayoutTSNE
-    from cello.layout.transform import Shaker
-    from cello.layout.transform import ByConnectedComponent
-
-    layouts = [
-        # 3D
-        ("3DKamadaKawai" , KamadaKawaiLayout(dim=3) ),
-        ("3DTSNE"         , ProxLayoutTSNE(dim=3) | Shaker(kelastic=.001) ),
-        ("3DMds"         , ProxLayoutMDS(dim=3) | Shaker(kelastic=.001) ),
-        ("3DPca"         , ProxLayoutPCA(dim=3, ) | Shaker(kelastic=.9) ),
-        ("3DPcaWeighted" , ProxLayoutPCA(dim=3, weighted=True) | Shaker(kelastic=.9) ),
-        ("3DRandomProj"  , ProxLayoutRandomProj(dim=3) ),
-        ("3DOrdered"     , ProxMDSSugiyamaLayout(dim=3) | Shaker(kelastic=0.9) ),
-        # 2D
-        ("2DPca"         , ProxLayoutPCA(dim=2) | Shaker(kelastic=1.8) ),
-        ("2DTSNE"         , ProxLayoutTSNE(dim=2 ) | Shaker(kelastic=.001) ),
-        ("2DMds"         , ProxLayoutMDS(dim=2 ) | Shaker(kelastic=.001) ),
-        ("2DKamadaKawai" , KamadaKawaiLayout(dim=2) ),
-        # tree
-        ("2DFruchtermanReingoldLayout" , FruchtermanReingoldLayout(dim=2) ),
-        ("3DFruchtermanReingoldLayout" , FruchtermanReingoldLayout(dim=3) ),
-        ("2DFruchtermanReingoldLayoutWeighted" , FruchtermanReingoldLayout(dim=2, weighted=True) ),
-        ("3DFruchtermanReingoldLayoutWeighted" , FruchtermanReingoldLayout(dim=3, weighted=True) ),
-    ] 
-
-    for k,v in layouts:
-        v.name = k
-        
-    layouts = [ l for n,l in layouts ]        
-    engine.layout.set( *layouts )
-    
-    engine.export.set( export_layout )
-
-    return engine
-
-
-def clustering_engine():
-    """ Return a default engine over a lexical graph
-    """
-    # setup
-    engine = Engine("gbuilder", "clustering", "labelling")
-    engine = Engine("gbuilder", "clustering")
-    engine.gbuilder.setup(in_name="request", out_name="graph", hidden=True)
-    engine.clustering.setup(in_name="graph", out_name="clusters")
-    #engine.labelling.setup(in_name="clusters", out_name="clusters", hidden=True)
-
-    engine.gbuilder.set(edge_subgraph) 
-
-    ## Clustering
-    from cello.graphs.transform import EdgeAttr
-    from cello.clustering.common import Infomap, Walktrap
-    #RMQ infomap veux un pds, donc on en ajoute un bidon
-    walktrap = EdgeAttr(weight=1.) | Walktrap()
-    walktrap.name = "Walktrap"
-    infomap = EdgeAttr(weight=1.) | Infomap() 
-    infomap.name = "Infomap"
-    engine.clustering.set(walktrap, infomap)
-
-    ## Labelling
-    from cello.clustering.labelling.model import Label
-    from cello.clustering.labelling.basic import VertexAsLabel, TypeFalseLabel, normalize_score_max
-
-    def _labelling(graph, cluster, vtx):
-        return  Label(vtx["uuid"], score=1, role="default")
-    
-    #labelling = VertexAsLabel( _labelling ) | normalize_score_max
-    #engine.labelling.set(labelling)
-
-    return engine
+def _engines():
+    host = ENGINES_HOST
+    return jsonify({'routes': get_engines_routes(app, host)})
 
     
 
 def build_app():
 
+    pass
     
-    api = ReliureAPI( "engines" ,expose_route = False)
-    # Layouts
-    view = EngineView(layout_engine())
-    view.set_input_type(EdgeList())
-    view.add_output("layout", lambda x:x)
-
-    api.register_view(view, url_prefix="layout")
-
-    from cello.clustering import export_clustering
-
-    # Clusters
-    view = EngineView(clustering_engine())
-    view.set_input_type(EdgeList())
-    view.add_output("clusters", export_clustering,  vertex_id_attr='uuid')
-
-    api.register_view(view, url_prefix="clustering")
-
-    app.register_blueprint(api)
-
 
 # Start app
 

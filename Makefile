@@ -1,6 +1,8 @@
 .PHONY: install docker-build docker-push docker-pull
 
-install: 
+install:
+
+
 	mkdir -p  ./static/images/
 
 	pip install -r requirements.txt
@@ -8,6 +10,20 @@ install:
 	wget https://github.com/Semantic-Org/Semantic-UI-CSS/archive/master.zip -O static/master.zip
 
 	cd ./static && unzip master.zip
+
+	npm install jade --save
+ 
+
+
+jade:
+	@echo "\n ---------------------------"
+	@echo " * Building flask templates"
+	@echo " ---------------------------\n"
+
+	#cd ./templates && pypugjs  *.jade
+	cd ./templates && node ../node_modules/jade/bin/jade.js -P *.jade
+
+
 
 
 docker-build:

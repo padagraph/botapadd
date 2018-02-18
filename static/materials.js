@@ -98,18 +98,22 @@
                 'lineType' : "dashed",
                 'dashSize' : .1,
                 'gapSize'  : .5,
-                'line_max_length': 11,
+                'line_max_length': 12,
 
-                'fontScale'  :  0.07,
+                'fontScale'  :  0.12,
                 'font' : "normal 10px sans-serif",
                 'fontFillStyle'  : '#222',  //#366633',
                 //'fontStrokeStyle'  : 'black',
                 //'fontStrokeWidth' : 0.6,
+               
+                "textAlign": "left",
+                "textVerticalAlign" : 'center',
+                'textPaddingY'  : -4,
+                'textPaddingX'  : 0.5,
                 
-                'textPaddingY'  : -0.8,
-                'textPaddingX'  : 0,
-                'textAlign'     : 'center',
-                'textVerticalAlign'     : 'center',
+                // text length
+                'textLength' : 20,
+                
             } },
 
 
@@ -144,9 +148,11 @@
             } },
 
             { '.form.intersected':  {
-                'fontScale'  :  0.13,
+                'fontScale'  :  0.1,
                 'scale':1.2,
-                'opacity'   : 1,
+                'opacity' : 1,
+                'line_max_length': 18,
+                'textLength' : 100,
 
             } },
 
@@ -156,6 +162,7 @@
                 'opacity'   : 1,
                 //'fontScale'  :  0.4,
                 'paddingX': 200,
+                'line_max_length': 24,
             } },
 
             { '.target': {
