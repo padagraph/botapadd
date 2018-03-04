@@ -4,7 +4,11 @@
     Materials =  {
         'edge' : [
             {'default' : {
-                'lineWidth'  : 2,
+                'lineWidth' : function(edge){
+                        var w = edge.properties.get('width');
+                        if (!w) w = 2;
+                        return w;
+                    },
                 'color'    : "#666",
                 'opacity'  : 1, //.4
                 'label_visible' : false,

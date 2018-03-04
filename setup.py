@@ -13,7 +13,7 @@ required = []
 
 setup(
     name='botapad',
-    version='0.3',
+    version='0.4',
     description='padagraph pad parser',
     author='ynnk, a-tsioh',
     author_email='contact@padagraph.io',

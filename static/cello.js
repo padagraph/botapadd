@@ -1351,7 +1351,6 @@ var Graph = Backbone.Model.extend({
         // create a graph from json data
         Cello.debug("parse graph", data);
 
-
         if (data.nodetypes)
         {
             this.nodetypes.set({ 'nodetypes': data.nodetypes } , {parse:true});
@@ -1385,6 +1384,14 @@ var Graph = Backbone.Model.extend({
         // create a graph from json data
         Cello.debug("merge graph", data);
 
+        if (data.nodetypes)
+            this.nodetypes.set({ 'nodetypes': data.nodetypes } , {remove:false, parse:true});
+        if (data.edgetypes)
+            this.edgetypes.set({ 'edgetypes': data.edgetypes }, {remove:false, parse:true});
+        if (data.meta)
+            this.meta.set(data.meta, {parse:true})
+        if (data.properties)
+            this.properties.set(data.properties, {parse:true})
         
         this.vs.add(data.vs, {parse:true});
         this.es.add(data.es, {parse:true});
@@ -2082,28 +2089,24 @@ function random_int(min, max) {
         defaults: { 
             // core attributes
             members: {}, // list of this cluster's members
+            labels: [], // list of this cluster's labels
             misc: false,
             // more surfacic attributes
             selected: false,    // is the cluster selected ?
-            roles: [],          // list of select roles for labels display
             color: [200,200,200],
          },
          
         initialize: function(attrs, options){
             var _this = this;
             // Getters
-            _.bindAll(_this, "_compute_membership", "_compute_colors", "_set_roles");
+            _.bindAll(_this, "_compute_membership", "_compute_colors");
 
 //            Cello.get(this, 'clustering');
             Cello.get(this, 'members');
-            Cello.get(this, 'labels', function(){
-                return _this.members.labels || new Cello.ClusterLabelsList([]);
-            });
+            Cello.getset(this, 'labels');
             Cello.get(this, 'misc');
             Cello.getset(this, 'color'); //TODO; add validate on setter
             Cello.get(this, 'selected', function(){ return _this.has_flag("selected"); });    // true if selected
-            Cello.get(this, 'roles');       // list of active roles (for labels)
-            Cello.set(this, 'roles', this._set_roles);
             
             this.listenTo(this, "addflag:selected rmflag:selected", function(){
                 _this.collection.trigger("change:selected");
@@ -2120,53 +2123,6 @@ function random_int(min, max) {
          */
         is_misc: function(){ 
             return this.misc;
-        },
-
-        /** Returns the list of all label's roles
-         *
-         * hidden: default=False, it True even hidden roles are listed (thoses that starts with _)
-         */
-        all_roles: function(hidden){
-            var roles = _.map(this.labels.models, function(model){
-                return model.get('role');
-            });
-            
-            roles = _.union(roles);
-            if(!(_.isEmpty(roles)) && !hidden){
-                roles = _.filter(roles, function(role){ return role !== null && role.substring(0,1) != "_";} );
-            }
-            return roles;
-        },
-        
-        /** Select the active label roles
-         *
-         * This should be call with the property:
-         * cluster.role = 'keywords';
-         */
-        _set_roles: function(roles){
-            if(!(roles instanceof Array)){
-                roles = [roles];
-            }
-            this.set('roles', roles);
-        },
-        
-        /** Get labels the labels for the selected roles, or for some roles
-         * roles: if undefined use 'roles' attribute, else one role or a list of role
-         *
-         * a empty role list mean all roles
-         */
-        get_labels: function(roles){
-            if(roles === undefined){
-                roles = this.roles;
-            } else {
-                if(!(roles instanceof Array)){
-                    roles = [roles];
-                }
-            }
-            
-            // get the labels
-            selected = _.filter(this.labels, function(label){return _.indexOf(roles, label.role) >= 0});
-            return selected;
         },
 
         /** Select the current cluster (got throw the collection)
@@ -2320,17 +2276,11 @@ function random_int(min, max) {
         
         initialize: function(models, options){
             _this = this;
-            _.bindAll(this, "_set_roles");
 
             Cello.get(this, 'selected', function(){return this.by_flag("selected");});
-            Cello.get(this, 'roles', this._roles);   // list of active roles (for labels)
-            Cello.set(this, 'roles', this._set_roles);
             Cello.assert(options.clustering, "options.clustering is needed");
             this.clustering = options.clustering;   // the clustering this clusters list belongs to
-            
-            //by default select all roles XXX voir l'intérêt de faire ça à ce niveau et pas au niveau de chaque cluster
-            this.roles = this.all_roles();
-            
+                        
             this.on('add remove reset', function(){
                 var v_used_color = [];
                 this.each(function(model){
@@ -2400,35 +2350,6 @@ function random_int(min, max) {
         cluster: function(cid){
             return this.at(cid);
         },
-
-        /** 
-        list all availables roles of each labels
-         */
-        all_roles: function(hidden){
-            var roles = [];
-            this.each(function(cluster){
-                roles = _.union( roles, cluster.all_roles(hidden) );
-            });
-            return roles;
-        },
-
-        /** list all active roles
-         */
-        _roles: function(hidden){
-            var roles = [];
-            _.each(this, function(cluster){
-                roles = _.union( roles, cluster.roles );
-            });
-            return roles;
-        },
-
-        /** Change the selected roles on each cluster
-         */
-        _set_roles: function(roles){
-            this.each(function(cluster){
-                cluster.roles = roles;
-            });
-        }
     });
 
     /**
@@ -2454,7 +2375,6 @@ function random_int(min, max) {
             // Getters
             Cello.getset(this, 'members');
             Cello.getset(this, 'clusters');
-            Cello.getset(this, 'labels');
             Cello.getset(this, 'color_value');
             Cello.getset(this, 'color_saturation');
             
@@ -2463,15 +2383,6 @@ function random_int(min, max) {
             this.ClusterModel = attrs.ClusterModel || this.ClusterModel;
             this.ClustersCollection = attrs.ClustersCollection || this.ClustersCollection;
             
-            //initialize labels collection
-            var labels = new Backbone.Collection([],{model:this.ClusterLabelModel}); // <ClusterLabel> collection
-            this.labels = labels;
-            
-            //add labels members and attrs.members to this.members
-            this.members.labels = {source: this.labels, id_field: "label_ids"};
-//             _.each(attrs.members, function(member){
-//                _.extend(this.members, member);
-//             });
             var clusters_options = { // <Cluster> collection
                 clustering:this, 
                 model:this.ClusterModel
@@ -2482,7 +2393,6 @@ function random_int(min, max) {
             this.set("clusters", clusters);
             
             Cello.FlagableCollection(this.clusters);
-            Cello.FlagableCollection(this.labels);
         },
 
         /** Reset the data from a std cluster model
@@ -2517,23 +2427,6 @@ function random_int(min, max) {
                 tmp_data.clusters[tmp_data.misc].misc = true;
             }
 
-            // GESTION DES CLUSTERS
-            //reset the cluster labels collection
-            if (members.labels){
-                var labels = [];
-                _.each(tmp_data.clusters, function(cl){
-                    //add an id to each label to have unique labels and to link them to collection labels
-                    cl.labels = cl.labels || [];
-                    _.each(cl.labels, function(label, idx){label.id = labels.length + idx;});
-                    labels = _.union(labels, cl.labels);
-                });
-                this.labels.reset(labels);
-                
-                //add a collection of label_ids to each cluster
-                _.each(tmp_data.clusters, function(cl){
-                    cl[members.labels.id_field] = _.map(cl.labels, function(label){return label.id;});
-                });
-            }
             //build the cluster models and reset the clusters collection
             cluster_models = [];
             
@@ -2552,11 +2445,10 @@ function random_int(min, max) {
                     source_clone.reset(                  // keep only ones of the current cluster
                         source_filtered,
                         {silent: true}
-                    );
+                    )
                     cluster_members[key] = source_clone; 
                 });
 
-                //push this computed cluster the list
                 cluster_models.push(new _this.ClusterModel({
                     members: cluster_members,
                     misc: cl.misc
@@ -2566,10 +2458,12 @@ function random_int(min, max) {
             // reset the clusters collection
             this.clusters.reset(cluster_models);
             
-            // reset active roles XXX check if it is useful (not useful if it is manage at cluster level)
-            this.clusters.roles = this.clusters.all_roles();
-            
             this.trigger("reset");
+        },
+        set_labels: function(data, options){
+
+            this.clusters.each( function(cl,i){ cl.labels = data.labels[i] } )
+                    
         },
     });
 

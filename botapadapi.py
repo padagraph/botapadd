@@ -105,9 +105,4 @@ def explore_api(engines, graphdb):
 
     api.register_view(view, url_prefix="additive_nodes")
 
-    #layout
-    api = layout_api(engines, api)
-    #clustering
-    api = clustering_api(engines, api)
-
     return api

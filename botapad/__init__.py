@@ -262,6 +262,8 @@ class Botapad(object):
         self.starred = set()
         
         self.log( " * [Parse] %s complete" % path )
+        g = self.bot.get_igraph(weight_prop="weight")
+        self.log( g.summary() )
         self.log( self.bot.get_graph(self.gid) , self.imports)
 
         return path , self.bot.get_graph(self.gid), self.imports
@@ -277,6 +279,7 @@ class Botapad(object):
         self.starred = set()
         
         self.log( " * [Parse] %s rows  complete" % len(rows) )
+        
         self.log( self.bot.get_graph(self.gid) , self.imports)
 
         return self.bot.get_graph(self.gid), self.imports
@@ -296,16 +299,38 @@ class Botapad(object):
         return self._parse_csvrows(csv, rows, **kwargs)
 
         
-
     def _parse_csvrows(self, csv, rows, **kwargs):
+
+        # ( name, type indexed, projection )
+        def _w(e):
+            isproj="%" in e
+            w =  re.findall( "\(([0-9]?\.?[0-9]+)\)", e  )
+            if isproj and len(w) :
+                w = float(w[0])
+            elif isproj :
+                w = 1.
+            else  :
+                w = None
+
+            return w
+
+        def _v(e):
+            
+            isproj="%" in e
+            w =  "".join( re.findall( "\[(.*)\]", e  ))
+            if not isproj : 
+                return w if len(w) else None 
+            elif isproj :
+                return None
+
         for row in csv:
             cell = row[0]
             # ! comment
-            if cell[:1] == "!":
+            if cell and cell[:1] == "!":
                 continue
 
             # IMPORT external ressource
-            if cell[:1] == "&":
+            if cell and cell[:1] == "&":
                 
                 url = cell[1:].strip()
                 # circular references
@@ -316,7 +341,7 @@ class Botapad(object):
                     raise BotapadParseError(self.path, "Same file is imported multiple times  ! ", row )
                     
             # @ Nodetypes, _ Edgetypes
-            elif cell[:1] in ("@", "_"):
+            elif cell and cell[:1] in ("@", "_"):
 
                 self.post(self.current, rows)
                 rows = []
@@ -328,30 +353,6 @@ class Botapad(object):
                 cols = [e for e in re.split("[:;,]" , "%s" % cols, flags=re.UNICODE) if len(e)]
                 label = cols[0] # @Something
                 
-                # ( name, type indexed, projection )
-                def _w(e):
-                    
-                    isproj="%" in e
-                    w =  re.findall( "\(([0-9]?\.?[0-9]+)\)", e  )
-                    if isproj and len(w) :
-                        w = float(w[0])
-                    elif isproj :
-                        w = 1.
-                    else  :
-                        w = None
-
-                    return w
-
-
-                def _v(e):
-                    
-                    isproj="%" in e
-                    w =  "".join( re.findall( "\[(.*)\]", e  ))
-                    if not isproj : 
-                        return w if len(w) else None 
-                    elif isproj :
-                        return None
-
 
                 props = [ Prop( name=norm_key(e), type=Text(multi="+" in e),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
@@ -480,7 +481,7 @@ class Botapad(object):
             if len(index_props) == 0 : index_props = [0]
             try :
                 for values in rows:
-                    if values[0][:1] == "*":
+                    if values[0] and values[0][:1] == "*":
                         values[0] = values[0][1:]
                         self.starred.add(values[0])
 
@@ -597,7 +598,6 @@ class Botapad(object):
             cliqedges = [] 
             cliqname = ""
             
-            self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
             for r in rows:                
                 if iprop < len(r):
                     targets = r[iprop] if prop.ismulti else [r[iprop]]
@@ -636,15 +636,14 @@ class Botapad(object):
                             } )
                             
             self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
-            for e in self.bot.post_edges(self.gid, iter(cliqedges)) : 
+            for e in self.bot.post_edges(self.gid, iter(cliqedges), extra=lambda x : etname) : 
                 self.debug(e)
                     
             self.log( " * [Projector] posting _ %% %s %s " % (len(edges), etname ) )
-            for e in self.bot.post_edges(self.gid, iter(edges)) : 
+            for e in self.bot.post_edges(self.gid, iter(edges), extra=lambda x : etname) : 
                 self.debug(e)
-        
-
-        
+            
+            
 def main():
     """ """
     parser = argparse.ArgumentParser()

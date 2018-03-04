@@ -597,9 +597,13 @@ from pdgapi import graphedit
 edit_api = graphedit.graphedit_api("graphs", app, graphdb, login_manager, socketio )
 app.register_blueprint(edit_api)
 
-from botapadapi import explore_api
 from pdglib.graphdb_ig import engines
+from botapadapi import explore_api
+from  pdgapi.explor import layout_api, clustering_api
 api = explore_api(engines, graphdb)
+api = layout_api(engines, api)
+api = clustering_api(engines, api)
+
 
 app.register_blueprint(api)
 
