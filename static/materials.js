@@ -1,6 +1,6 @@
 !!!define([], function() {
 
-
+    lineTypes = [ 'plain', 'dashed', 'dotted' ]
     Materials =  {
         'edge' : [
             {'default' : {
@@ -9,7 +9,17 @@
                         if (!w) w = 2;
                         return w;
                     },
-                'color'    : "#666",
+                'color' : function(edge){
+                        var w = edge.properties.get('color');
+                        if (!w) w = "#666";
+                        return w;
+                    },
+                'lineType' : function(edge){
+                        var w = edge.properties.get('line');
+                        if (!w) w = "plain";
+                        return w;
+                    },
+
                 'opacity'  : 1, //.4
                 'label_visible' : false,
                 'fontColor': "#4C4D00",
@@ -17,10 +27,8 @@
                 'orientation_visible' : true,
                 'label_visible' : false,
 
-                //'lineType' : "dashed",
                 //'dashSize' : 2,
                 //'gapSize'  : 5,
-                'lineType' : "plain",
 
             }},
 
@@ -47,7 +55,7 @@
                     'opacity'    : 1,
                     //'label_visible' : true,
                     //'orientation_visible' : true,
-                    'lineType' : "plain",
+                    //'lineType' : "plain",
                 }
             },
 

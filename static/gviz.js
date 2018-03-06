@@ -1762,12 +1762,14 @@ gviz.ThreeViz = Backbone.View.extend({
     },
 
     renderClustersLabels: function (context){
+        
         if (! this.clustering){ return ;}
         
         var gviz = this;
-        for (var i in this.clustering.clusters.models){
-            var cluster = this.clustering.clusters.models[i];
 
+        for (var i in this.clustering.clusters.models) {
+
+            var cluster = this.clustering.clusters.models[i];
             
             var members = cluster.members.vs.models;
             var n = 0,
@@ -1775,7 +1777,7 @@ gviz.ThreeViz = Backbone.View.extend({
 
             members.forEach( function(e,i){
                 var v = gviz.wnidx[e.id];
-                if ( v.screenX < 0 ) return;
+                if ( !v || v.screenX < 0 ) return;
                 
                 var x = v.screenX;
                 var y = v.screenY;
@@ -1794,18 +1796,29 @@ gviz.ThreeViz = Backbone.View.extend({
                 var labels = cluster.labels.map( function(e){ return e.label } )
                 label = labels.join( ", " );
             }
+
+            if ( !label.length ) return ;
+            
             var color = "rgb(" + cluster.color.join(',') + ")";
-            var width = context.measureText(label).width;
-        
-            point.y = point.y / n; 
+            point.y = point.y / n;
             if ( n == 1 ){
-                point.x = point.x - width/2; 
+                point.x = point.x - width/2;
             }
             else {
                 point.x = point.minX  +  ( point.maxX - point.minX - width)/2 ;
             }
             context.font =  Math.min(25, 14 + n ) +  "px Arial";
+            
+            var width = context.measureText(label).width;
+            var height = context.measureText("M").width;
+        
+            context.beginPath();
+            context.rect(point.x - 8, point.y - 4 - height , width + 16, height + 16 );
+            context.fillStyle = "rgba(" + cluster.color.join(',') + ", 0.2)";
+            context.fill();
+
             context.strokeStyle = "#333";
+            context.lineWidth = 2;
             context.strokeText(label ,point.x, point.y);
             context.fillStyle = color;
             context.fillText(label ,point.x, point.y);

@@ -1081,6 +1081,7 @@ App.Base = Backbone.View.extend({
         app.listenTo( Backbone, Const.remove_node, function(vertex){
             app.set_auto_compute(false);
             if( vertex ){
+                graph.vs.set_selected([]);
                 graph.vs.remove(vertex);
             }
             app.set_auto_compute(true);
@@ -1464,13 +1465,17 @@ App.Base = Backbone.View.extend({
         //Backbone.trigger( Const.unselect_edges );
         //Backbone.trigger('engine:request_animation');
 
-        // merge graph
-        this.models.graph.merge(response.results.graph);
+        options || (options = {});
+        // merge/reset graph
+        if (options && options.reset)
+            this.models.graph.reset(response.results.graph);
+        else
+            this.models.graph.merge(response.results.graph);
+        
         this.models.graph.vs.each(function(vtx){
             vtx.add_flag("form");
         });
 
-        options || (options = {});
         if ( options.callback )
             options.callback();
 

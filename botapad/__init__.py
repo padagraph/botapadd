@@ -6,7 +6,7 @@ import argparse
 from botapi import Botagraph, BotApiError
 from reliure.types import Text , Numeric
 
-from collections import namedtuple
+import collections 
 import codecs
 from StringIO import StringIO
 import requests
@@ -89,8 +89,18 @@ def parse_url(url):
     # github
     return url, None, ""
 
+def namedtuple_with_defaults(typename, field_names, default_values=()):
+    T = collections.namedtuple(typename, field_names)
+    T.__new__.__defaults__ = (None,) * len(T._fields)
+    if isinstance(default_values, collections.Mapping):
+        prototype = T(**default_values)
+    else:
+        prototype = T(*default_values)
+    T.__new__.__defaults__ = tuple(prototype)
+    return T
+    
 #                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float) ,[default]
-Prop = namedtuple('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight','value'  ])
+Prop = namedtuple_with_defaults('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight','value'  ], default_values=() )
 
 
 class BotapadError(Exception):
@@ -354,7 +364,7 @@ class Botapad(object):
                 label = cols[0] # @Something
                 
 
-                props = [ Prop( name=norm_key(e), type=Text(multi="+" in e),
+                props = [ Prop( name=norm_key(e), type=Text(multi="+" in e, default=_v(e)),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
                     isproj="%" in e, iscliq="+" in e and "=" in e ,
                     isignored="!" in e, weight=_w(e), value=_v(e) ) for e in cols[1:] ]
@@ -367,13 +377,14 @@ class Botapad(object):
                 start = 0
                 end   = None
                 props = props[start: end]
+                print "props", props
                 
                 names = [ k.name for k in props ]
                 projs = [ k.name for k in props if k.isproj ]
                 indexes = [ k.name for k in props if k.isindex ]
 
-                typeprops = { p.name : p.type for p in props }
-                print "props", props
+                typeprops = lambda px : { p.name : p.type for p in px }
+                
                 if cell[:1] == "@": # nodetype def
                     # raise error if no label & index
                     pl = get_prop('label')
@@ -398,15 +409,20 @@ class Botapad(object):
 
                     if not label in self.nodetypes:
                         self.log( "* posting @ %s [%s]" % (label, ", ".join(names)) , indexes, projs)
-                        self.nodetypes[label] = self.bot.post_nodetype(self.gid, label, label, typeprops)
+                        self.nodetypes[label] = self.bot.post_nodetype(self.gid, label, label, typeprops(props))
                         self.node_headers[label] = props
                         
                 elif cell[:1] == "_": # edgetype def
                     rows = []
                     self.current = (EDGE, label, props)
                     if not label in self.edgetypes:                        
+
+                        if "label" not in names : props = [Prop( name="label", type=Text(), value="" )] + props
+                        if "weight" not in names : props = [Prop( name="weight", type=Numeric(), value=1. )] + props
+                        names = [ k.name for k in props ]
                         self.log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
-                        self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops)
+                        
+                        self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops(props))
                         self.edge_headers[label] = props
 
                 
@@ -571,7 +587,6 @@ class Botapad(object):
                     _v = [ p.value for p in self.node_headers[tgt] if p.value  ]
                     properties = dict( zip(_k,_v) )
                     properties['label'] = v
-
                     
                     payload.append( {
                         'nodetype': self.nodetypes[tgt]['uuid'],
@@ -627,12 +642,21 @@ class Botapad(object):
                             srcid = "".join([ r[i] for i in indexes  ])
                             tgtid = '%s' % (t)
 
+                            properties = dict()
+                            if etname in self.edge_headers:
+                                _k = [ p.name  for p in self.edge_headers[etname] if p.value ]
+                                _v = [ p.value for p in self.edge_headers[etname] if p.value ]
+                                properties = dict( zip(_k,_v) )
+
+                            properties['label']  = etname
+                            properties['weight'] = prop.weight
+                        
                             edges.append( {
                                 'edgetype': self.edgetypes[etname]['uuid'],
                                 'source': self.idx[srcid],
                                 'target': self.idx[tgtid],
                                 'weight' : prop.weight,
-                                'properties': { "label" : etname, 'weight' : prop.weight, }
+                                'properties': properties
                             } )
                             
             self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )

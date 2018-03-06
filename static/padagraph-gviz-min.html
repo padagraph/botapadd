@@ -8478,57 +8478,76 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 
   });
 });</script></dom-module><dom-module id="keb-option" assetpath="./"><style>label .name { font-weight:bold; }
-</style><template><template is="dom-if" if="{{ isBoolean(option) }}"><div class="ui checkbox"><input type="checkbox" on-change="bool_changed" checked="{{value::input}}"><label>{{option.name}}</label></div></template><template is="dom-if" if="{{ isEditable(option) }}"><label><span class="name">{{option.name}} :</span><br><span class="help">{{option.otype.help}}</span></label><input value="{{value::input}}"><br></template><template is="dom-if" if="{{ isChoice(option) }}"><label>{{option.name}} {{option.otype.help}}</label><select value="{{value::input}}"><template is="dom-repeat" items="[[option.otype.choices]]"><option selected$="{{isSelected(option, item)}}" value="{{item}}">{{item}} </option></template></select></template></template><script>'use strict';
+</style><template><template is="dom-if" if="{{ isBoolean(option) }}"><div class="ui checkbox"><input type="checkbox" on-change="bool_changed" checked="{{value::input}}"><label>{{option.name}}</label></div></template><template is="dom-if" if="{{ isEditable(option) }}"><label><span class="name">{{option.name}} :</span><br><span class="help">{{option.otype.help}}</span></label><input value="{{value::input}}"><br></template><template is="dom-if" if="{{ isChoice(option) }}"><label>{{option.name}} {{option.otype.help}}</label><select value="{{value}}" multiple$="{{option.otype.multi}}" on-change="observe_input"><template is="dom-repeat" items="[[option.otype.choices]]"><option selected$="{{isSelected(option, item)}}" value="{{item}}">{{item}} </option></template></select></template></template><script>'use strict';
 
 require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
-  Polymer({
-    is: "keb-option",
+    Polymer({
+        is: "keb-option",
 
-    properties: {
-      comp: Object,
-      option: Object,
-      value: String
-    },
+        properties: {
+            comp: Object,
+            option: Object,
+            value: String
+        },
 
-    observers: ["observe(comp, option)", "observe_input(value)"],
+        observers: ["observe(comp, option)", "observe_input(value)"],
 
-    observe: function observe(comp, option) {
-      console.log(comp, option, this.value);
-      if (this.value != option.value) this.value = option.value;
-    },
+        observe: function observe(comp, option) {
+            console.log(comp, option, this.value);
+            if (this.value != option.value) this.value = option.value;
+        },
 
-    observe_input: function observe_input(value) {
-      if (this.option.value != value) {
-        console.log("setting ", this.option.name, value);
-        this.option.value = value;
-      }
-    },
+        observe_input: function observe_input(value) {
 
-    isBoolean: function isBoolean(option) {
-      return option.otype.type == 'Boolean';
-    },
-    bool_changed: function bool_changed() {
-      this.option.value = !this.option.value;
-    },
+            console.log("setting ", this.option.name, value);
 
-    isChoice: function isChoice(option) {
-      return option.otype.choices != null;
-    },
-    isSelected: function isSelected(option, item) {
-      return option.value == option.parse(item);
-    },
+            if (this.option.otype.type == 'Boolean') {
+                return;
+            }
+            if (this.option.otype.choices) {
+                var values = null;
+                var $select = this.$$("select");
+                if ($select) {
+                    var options = Array.from($select.selectedOptions);
+                    values = options.map(function (e) {
+                        return e.value;
+                    });
+                    if (this.option.otype.multi) {
+                        this.option.value = values;
+                    } else {
+                        this.option.value = values.length ? values[0] : "";
+                    }
+                }
+            } else if (this.option.value != value) {
+                this.option.value = value;
+            }
+        },
 
-    isEditable: function isEditable(option) {
-      return !this.isChoice(option) && (this.isText(this.option) || this.isNumeric(this.option));
-    },
-    isText: function isText(option) {
-      return option.otype.type == 'Text';
-    },
-    isNumeric: function isNumeric(option) {
-      return option.otype.type == 'Numeric';
-    }
+        isBoolean: function isBoolean(option) {
+            return option.otype.type == 'Boolean';
+        },
+        bool_changed: function bool_changed() {
+            this.option.value = !this.option.value;
+        },
 
-  });
+        isChoice: function isChoice(option) {
+            return option.otype.choices != null;
+        },
+        isSelected: function isSelected(option, item) {
+            if (option.otype.multi) return option.value.indexOf(option.parse(item)) >= 0;else return option.value == option.parse(item);
+        },
+
+        isEditable: function isEditable(option) {
+            return !this.isChoice(option) && (this.isText(this.option) || this.isNumeric(this.option));
+        },
+        isText: function isText(option) {
+            return option.otype.type == 'Text';
+        },
+        isNumeric: function isNumeric(option) {
+            return option.otype.type == 'Numeric';
+        }
+
+    });
 });</script></dom-module><dom-module id="keb-optionable" assetpath="./"><style>.options_form_menu {
     margin: 4px;
 }
