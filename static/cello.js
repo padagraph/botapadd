@@ -711,6 +711,7 @@ Cello.Doc = Backbone.Model.extend({
                 }
                 if(this.otype.vtype === "int"){
                     val = parseInt(val);
+                    if ( _.isNaN(val) ) val = "";
                 }
             }
             return val;
@@ -1139,7 +1140,7 @@ Cello.Doc = Backbone.Model.extend({
                 var block = _this.get_block(block_name);
                 block.set_state(block_state);
             });
-        },
+        },  
 
         /* return a str version of the current engine config
         this str can be part of an url
@@ -1201,11 +1202,13 @@ Cello.Doc = Backbone.Model.extend({
                     } else {
                         console.log("play:success", response, kwargs, state);
                         _this.trigger("play:success", response, kwargs, state);
+                        _this.trigger("play:complete", response, kwargs, state);
                     }
                 },
                 error: function(xhr, textStatus, errorThrown){
-                    // get an HTTP error anwser (get a 5**)
+                    // get an HTTP error answer (get a 5**)
                     _this.trigger("play:error", {}, xhr);
+                    _this.trigger("play:complete", {}, xhr);
                 },
             });
         },
@@ -1348,6 +1351,7 @@ var Graph = Backbone.Model.extend({
     },
     
     reset: function(data, options){
+        
         // create a graph from json data
         Cello.debug("parse graph", data);
 

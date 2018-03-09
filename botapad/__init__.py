@@ -209,7 +209,9 @@ class Botapad(object):
                 url = convert_url(path)
                 self.log( " * Converting url %s to %s" % ( path, url ) )
                 self.log( " * Downloading %s %s\n" % (url, separator))
-                content = requests.get(url).text
+                r = requests.get(url)
+                print r
+                content = r.text
                 # bug BOM ggdoc
                 if content[0:1] == u'\ufeff':
                     content = content[1:]
@@ -620,18 +622,28 @@ class Botapad(object):
                     if prop.iscliq :
                         cliqname = "%s_clique" % (prop.name)
                         if cliqname not in self.edgetypes:
+                            self.log( " * [Projector] POST edgetype %s %s " % (cliqname, edgeprops ) )
                             self.edgetypes[cliqname] = self.bot.post_edgetype(self.gid, cliqname, cliqname, edgeprops)
                         
+                                
                         for e, t in enumerate(targets):
                             for t2 in targets[e+1:]:
                                 
                                 cliqe = '%s%s' % (t,t2) if t > t2 else (t2,t)
                                 if cliqe not in cliqset:
+                                    
+                                    properties = {"label" : cliqname, 'weight' : prop.weight}
+                                    if cliqname in self.edge_headers:
+                                        _k = [ p.name  for p in self.edge_headers[cliqname] if p.value ]
+                                        _v = [ p.value for p in self.edge_headers[cliqname] if p.value ]
+                                        properties = dict( zip(_k,_v) )
+                                        
+
                                     cliqedges.append( {
                                         'edgetype': self.edgetypes[cliqname]['uuid'],
                                         'source': self.idx['%s' % (t)],
                                         'target': self.idx['%s' % (t2)],
-                                        'properties': {"label" : cliqname, 'weight' : prop.weight}
+                                        'properties': properties
                                     } )
                                     cliqset.add(cliqe)
                                     

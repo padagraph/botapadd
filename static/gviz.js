@@ -1797,7 +1797,7 @@ gviz.ThreeViz = Backbone.View.extend({
                 label = labels.join( ", " );
             }
 
-            if ( !label.length ) return ;
+            if ( !label.length ) continue ;
             
             var color = "rgb(" + cluster.color.join(',') + ")";
             point.y = point.y / n;
@@ -1813,12 +1813,12 @@ gviz.ThreeViz = Backbone.View.extend({
             var height = context.measureText("M").width;
         
             context.beginPath();
-            context.rect(point.x - 8, point.y - 4 - height , width + 16, height + 16 );
-            context.fillStyle = "rgba(" + cluster.color.join(',') + ", 0.2)";
+            context.rect(point.x - 8, point.y - 5 - height , width + 16, height + 16 );
+            context.fillStyle = "rgba(200,200,200, 0.5)";
             context.fill();
 
             context.strokeStyle = "#333";
-            context.lineWidth = 2;
+            context.lineWidth = 3;
             context.strokeText(label ,point.x, point.y);
             context.fillStyle = color;
             context.fillText(label ,point.x, point.y);

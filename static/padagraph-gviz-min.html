@@ -8357,7 +8357,13 @@ require(['backbone', 'underscore'], function (Backbone, _) {
   text-align:left !important;
 }
 
-</style><div class="ui icon input"><input id="search" name="search" type="text" autocomplete="off" value="{{value::input}}" placeholder="{{placeholder}}" on-keyup="keyHandler"><i class="search icon"></i></div><div class="ui fluid popup bottom left transition"><div class="ui left aligned column"><div class="ui scrollable comments"><template is="dom-repeat" items="[[completions]]"><padagraph-node-completion-card option="notext" actions="{{actions}}" model="{{item}}" on-completion-close="handleClose" class="comment"></padagraph-node-completion-card><div class="ui divider"></div></template></div></div></div></template><script>'use strict';
+span.nodetype{
+  font-size: 16px !important;
+  margin-left: 24px !important;
+  color: rgba(0,0,0,.4);
+  font-size:24px;
+}
+</style><div class="ui icon input"><input id="search" name="search" type="text" autocomplete="off" value="{{value::input}}" placeholder="{{placeholder}}" on-keyup="keyHandler"><i class="search icon"></i></div><div class="ui fluid popup bottom left transition"><div class="ui left aligned column"><div class="ui scrollable comments"><template is="dom-repeat" items="[[completions]]"><template is="dom-if" if="{{item.model}}"><div style="display:inline;" class="card"><padagraph-vertex-card-xs model="{{item.model}}" actions="select"></padagraph-vertex-card-xs><span class="nodetype">{{item.model.nodetype.label}}</span></div></template><template is="dom-if" if="{{!item.model}}"><padagraph-node-completion-card option="notext" actions="{{actions}}" model="{{item}}" on-completion-close="handleClose" class="comment"></padagraph-node-completion-card></template><div class="ui divider"></div></template></div></div></div></template><script>'use strict';
 
 require(['jquery', 'backbone', 'semantic'], function ($, Backbone) {
   Polymer({
@@ -8424,11 +8430,14 @@ require(['jquery', 'backbone', 'semantic'], function ($, Backbone) {
       if (e.keyCode == 13) {
 
         // add first node to the view
-        if (this.completions.length) {
-          var model = this.completions[0];
-          Backbone.trigger('engine:additive_nodes', [model.uuid]);
-          this.handleClose();
-        }
+        //if (this.completions.length){
+        //var model = this.completions[0];
+        //Backbone.trigger('engine:additive_nodes', [model.uuid]);
+        //this.handleClose();
+        //}
+        //else {
+        //}
+        this.fire("complete:valid", { complete: null, value: this.value });
       }
       //else
       //    this.complete();
@@ -8450,7 +8459,14 @@ require(['jquery', 'backbone', 'semantic'], function ($, Backbone) {
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function success(data) {
-          self.completions = data.complete;
+
+          var complete = data.complete;
+          complete.forEach(function (e, i) {
+            var m = self.graph.vs.get(e.uuid);
+            e.model = m ? m : null;
+          });
+
+          self.completions = complete;
           self.show();
         },
         error: function error() {
@@ -8493,8 +8509,14 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
         observers: ["observe(comp, option)", "observe_input(value)"],
 
         observe: function observe(comp, option) {
+            var _this = this;
+
             console.log(comp, option, this.value);
             if (this.value != option.value) this.value = option.value;
+
+            this.option.on('change', function (option) {
+                if (!_this.option.otype.multi) if (_this.value != option.value) _this.value = option.value;
+            });
         },
 
         observe_input: function observe_input(value) {
@@ -8513,7 +8535,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                         return e.value;
                     });
                     if (this.option.otype.multi) {
-                        this.option.value = values;
+                        this.option.set('value', values);
                     } else {
                         this.option.value = values.length ? values[0] : "";
                     }
@@ -8554,7 +8576,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 .optionable.item {
     cursor:pointer;
     padding: 5px;
-    margin-top: 12px;
+    margin-bottom: 12px;
     background: #FAFAFA;
 }
 .optionable.selected.item {
@@ -8567,7 +8589,11 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
     margin-left: 0px;
     background: none;
 }
-  </style><template><div class$="{{optionable_css(comp.selected)}}" on-tap="select_component" class="optionable item"><template is="dom-if" if="{{ !comp.selected }}"><a> <i class="caret right icon"></i>{{comp.name}}</a></template><template is="dom-if" if="{{ comp.selected }}"><a class="selected"><i class="checkmark icon"></i>{{comp.name}}</a><a on-tap="play" class="ui right floated button"><i class="video play icon"></i></a><template is="dom-if" if="{{comp.options.models.length}}"><div class="options_form_menu"><div class="ui small form"><fieldset><template is="dom-repeat" items="[[comp.options.models]]" as="opt"><template is="dom-if" if="{{ comp.selected }}"><div class="inline field"><keb-option comp="{{comp}}" option="{{opt}}"></keb-option></div></template><template is="dom-if" if="{{ !comp.selected }}"><label>{{ opt.name }} : </label><span>{{opt.value}}</span><br></template></template></fieldset></div></div></template></template></div></template><script>'use strict';
+  </style><template><div>{{comp.description}}</div><div class$="{{optionable_css(comp.selected)}}" on-tap="select_component" class="optionable item"><template is="dom-if" if="{{ !comp.selected }}"><a> <i class="caret right icon"></i>{{comp.name}}</a></template><template is="dom-if" if="{{ comp.selected }}"><a class="selected"><i class="checkmark icon"></i>{{comp.name}}</a><a on-tap="play" class="ui right floated button"><i class="video play icon"></i></a></template><template is="dom-if" if="{{comp.options.models.length}}"><div class="options_form_menu"><div class="ui small form"><fieldset><template is="dom-repeat" items="[[comp.options.models]]" as="opt"><div class="inline field"><keb-option comp="{{comp}}" option="{{opt}}"></keb-option></div></template><!--template(is="dom-if", if="{{ comp.selected }}"  )//template(is="dom-if", if="{{ !comp.selected }}" )
+  //label {{ opt.name }} : 
+  //span {{opt.value}}
+  //br/
+--></fieldset></div></div></template></div></template><script>'use strict';
 
 require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
   Polymer({
@@ -8625,7 +8651,7 @@ a.selected {
 }
 
 
-</style><template><div class="ui segment"> <template is="dom-repeat" items="[[engines]]" as="engine"><a name="{{engine.name}}"></a><h2 class="header"><a>{{engine.name}}</a></h2><div class="menu"></div><template is="dom-if" if="{{ engine.blocks.models.length }}"><template is="dom-repeat" items="[[engine.blocks.models]]" as="block"><div class="block item"><!--a {{block.name}}--><div class="menu"> </div><template is="dom-repeat" items="[[block.components.models]]" as="optionable"><keb-optionable engine="[[engine]]" block="[[block]]" comp="[[optionable]]"></keb-optionable></template></div></template></template></template></div></template><script>'use strict';
+</style><template><div class="ui segment"> <template is="dom-repeat" items="[[engines]]" as="engine"><a name="{{engine.name}}"></a><h2 class="ui sub header"><a>{{engine.name}}</a></h2><p>{{engine.description}} </p><div class="menu"></div><template is="dom-if" if="{{ engine.blocks.models.length }}"><template is="dom-repeat" items="[[engine.blocks.models]]" as="block"><div class="block item"><!--a {{block.name}}--><div class="menu"> </div><template is="dom-repeat" items="[[block.components.models]]" as="optionable"><keb-optionable engine="[[engine]]" block="[[block]]" comp="[[optionable]]"></keb-optionable></template></div></template></template></template></div></template><script>'use strict';
 
 require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
   Polymer({
@@ -10209,11 +10235,11 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                 });
             }
 
-            graph.on('reset', function () {
-                _(filters).forEach(function (f) {
-                    f.reset_filters();
-                });
-            });
+            //graph.on('reset', ()=>{
+            //_(filters).forEach((f) => {
+            //f.reset_filters()
+            //});
+            //});
 
             var search = $("padagraph-node-search");
             if (search.length) {
@@ -10338,7 +10364,7 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
         },
 
         setGraphModel: function setGraphModel(app, graph) {
-
+            var _this = this;
             if (!app || !graph) return;
 
             $('.dropdown', this).dropdown();
@@ -10365,6 +10391,12 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 
             this._listener.listenTo(this.collection, 'addflag:selected', this.add_selected.bind(this));
             this._listener.listenTo(this.collection, 'rmflag:selected', this.rm_selected.bind(this));
+
+            this._listener.listenTo(this.collection.graph, 'merge', this.update_filtering.bind(this));
+            this._listener.listenTo(this.collection.graph, 'reset', function () {
+                _this.reset_filters();
+                _this.filter_count();
+            });
 
             this._listener.listenTo(this.collection, 'filter:changed', this.filter_count.bind(this));
             if (this.is_mode_edge) {
@@ -10408,20 +10440,37 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
             return visible;
         },
 
-        set_type_filters: function set_type_filters() {
+        set_type_filters: function set_type_filters(old) {
+            var selected = {};
+
+            if (old && old.length) {
+                selected = _.chain(old.map(function (e, i) {
+                    var items = e.items.map(function (ee, j) {
+                        return [ee.group + ee.name, ee.selected];
+                    });
+                    return items;
+                })).flatten(true).union(old.map(function (e, i) {
+                    return [e.label, e.selected];
+                })).object().value();
+            }
+
             var types = this.mode == "node" ? this.graph.nodetypes : this.graph.edgetypes;
             var collection = this.mode == "node" ? this.graph.vs : this.graph.es;
 
             var ls = _.map(types.models, function (e) {
+
                 var filter = function filter(m) {
                     return e.get('uuid') == m.type.get('uuid');
                 };
                 var count = collection.filter(filter).length;
-
                 var group = e.label.indexOf('/') > 0 ? e.label.substr(0, e.label.indexOf('/')) : "*";
                 var name = e.label.substr(e.label.indexOf('/') + 1);
 
-                return { group: group, name: name, label: e.label, selected: true, count: count, model: e };
+                return { 'group': group,
+                    'name': name,
+                    'label': e.label,
+                    'selected': old ? group + name in selected ? selected[group + name] : true : true,
+                    'count': count, model: e };
             });
 
             var fs = _.filter(ls, function (e) {
@@ -10435,7 +10484,10 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
                 var count = _.reduce(v, function (memo, e) {
                     return memo + e.count;
                 }, 0);
-                return { label: k, selected: true, items: v, count: count };
+                return { 'label': k,
+                    'selected': old ? k in selected ? selected[k] : true : true,
+                    'items': v,
+                    'count': count };
             });
             if (this.groups_sort) groups.sort(this.groups_sort);
 
@@ -10511,11 +10563,13 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
         },
 
         update_filtering: function update_filtering() {
+            this.set_type_filters(this.filter_groups);
             this.apply_filters(this.elements, this.filter_types, this.filter_label, this.filter_label_chk);
+            this.filter_count();
         },
 
         apply_filters: function apply_filters(elements, groups, label, _chk) {
-            var _this = this;
+            var _this2 = this;
 
             if (!groups || !groups.length) return;
 
@@ -10524,15 +10578,15 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 
             _.each(groups, function (g, i) {
                 _.each(g.items, function (e, j) {
-                    var filter = _this.filtered([{ label: e.label, selected: true }], label);
+                    var filter = _this2.filtered([{ label: e.label, selected: true }], label);
                     e.count = elements.filter(filter).length;
                     //this.notifyPath('filter_types.'+i+'.count' )
-                    _this.notifyPath('filter_groups.' + i + '.items.' + j + '.count');
+                    _this2.notifyPath('filter_groups.' + i + '.items.' + j + '.count');
                 });
                 g.count = _.reduce(g.items, function (memo, e) {
                     return memo + e.count;
                 }, 0);
-                _this.notifyPath('filter_groups.' + i + '.count');
+                _this2.notifyPath('filter_groups.' + i + '.count');
             });
 
             var types = _.flatten(_.map(groups, function (e) {
