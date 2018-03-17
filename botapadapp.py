@@ -393,8 +393,8 @@ def botimport(repo, padurl, gid, content_type):
     if padurl:
         
         promote = 1 if request.form.get('promote', 0)  else 0    
-        graphurl = "#/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
-        graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
+        graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
+        #graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
 
         options = {
             #
@@ -407,8 +407,8 @@ def botimport(repo, padurl, gid, content_type):
             'el': "#viz",
             'background_color' : color,
             'initial_size' : 16,
-            'user_font_size' : 2,
-            'user_vtx_size' : 3,
+            'user_font_size' : 1,
+            'user_vtx_size' : 2,
             'vtx_size' : args.get("vertex_size", 2 ),
             'show_text'  : 0 if args.get("no_text"  , None ) else 1,     # removes vertex text 
             'show_nodes' : 0 if args.get("no_nodes" , None ) else 1,   # removes vertex only 

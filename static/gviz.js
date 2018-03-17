@@ -1773,12 +1773,12 @@ gviz.ThreeViz = Backbone.View.extend({
             
             var members = cluster.members.vs.models;
             var n = 0,
-                point = {x:0, y:0, minX:100000, maxX:0, minY:0, maxY:0};
+                point = {x:0, y:0, minX:100000, maxX:0, minY:100000, maxY:0};
 
-            members.forEach( function(e,i){
+            members.forEach( function(e,j){
                 var v = gviz.wnidx[e.id];
                 if ( !v || v.screenX < 0 ) return;
-                
+
                 var x = v.screenX;
                 var y = v.screenY;
                 n ++;
@@ -1786,9 +1786,9 @@ gviz.ThreeViz = Backbone.View.extend({
                 point.x += x
                 point.minX = Math.min( x, point.minX )
                 point.maxX = Math.max( x, point.maxX )
-                point.minY = Math.min( y, point.minY )
-                point.maxY = Math.max( y, point.maxY )
-                v.screenX = -1; // 
+                //point.minY = Math.min( y, point.minY )
+                //point.maxY = Math.max( y, point.maxY )
+                //v.screenX = -1; 
             } );
             
             var label = "Cluster " + i;
@@ -1796,10 +1796,14 @@ gviz.ThreeViz = Backbone.View.extend({
                 var labels = cluster.labels.map( function(e){ return e.label } )
                 label = labels.join( ", " );
             }
-
             if ( !label.length ) continue ;
             
-            var color = "rgb(" + cluster.color.join(',') + ")";
+            context.font =  Math.min(25, 14 + n ) +  "px Arial";
+            context.lineWidth = 3;
+            
+            var width = context.measureText(label).width;
+            var height = context.measureText("M").width;
+            
             point.y = point.y / n;
             if ( n == 1 ){
                 point.x = point.x - width/2;
@@ -1807,20 +1811,16 @@ gviz.ThreeViz = Backbone.View.extend({
             else {
                 point.x = point.minX  +  ( point.maxX - point.minX - width)/2 ;
             }
-            context.font =  Math.min(25, 14 + n ) +  "px Arial";
-            
-            var width = context.measureText(label).width;
-            var height = context.measureText("M").width;
         
             context.beginPath();
             context.rect(point.x - 8, point.y - 5 - height , width + 16, height + 16 );
             context.fillStyle = "rgba(200,200,200, 0.5)";
             context.fill();
 
-            context.strokeStyle = "#333";
-            context.lineWidth = 3;
-            context.strokeText(label ,point.x, point.y);
+            var color = "rgb(" + cluster.color.join(',') + ")";
             context.fillStyle = color;
+            context.strokeStyle = "#333";
+            context.strokeText(label ,point.x, point.y);
             context.fillText(label ,point.x, point.y);
         }
         
