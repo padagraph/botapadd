@@ -95,12 +95,48 @@ import StringIO
 from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
 
-graphdb = IGraphDB({})
-graphdb.open_database()
-
 STORE = "../application/src/sample"
 STORE = "./pads"
 
+import redis
+class RedisGraphs(object):
+    def __init__(self, host='localhost', port=6379):
+        # initialize the redis connection pool
+        self.redis = redis.Redis(host=host, port=port)
+
+    def __setitem__(self, gid, graph):
+        # pickle and set in redis
+        # todo ttl = 10
+        self.redis.set(gid, pickle.dumps(graph))
+
+    def get(self, gid):
+        return self.__getitem__(gid)
+
+    def __getitem__(self, gid):
+        # get from redis and unpickle
+        
+        graph = pickle.loads(self.redis.get(gid))
+        print "loading %s from redis" % gid
+        
+        if graph is None : 
+            path = self.conf.get(gid, None)
+            if path is None :
+                raise GraphError('no such graph %s' % gid) 
+            else:
+                print "opening graph %s@%s" %(gid, path)
+                graph = IgraphGraph.Read(path)
+
+        if graph is not None:
+            return graph
+        else :
+            raise GraphError('%s' % gid)
+
+    def keys(self):
+        return []
+        
+#graphdb = IGraphDB( graphs=RedisGraphs() )
+graphdb = IGraphDB( graphs={} )
+graphdb.open_database()
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -393,8 +429,8 @@ def botimport(repo, padurl, gid, content_type):
     if padurl:
         
         promote = 1 if request.form.get('promote', 0)  else 0    
-        graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
-        #graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
+        #graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
+        graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
 
         options = {
             #
@@ -416,7 +452,7 @@ def botimport(repo, padurl, gid, content_type):
             'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
             
             'auto_rotate': 0,
-            'adaptive_zoom': 0,
+            'adaptive_zoom': 1,
                 
         }
     
@@ -446,7 +482,7 @@ def botimport(repo, padurl, gid, content_type):
 
                     graph['meta']['pedigree'] = pedigree.compute(graph)
           
-                    graphdb.graphs[gid] = graph
+                    graphdb.set_graph(gid, graph)
                                         
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
