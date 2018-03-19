@@ -423,7 +423,10 @@ def botimport(repo, padurl, gid, content_type):
 
     reader = args.get("format", "csv")
 
-    args = dict(request.args)
+    args =  dict(zip(
+        request.args.keys(),
+        request.args.values()
+    ))
     args['s'] = padurl
 
     if padurl:
@@ -442,17 +445,21 @@ def botimport(repo, padurl, gid, content_type):
             # gviz
             'el': "#viz",
             'background_color' : color,
-            'initial_size' : 16,
-            'user_font_size' : 1,
-            'user_vtx_size' : 2,
+
+            # todo check where used
+            'initial_size' : 6,
             'vtx_size' : args.get("vertex_size", 2 ),
-            'show_text'  : 0 if args.get("no_text"  , None ) else 1,     # removes vertex text 
-            'show_nodes' : 0 if args.get("no_nodes" , None ) else 1,   # removes vertex only 
-            'show_edges' : 0 if args.get("no_edges" , None ) else 1,   # removes edges 
+
+            'user_font_size': int(args.get("user_font_size", 1) ),
+            'user_vtx_size' : int(args.get("user_vtx_size" , 2) ),
+            
+            'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
+            'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
+            'show_edges' : 0 if args.get("no_edges" , None ) else 1, # removes edges 
             'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
             
-            'auto_rotate': 0,
-            'adaptive_zoom': 1,
+            'auto_rotate': int(args.get("auto_rotate", 0 )),
+            'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
                 
         }
     
@@ -503,7 +510,6 @@ def botimport(repo, padurl, gid, content_type):
                         print pzeros , graph.summary()
                         
                         graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
-                        print LENMIN , graph.summary()
                                                  
                     
                     data = export_graph(graph, id_attribute='uuid')

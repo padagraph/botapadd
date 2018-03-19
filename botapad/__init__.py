@@ -99,7 +99,7 @@ def namedtuple_with_defaults(typename, field_names, default_values=()):
     T.__new__.__defaults__ = tuple(prototype)
     return T
     
-#                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float) ,[default]
+#                                label   ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float) ,[default]
 Prop = namedtuple_with_defaults('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'direction', 'weight','value'  ], default_values=() )
 
 
@@ -208,15 +208,17 @@ class Botapad(object):
             try : 
                 url = convert_url(path)
                 self.log( " * Converting url %s to %s" % ( path, url ) )
-                self.log( " * Downloading %s %s\n" % (url, separator))
+                self.log( " * Downloading %s %s" % (url, separator))
                 r = requests.get(url)
-                print r
                 content = r.text
+                self.log( "   %s, %s\n" % (r, len(content)))
+                
                 # bug BOM ggdoc
                 if content[0:1] == u'\ufeff':
                     content = content[1:]
                 lines = content.split('\n')
             except :
+                raise
                 raise BotapadURLError("Can't download %s" % url, url)
 
         else:
@@ -381,7 +383,11 @@ class Botapad(object):
                 start = 0
                 end   = None
                 props = props[start: end]
-                print "props", props
+                self.log( "\n * @%s : Props " % label )
+                self.log( "  (%s)" % ",".join(Prop()._fields) )
+                for e in props:
+                    self.log( "  %s" % str([v for v in e]) )
+                
                 
                 names = [ k.name for k in props ]
                 projs = [ k.name for k in props if k.isproj ]
@@ -412,7 +418,7 @@ class Botapad(object):
                     self.current = (VERTEX, label, props)
 
                     if not label in self.nodetypes:
-                        self.log( "* posting @ %s [%s]" % (label, ", ".join(names)) , indexes, projs)
+                        self.log( "\n  >> posting @ %s [%s] [%s] [%s]" % (label, ", ".join(names) , ", ".join(indexes), ", ".join(projs)))
                         self.nodetypes[label] = self.bot.post_nodetype(self.gid, label, label, typeprops(props))
                         self.node_headers[label] = props
                         
@@ -424,7 +430,7 @@ class Botapad(object):
                         if "label" not in names : props = [Prop( name="label", type=Text(), value="" )] + props
                         if "weight" not in names : props = [Prop( name="weight", type=Numeric(), value=1. )] + props
                         names = [ k.name for k in props ]
-                        self.log( "* posting _ %s [%s]" % (label, ", ".join(names)) )
+                        self.log( "  >> posting _ %s [%s]" % (label, ", ".join(names)) )
                         
                         self.edgetypes[label] = self.bot.post_edgetype(self.gid, label, "", typeprops(props))
                         self.edge_headers[label] = props
@@ -521,7 +527,7 @@ class Botapad(object):
                 
                 # post nodes
                 node = None
-                self.log( "    [POST] @ %s %s" % (len(payload), label) , names  ,index_props) 
+                self.log( "    [POST] @ %s %s [%s] (%s)" % (len(payload), label , ", ".join(names)  ,  ", ".join(["%s" % e for e in index_props]) )) 
 
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload)):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
@@ -685,7 +691,6 @@ class Botapad(object):
             self.log( " * [Projector] posting _ %% %s %s %s " % (len(edges), direction, etname ) )
             for e in self.bot.post_edges(self.gid, iter(edges), extra=lambda x : etname) : 
                 self.debug(e)
-                print(e)
             
             
 def main():
