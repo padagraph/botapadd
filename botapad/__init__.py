@@ -100,7 +100,7 @@ def namedtuple_with_defaults(typename, field_names, default_values=()):
     return T
     
 #                          ""    ,  text  , @     ,  #       ,  +       ,  %      ,  =      , !         , (float) ,[default]
-Prop = namedtuple_with_defaults('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'weight','value'  ], default_values=() )
+Prop = namedtuple_with_defaults('Prop', ['name', 'type' ,'isref', 'isindex', 'ismulti', 'isproj','iscliq', 'isignored', 'direction', 'weight','value'  ], default_values=() )
 
 
 class BotapadError(Exception):
@@ -369,7 +369,9 @@ class Botapad(object):
                 props = [ Prop( name=norm_key(e), type=Text(multi="+" in e, default=_v(e)),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
                     isproj="%" in e, iscliq="+" in e and "=" in e ,
-                    isignored="!" in e, weight=_w(e), value=_v(e) ) for e in cols[1:] ]
+                    isignored="!" in e,
+                    direction= "OUT" if ">" in e else "IN" if "<" in e else "ALL" ,
+                    weight=_w(e), value=_v(e) ) for e in cols[1:] ]
 
                 def get_prop(name):
                     for e in props :
@@ -662,22 +664,28 @@ class Botapad(object):
 
                             properties['label']  = etname
                             properties['weight'] = prop.weight
-                        
+
+                            # edge direction
+                            essrc = self.idx[srcid] if prop.direction in ("IN",) else self.idx[tgtid]
+                            estgt = self.idx[srcid] if prop.direction in ("OUT", "ALL") else self.idx[tgtid]
+
                             edges.append( {
                                 'edgetype': self.edgetypes[etname]['uuid'],
-                                'source': self.idx[srcid],
-                                'target': self.idx[tgtid],
+                                'source': essrc,
+                                'target': estgt,
                                 'weight' : prop.weight,
                                 'properties': properties
                             } )
                             
-            self.log( " * [Projector] posting _ = %s %s " % (len(cliqedges), cliqname ) )
+            direction = prop.direction
+            self.log( " * [Projector] posting _ = %s %s %s " % (len(cliqedges), direction, cliqname ) )
             for e in self.bot.post_edges(self.gid, iter(cliqedges), extra=lambda x : etname) : 
                 self.debug(e)
                     
-            self.log( " * [Projector] posting _ %% %s %s " % (len(edges), etname ) )
+            self.log( " * [Projector] posting _ %% %s %s %s " % (len(edges), direction, etname ) )
             for e in self.bot.post_edges(self.gid, iter(edges), extra=lambda x : etname) : 
                 self.debug(e)
+                print(e)
             
             
 def main():
