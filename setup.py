@@ -9,7 +9,6 @@ from setuptools import setup, find_packages
 0.6   added edge direction with reification > or < where % === %<
 """
 
-
 required = []
 try :
     with open('requirements.txt') as f:

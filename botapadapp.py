@@ -450,8 +450,8 @@ def botimport(repo, padurl, gid, content_type):
             'initial_size' : 6,
             'vtx_size' : args.get("vertex_size", 2 ),
 
-            'user_font_size': int(args.get("user_font_size", 1) ),
-            'user_vtx_size' : int(args.get("user_vtx_size" , 2) ),
+            'user_font_size': float(args.get("user_font_size", 1) ), // [-5, 5]
+            'user_vtx_size' : float(args.get("user_vtx_size" , 2) ), // float > 0
             
             'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
             'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
