@@ -42,8 +42,13 @@ Some special characters are used at a begin line:
 *[Properties]*  
 * '*' marker for starred nodes :  
 * '+' marker for multiple values in column  
+
 * '%' marker for projection :  
+* '>' and '<' edge direction , [optional] default '<'
 * '=' used with '%' create a clique with all cell elements :  
+* '(w)' w: float value used as edge weight
+* '[v]' v: text value used as default value for a property
+
 * '&' is an import directive to load external data  
 
 
