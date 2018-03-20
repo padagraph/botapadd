@@ -559,12 +559,13 @@ def botimport(repo, padurl, gid, content_type):
                 'host' : err.host, 
                 'url' : padurl, 
             }
-        #except :
-            #error = {
-                #'class' : "ImportERROR",
-                #'message' : "unexpected",
-                #'url' : padurl, 
-            #}
+        except Exception as err:
+            error = {
+                'class' : "Import ERROR",
+                'message' : "unexpected",
+                'url' : padurl, 
+            }
+            print err
         finally:
             today = datetime.datetime.now()
             db = get_db()
