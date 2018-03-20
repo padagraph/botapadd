@@ -2,8 +2,11 @@
 #-*- coding:utf-8 -*-
 
 from flask import request, jsonify
+from flask import Response, make_response
 
 import igraph
+import pickle
+import json
 
 from reliure.types import GenericType, Text, Numeric, Boolean
 from reliure.web import ReliureAPI, EngineView, ComponentView, RemoteApi
@@ -38,17 +41,19 @@ def explore_engine(graphdb):
         graph = get_graph(query)
 
         uuids = { v['uuid'] : v.index for v in graph.vs }
-        pz = [ q for q in query['units']]
+        pz = [ q for q in query.get('units', []) ]
         pz = [ uuids[p] for p in pz ]
         
         extract = ProxExtract()
         vs = []
-        
-        for u in pz:
-            s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
-                
-            vs = vs + s.keys()
-
+        if len(pz):
+            for u in pz:
+                s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
+                vs = vs + s.keys()
+        else :
+            s = extract(graph, pzeros=[], weighted=weighted,mode=mode, cut=cut, length=length)
+            vs = s.keys()
+            
         return graph.subgraph(vs)
 
     from cello.graphs.transform import VtxAttr
@@ -104,5 +109,30 @@ def explore_api(engines, graphdb):
     view.add_output("graph", export_graph, id_attribute='uuid'  )
 
     api.register_view(view, url_prefix="additive_nodes")
+
+    @api.route("/<string:gid>.json", methods=['GET'])
+    def _json_dump(gid):
+        dumps = lambda g : json.dumps( export_graph(g, id_attribute='uuid') )
+        return stargraph_dump(gid, dumps, 'json')
+
+    @api.route("/<string:gid>.pickle", methods=['GET'])
+    def _pickle_dump(gid):
+        return stargraph_dump(gid, pickle.dumps, 'pickle')
+
+    def stargraph_dump(gid, dumps, content_type):
+        """ returns igraph pickled/jsonified starred graph  """
+
+        engine = explore_engine(graphdb)
+        
+        meta = graphdb.get_graph_metadata(gid)
+        graph = engine.play({'graph':gid})['graph']
+
+        for k,v in meta.iteritems():
+            graph[k] = v
+
+        response = make_response(dumps(graph))
+        response.headers['Content-Type'] = 'application/%s' % content_type
+        response.headers['Content-Disposition'] = 'inline; filename=%s.%s' % (gid, content_type)
+        return response
 
     return api

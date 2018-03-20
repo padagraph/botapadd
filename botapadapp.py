@@ -374,13 +374,17 @@ FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
 @app.route('/import/', methods=['GET'])
 @app.route('/import/<string:repo>', methods=['GET', 'POST'])
 @app.route('/import/<string:repo>.<string:content>', methods=['GET', 'POST'])
-def import2pdg(repo='igraph', content=None):
+#  
+#  name: import2pdg
+#  @param
+#  @return
+#  
+def import2pdg(repo='igraph', content="html"):
     
     if repo in ("padagraph", "igraph"):
         content = request.form.get('content_type', content)
         if content in ("html", "embed", "pickle", "json", ):
 
-            gid = request.form.get('gid', request.args.get('gid', "graph"))
             padurl = request.form.get('url', None)
             pad_source = request.args.get('s', padurl)
 
@@ -393,6 +397,9 @@ def import2pdg(repo='igraph', content=None):
                     padurl = "https://docs.google.com/document/d/%s/edit" % gid
 
                 else : padurl = pad_source
+
+            gid = "%s" % padurl.split('/')[-1] if padurl else None
+            gid = request.form.get('gid', request.args.get('gid', gid ))
 
             return botimport(repo, padurl, gid, content)
 
@@ -422,7 +429,7 @@ def botimport(repo, padurl, gid, content_type):
     if content_type == "embed":
         footer = False
     else : 
-        footer = not(args.get('nofoot', 0) == "1") # default true
+        footer = (args.get('footer', 0) == "1") # default false
 
     reader = args.get("format", "csv")
 
@@ -432,40 +439,52 @@ def botimport(repo, padurl, gid, content_type):
     ))
     args['s'] = padurl
 
-    if padurl:
+    graphurl = u"?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in args])
+    options = {
+        #
+        'wait' : 4,
+        #template
+        'zoom'  : args.get("zoom", 1200 ),
+        'buttons': 0, # removes play/vote buttons
+        'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
+        # gviz
+        'el': "#viz",
+        'background_color' : color,
+
+        # todo check where used
+        'initial_size' : 6,
+        'vtx_size' : args.get("vertex_size", 2 ),
+
+        'user_font_size': float(args.get("user_font_size", 1) ), # [-5, 5]
+        'user_vtx_size' : float(args.get("user_vtx_size" , 2) ), # float > 0
+        
+        'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
+        'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
+        'show_edges' : 0 if args.get("no_edges" , None ) else 1, # removes edges 
+        'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
+        
+        'auto_rotate': int(args.get("auto_rotate", 0 )),
+        'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
+            
+    }
+
+
+    if gid == None and padurl == None :
+        #error = {
+            #'class' : "BotapadURLError",
+            #'message' : "padurl not given",
+            #'url' : "###", 
+        #}
+        pass
+    elif gid and padurl == None :
+        sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+        data = "%s/xplor/%s.json" % (ENGINES_HOST, gid)
+        complete = True
+        
+    elif padurl :
         
         promote = 1 if request.form.get('promote', 0)  else 0    
-        #graphurl = "/import/igraph.html?s=%s&gid=%s&nofoot=1" % (padurl, gid)
-        graphurl = u"?%s" % "&".join([ "%s=%s" % (k,request.args.get(k)) for k in  request.args])
 
-        options = {
-            #
-            'wait' : 4,
-            #template
-            'zoom'  : args.get("zoom", 1200 ),
-            'buttons': 0, # removes play/vote buttons
-            'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
-            # gviz
-            'el': "#viz",
-            'background_color' : color,
-
-            # todo check where used
-            'initial_size' : 6,
-            'vtx_size' : args.get("vertex_size", 2 ),
-
-            'user_font_size': float(args.get("user_font_size", 1) ), # [-5, 5]
-            'user_vtx_size' : float(args.get("user_vtx_size" , 2) ), # float > 0
-            
-            'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
-            'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
-            'show_edges' : 0 if args.get("no_edges" , None ) else 1, # removes edges 
-            'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
-            
-            'auto_rotate': int(args.get("auto_rotate", 0 )),
-            'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
-                
-        }
-    
         try : 
             if repo == "padagraph":
                 pad2pdg(gid, padurl)
@@ -482,7 +501,7 @@ def botimport(repo, padurl, gid, content_type):
                 if content_type == "embed":
                     complete = True 
                     data = "%s/import/igraph.json?s=%s" % (ENGINES_HOST, padurl)
-
+    
                 else :
                     graph = pad2igraph( gid, padurl, reader )
                     graph = prepare_graph(graph)
@@ -492,8 +511,7 @@ def botimport(repo, padurl, gid, content_type):
 
                     graph['meta']['pedigree'] = pedigree.compute(graph)
           
-                    graphdb.set_graph(gid, graph)
-                                        
+                    graphdb.set_graph(gid, graph)                                        
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                     
@@ -565,7 +583,7 @@ def botimport(repo, padurl, gid, content_type):
         except Exception as err:
             error = {
                 'class' : "Import ERROR",
-                'message' : "unexpected",
+                'message' : "unexpected error",
                 'url' : padurl, 
             }
             print err
@@ -659,7 +677,8 @@ from pdgapi import get_engines_routes
 @app.route('/engines', methods=['GET'])
 def _engines():
     host = ENGINES_HOST
-    return jsonify({'routes': get_engines_routes(app, host)})
+    routes = { k:v for k,v in get_engines_routes(app, host).items() if k[0] != "<" }
+    return jsonify({'routes': routes})
 
     
 
