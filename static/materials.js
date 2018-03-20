@@ -6,7 +6,7 @@
             {'default' : {
                 'lineWidth' : function(edge){
                         var w = edge.properties.get('width');
-                        if (!w) w = 2;
+                        if (!w) w = 1;
                         return w;
                     },
                 'color' : function(edge){
@@ -110,7 +110,6 @@
                 'lineType' : "dashed",
                 'dashSize' : .1,
                 'gapSize'  : .5,
-                'line_max_length': 12,
 
                 'fontScale'  :  0.12,
                 'font' : "normal 10px sans-serif",
@@ -124,7 +123,8 @@
                 'textPaddingX'  : 0.5,
                 
                 // text length
-                'textLength' : 20,
+                'line_max_length': 14,
+                'textLength' : 29,
                 
             } },
 
@@ -163,7 +163,7 @@
                 'fontScale'  :  0.1,
                 'scale':1.2,
                 'opacity' : 1,
-                'line_max_length': 18,
+                'line_max_length': 20,
                 'textLength' : 100,
 
             } },
@@ -174,7 +174,7 @@
                 'opacity'   : 1,
                 //'fontScale'  :  0.4,
                 'paddingX': 200,
-                'line_max_length': 24,
+                'line_max_length': 20,
             } },
 
             { '.target': {
