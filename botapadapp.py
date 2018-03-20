@@ -425,7 +425,7 @@ def botimport(repo, padurl, gid, content_type):
     #args
     args = request.args
      
-    color = "#" + args.get("color", "249999" )    
+    bgcolor = "#" + args.get("bgcolor", "249999" )    
     if content_type == "embed":
         footer = False
     else : 
@@ -449,14 +449,14 @@ def botimport(repo, padurl, gid, content_type):
         'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
         # gviz
         'el': "#viz",
-        'background_color' : color,
+        'background_color' : bgcolor,
 
         # todo check where used
         'initial_size' : 6,
         'vtx_size' : args.get("vertex_size", 2 ),
 
-        'user_font_size': float(args.get("user_font_size", 1) ), # [-5, 5]
-        'user_vtx_size' : float(args.get("user_vtx_size" , 2) ), # float > 0
+        'user_font_size': float(args.get("font_size", 1) ), # [-5, 5]
+        'user_vtx_size' : float(args.get("vtx_size" , 2) ), # float > 0
         
         'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
         'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
@@ -601,7 +601,7 @@ def botimport(repo, padurl, gid, content_type):
     print graphurl, gid
 
     return render_template('botapadapp.html',
-        static_host=STATIC_HOST, color=color,
+        static_host=STATIC_HOST, color=bgcolor,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
         padurl=padurl, graphurl = graphurl, sync=sync,
