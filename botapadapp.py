@@ -6,6 +6,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+import time 
 import datetime 
 import logging
 import codecs
@@ -93,7 +94,7 @@ create table imports (
 
 import igraph
 from igraph.utils import named_temporary_file 
-import pickle
+import cPickle as pickle
 import StringIO
 from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
@@ -118,6 +119,7 @@ class RedisGraphs(object):
     def __getitem__(self, gid):
         # get from redis and unpickle
         
+        start = time.time()
         graph = pickle.loads(self.redis.get(gid))
         print "loading %s from redis" % gid
         
@@ -129,10 +131,14 @@ class RedisGraphs(object):
                 print "opening graph %s@%s" %(gid, path)
                 graph = IgraphGraph.Read(path)
 
+        end = time.time()
+
+        print "redis time GET %s" % (end - start)
         if graph is not None:
+            print graph.summary()
             return graph
-        else :
-            raise GraphError('%s' % gid)
+
+        raise GraphError('%s' % gid)
 
     def keys(self):
         return []
@@ -530,22 +536,21 @@ def botimport(repo, padurl, gid, content_type):
                         pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
                         print pzeros , graph.summary()
                         
-                        graph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
+                        subgraph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
                                                  
-                    
-                    data = export_graph(graph, id_attribute='uuid')
-                                     
                     complete = True 
 
-                if content_type == "json":
-                    return jsonify(data)
                     
-                elif content_type == "pickle":
+                if content_type == "pickle":
                     response = make_response(pickle.dumps(graph))
                     response.headers["Content-Disposition"] = "attachment; filename=%s.pickle" % gid
                     return response
-                else :
-                    data = json.dumps(data)
+                else : 
+                    data = export_graph(subgraph, id_attribute='uuid')
+                    if content_type == "json":
+                        return jsonify(data)
+                    else :
+                        data = json.dumps(data)
 
         except BotapadCsvError as err:
             error = {

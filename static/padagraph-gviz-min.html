@@ -8541,7 +8541,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                     }
                 }
             } else if (this.option.value != value) {
-                this.option.value = value;
+                this.option.value = this.option.parse(value);
             }
         },
 
@@ -9780,6 +9780,47 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
         }
 
     });
+});</script></dom-module><dom-module id="padagraph-cluster-popup" assetpath="./"><style>.card { width:400px}
+.card .intersected { margin:4px; padding: 2px; border:none; }
+a.more { padding-right:12px; margin-top: -12px; }
+
+span.name {
+       display: inline-block;
+       color: #333;
+       font-weight: bold;
+       font-size: 1em;
+       margin-right: 6px;
+   }
+//.position {
+   //position:absolute;
+   //top: 12px;
+   //left: 12px;
+   //max-height: calc(100% - 24px);
+   //overflow-y: auto;
+   //z-index:1;
+//}
+</style><template><template is="dom-if" if="{{ clusters }}"> <div class="ui card"></div></template></template><script>'use strict';
+
+require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
+  Polymer({
+    is: "padagraph-cluster-popup",
+
+    properties: {
+      clustering: { type: Object, value: function value() {}, observer: 'clusters_changed' }
+    },
+
+    created: function created() {
+      this._listener = {};
+      _.extend(this._listener, Backbone.Events);
+    },
+
+    clusters_changed: function clusters_changed(clustering) {
+
+      this._listener.stopListening();
+      if (!clustering) return;
+    }
+
+  });
 });</script></dom-module><dom-module id="padagraph-model-popup" assetpath="./"><style>.card { width:400px}
 .card .intersected { margin:4px; padding: 2px; border:none; }
 a.more { padding-right:12px; margin-top: -12px; }

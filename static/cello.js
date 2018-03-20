@@ -699,19 +699,33 @@ Cello.Doc = Backbone.Model.extend({
             return _.isEqual(this.value, this.otype.default);
         },
 
-        /** Validate one value
-        */
+
+        cast : function(value){
+            var f = function(e){
+                return  e;
+            };
+            
+            if(this.otype.vtype === "float") f = parseFloat;
+            if(this.otype.vtype === "int") f = parseInt;
+            if(this.otype.type === "Boolean"){
+                f =  function(e){
+                    return  [1, true, "true", "True", "TRUE", "1", "yes"].indexOf(e) >= 0;
+                }
+            }
+            return f(value);
+        },
+        
         parse: function(val){
+            var self = this;
             if (this.otype) {
-                if(this.otype.type === "Boolean"){
-                    val = [1, true, "true", "True", "TRUE", "1", "yes"].indexOf(val) >= 0;
-                }
-                if(this.otype.vtype === "float"){
-                    val = parseFloat(val);
-                }
-                if(this.otype.vtype === "int"){
-                    val = parseInt(val);
-                    if ( _.isNaN(val) ) val = "";
+                if(this.otype.vtype === "float" || this.otype.vtype === "int") {
+                    if (this.otype.multi  ) {
+                        val = val.replace(/\s/g, '').split(',').map( function(e){ return self.cast(e);  } );
+                    }
+                    else {
+                        val = self.cast(val);
+                        if ( _.isNaN(val) ) val = "";
+                    }
                 }
             }
             return val;
@@ -720,7 +734,7 @@ Cello.Doc = Backbone.Model.extend({
         /** Validate one value
         */
         _validate_one: function(val){
-            val = this.parse(val)
+            val = this.cast(val)
             // check enum
             var choices = this.otype.choices;
             if(choices && _.indexOf(choices, val) < 0){
