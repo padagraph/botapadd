@@ -3,6 +3,9 @@
 
 import os
 import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 import datetime 
 import logging
 import codecs
