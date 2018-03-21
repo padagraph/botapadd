@@ -42,20 +42,26 @@ PATH = "./static/images" # images storage
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
 ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
 PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
+DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
+
+REDIS_STORAGE = os.environ.get('REDIS_STORAGE', False) == "true"
+LOCAL_PADS_STORE = "./pads"
+
 
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 except:
-    KEY = "SHOULD BE ADDED in secret/key.txt"
+    KEY = "!! SHOULD BE ADDED in secret/key.txt"
 
 
 # delete before import
-DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
 
 # app
-print( "== Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
-print( "== Running with gunicorn : %s==" % (RUN_GUNICORN) )
-print( "== engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PADAGRAPH_HOST) )
+print( " == Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
+print( " == Running with gunicorn : %s==" % (RUN_GUNICORN) )
+print( " == engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PADAGRAPH_HOST) )
+print( " == REDIS STORAGE : %s ==  " ) % REDIS_STORAGE
+print( " == LOCAL_PADS_STORE : %s ==  " ) % LOCAL_PADS_STORE
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -71,9 +77,7 @@ login_manager.init_app(app)
 from flask_cors import CORS
 CORS(app)
 
-# Database 
-# ===
-
+# == Database ==
 import os.path
 from flask import g
 import sqlite3
@@ -98,9 +102,6 @@ import cPickle as pickle
 import StringIO
 from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
-
-STORE = "../application/src/sample"
-STORE = "./pads"
 
 import redis
 class RedisGraphs(object):
@@ -143,8 +144,11 @@ class RedisGraphs(object):
     def keys(self):
         return []
         
-#graphdb = IGraphDB( graphs=RedisGraphs() )
 graphdb = IGraphDB( graphs={} )
+
+if REDIS_STORAGE:
+    graphdb = IGraphDB( graphs=RedisGraphs() )
+
 graphdb.open_database()
 
 def get_db():
@@ -302,7 +306,7 @@ def pad2igraph(gid, url, format="csv"):
         try : 
             description = "imported from %s" % url
             if url[0:4] != 'http':
-                url = "%s/%s.%s" % (STORE, url, format) 
+                url = "%s/%s.%s" % (LOCAL_PADS_STORE, url, format) 
             bot = BotaIgraph(directed=True)
             botapad = Botapad(bot , gid, description, delete=DELETE, verbose=True, debug=False)
             #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
@@ -337,11 +341,11 @@ def pad2igraph(gid, url, format="csv"):
 
         elif DEBUG : 
             try : 
-                content = open("%s/%s.%s" % (STORE, url, format) , 'rb').read()
+                content = open("%s/%s.%s" % (LOCAL_PADS_STORE, url, format) , 'rb').read()
             except Exception as err :
                 raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
 
-        print (" === reading  %s/%s.%s" % (STORE, url, format) )
+        print (" === reading  %s/%s.%s" % (LOCAL_PADS_STORE, url, format) )
 
         try :
             with named_temporary_file(text=False) as tmpf: 

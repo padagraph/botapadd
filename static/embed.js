@@ -466,12 +466,15 @@ Models.ExpandNodesQuery = Backbone.Model.extend({
     defaults : {
         graph : null,
         nodes: [], // uuids
+        expand: [], // uuids
         weights: [],
     },
     
     export_for_engine: function(){
+        var nodes = _.map( this.get('graph').vs.models, function(e){ return e.get('uuid') } );
         return { graph: this.get('graph').get('gid'),
-                 nodes: this.get('nodes'),
+                 nodes: nodes,
+                 expand: this.get('expand'),
                  weights: this.get('weights'),
                };
     },
@@ -1185,7 +1188,7 @@ App.Base = Backbone.View.extend({
             app.engines.expand_prox.register_input("request", expand_query);
             app.listenTo(Backbone, 'engine:expand_prox', function(data){
                 console.log('engine:expand_prox', data);
-                expand_query.set('nodes', data.nodes);
+                expand_query.set('expand', data.nodes);
                 expand_query.set('weights', data.weights);
                 app.engines.expand_prox.play();
             });

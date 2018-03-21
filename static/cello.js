@@ -720,11 +720,17 @@ Cello.Doc = Backbone.Model.extend({
             if (this.otype) {
                 if(this.otype.vtype === "float" || this.otype.vtype === "int") {
                     if (this.otype.multi  ) {
-                        val = val.replace(/\s/g, '').split(',').map( function(e){ return self.cast(e);  } );
+                        val = val.replace(/\s/g, '')
+                            .split(',')
+                            .filter(function(e){ return e.length })
+                            .map( function(e){ return self.cast(e);  } );
+                            
+                        if ( _.isNaN(val) ) val = "";
                     }
                     else {
                         val = self.cast(val);
-                        if ( _.isNaN(val) ) val = "";
+                        if ( _.isNaN(val) )
+                            val = "";
                     }
                 }
             }
@@ -734,7 +740,7 @@ Cello.Doc = Backbone.Model.extend({
         /** Validate one value
         */
         _validate_one: function(val){
-            val = this.cast(val)
+            //val = this.cast(val)
             // check enum
             var choices = this.otype.choices;
             if(choices && _.indexOf(choices, val) < 0){

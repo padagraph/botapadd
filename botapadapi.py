@@ -14,7 +14,7 @@ from reliure.pipeline import Optionable, Composable
 from reliure.engine import Engine
 
 from cello.graphs import export_graph, IN, OUT, ALL
-from cello.graphs.prox import ProxSubgraph, ProxExtract
+from cello.graphs.prox import ProxSubgraph, ProxExtract, pure_prox, sortcut
 
 from cello.layout import export_layout
 from cello.clustering import export_clustering
@@ -22,6 +22,35 @@ from cello.clustering import export_clustering
 from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, export_graph, layout_api, clustering_api
 
 
+def db_graph(graphdb, query ):
+    gid = query['graph']
+    graph = graphdb.get_graph(gid)
+    return graph
+
+def _weights(weightings):
+
+    def _w( graph, vertex):
+        
+        r = [(vertex, 1)] # loop        
+        for i in graph.incident(vertex, mode=ALL):
+            e = graph.es[i]
+            v = e.source if e.target == vertex else e.target
+
+            w = (v, 1) # default
+            
+            if weightings:
+                if "1" in weightings : 
+                    w = (v, 1.)
+                elif "weight" in weightings:
+                    w = (v, e['weight'])
+        
+            r.append( w )
+                
+        return r
+        
+    return _w
+
+    
 def explore_engine(graphdb):
     """ Prox engine """
     # setup
@@ -31,14 +60,12 @@ def explore_engine(graphdb):
     ## Search
     @Composable
     def get_graph(query, **kwargs):
-        gid = query['graph']
-        graph = graphdb.get_graph(gid)
-        return graph
+        return db_graph(graphdb, query)
         
     @Composable
     def subgraph(query, cut=50, weighted=True, length=3, mode=ALL, add_loops=False, ):
 
-        graph = get_graph(query)
+        graph = db_graph(graphdb, query)
 
         uuids = { v['uuid'] : v.index for v in graph.vs }
         pz = [ q for q in query.get('units', []) ]
@@ -75,12 +102,60 @@ def explore_engine(graphdb):
         search.name = k
         searchs.append(search)
 
-    sglobal = Composable(get_graph) | ProxSubgraph()
+    sglobal = get_graph | ProxSubgraph()
     sglobal.name = "Global"
     searchs.append(sglobal)
 
 
     engine.graph.set( *searchs )
+    return engine
+
+    
+def expand_prox_engine(graphdb):
+    """
+    prox with weights and filters on UNodes and UEdges types
+    
+    input:  {
+                nodes : [ uuid, .. ],  //more complex p0 distribution
+                weights: [float, ..], //list of weight
+            }
+    output: {
+                graph : gid,
+                scores : [ (uuid_node, score ), .. ]
+            }
+    """
+    engine = Engine("scores")
+    engine.scores.setup(in_name="request", out_name="scores")
+
+    ## Search
+    def expand(query, length=3, cut=100, nodes=False, weightings=None):
+
+        graph = db_graph(graphdb, query)
+        gid = query.get("graph")
+        uuids = { v['uuid'] : v.index for v in graph.vs }
+
+        pz = {}
+        qnodes = query.get("nodes", []) if nodes else []
+        qexpand = query.get("expand", [])
+        pz.update( { uuids[p] : 1./len(_nodes) for p in qnodes } )
+        pz.update( { uuids[p] : 1. for p in qexpand })
+        
+        weightings = ["1"] if weightings == None else weightings
+        wneighbors = _weights(weightings)
+        
+        vs = pure_prox(graph, pz, length, wneighbors)
+        vs = sortcut(vs, cut)
+        return dict(vs)
+
+    scores = Optionable("scores")
+    scores._func = Composable(expand)
+    scores.add_option("length", Numeric( vtype=int, default=3))
+    scores.add_option("cut", Numeric( vtype=int, default=50, max=100))
+    scores.add_option("nodes", Boolean( default=True))
+    scores.add_option("weighting", Text(choices=[  u"0", u"1", u"weight" ], multi=True, default=u"1", help="ponderation"))
+    
+    engine.scores.set(expand)
+
     return engine
 
 
@@ -97,7 +172,8 @@ def explore_api(engines, graphdb):
     api.register_view(view, url_prefix="explore")
 
     # prox expand returns [(node,score), ...]
-    view = EngineView(engines.expand_prox_engine(graphdb))
+        
+    view = EngineView(expand_prox_engine(graphdb))
     view.set_input_type(NodeExpandQuery())
     view.add_output("scores", lambda x:x)
 
