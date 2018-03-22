@@ -16,11 +16,11 @@ from functools import wraps
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
-from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
+from botapi import BotApiError, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
+from botapadapi import pad2igraph, pad2pdg, compute_pedigree, graph_stats
 
 from cello.graphs import IN, OUT, ALL
-from cello.graphs import pedigree
 from cello.graphs.prox import ProxSubgraph
 from cello.graphs.filter import RemoveNotConnected, GenericVertexFilter
 
@@ -246,7 +246,7 @@ def promote():
 
     
 @app.route('/stats', methods=['GET', 'POST'])
-def stats():
+def get_stats():
     query = """
     SELECT * FROM IMPORTS
     """
@@ -289,81 +289,7 @@ def stats():
 def readme():
     md = codecs.open('README.md', 'r', encoding='utf8').read()
     return render_template('botapadapp.html', readme=md )
-    
-def pad2pdg(gid, url):
-    description = "imported from %s" % url
-    bot = Botagraph(PADAGRAPH_HOST, KEY)
-    botapad = Botapad(bot, gid, description, delete=DELETE)
-    return botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-
-
-def pad2igraph(gid, url, format="csv"):
-
-    print ("format", gid, url, format )
-    
-    if format == 'csv':
-        
-        try : 
-            description = "imported from %s" % url
-            if url[0:4] != 'http':
-                url = "%s/%s.%s" % (LOCAL_PADS_STORE, url, format) 
-            bot = BotaIgraph(directed=True)
-            botapad = Botapad(bot , gid, description, delete=DELETE, verbose=True, debug=False)
-            #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-            botapad.parse(url, separator='auto', debug=False)
-            graph = bot.get_igraph(weight_prop="weight")
-
-            if graph.vcount() == 0 :
-                raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
-
-            return graph
-            
-        except BotapadParseError as e :
-            log = botapad.get_log()
-            e.log = log
-            raise e
-            
-        except OSError as e :
-            raise BotapadURLError( "No such File or Directory : %s " % url, url)
-            
-        
-    elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
-        content = None
-        if url[0:4] == 'http':
-            try :
-                url = convert_url(path)
-                if format in ( 'pickle', 'picklez'):
-                    raise ValueError('no pickle from HTTP : %s ' % url )
-                log( " * Downloading %s %s\n" % (url, separator))
-                content = requests.get(url).text
-            except :
-                raise BotapadURLError("Can't download %s" % url, url)
-
-        elif DEBUG : 
-            try : 
-                content = open("%s/%s.%s" % (LOCAL_PADS_STORE, url, format) , 'rb').read()
-            except Exception as err :
-                raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
-
-        print (" === reading  %s/%s.%s" % (LOCAL_PADS_STORE, url, format) )
-
-        try :
-            with named_temporary_file(text=False) as tmpf: 
-                outf = open(tmpf, "wt") 
-                outf.write(content) 
-                outf.close() 
-            
-                graph =  igraph.read(tmpf, format=format) 
-  
-            return graph
-        
-        except Exception as err :
-            raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err.message ))
-
-    else :
-        raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
-    
-    
+ 
 
 @app.route('/embed', methods=['GET'])
 def embed():
@@ -497,7 +423,7 @@ def botimport(repo, padurl, gid, content_type):
 
         try : 
             if repo == "padagraph":
-                pad2pdg(gid, padurl)
+                pad2pdg(gid, padurl, PADAGRAPH_HOST, KEY, DELETE , debug=app.config['DEBUG'])
                 
                 data = "%s/xplor/%s.json" % (ENGINES_HOST, gid) 
                 sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
@@ -513,14 +439,10 @@ def botimport(repo, padurl, gid, content_type):
                     data = "%s/import/igraph.json?s=%s" % (ENGINES_HOST, padurl)
     
                 else :
-                    graph = pad2igraph( gid, padurl, reader )
-                    graph = prepare_graph(graph)
-                    
-                    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
-                    graph['meta']['owner'] = None
 
-                    graph['meta']['pedigree'] = pedigree.compute(graph)
-          
+                    builder = pad2igraph | prepare_graph | compute_pedigree | graph_stats
+                    
+                    graph = builder( gid, padurl, reader ) 
                     graphdb.set_graph(gid, graph)                                        
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)

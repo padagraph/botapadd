@@ -1709,6 +1709,7 @@ var Type = Backbone.Model.extend({
     defaults: {
         //  attrs
         name: "",
+        count: 0,
         description: "",
         properties: new Cello.Options(),    // Collection of options
         material:  {},    // Collection of options
@@ -1761,6 +1762,7 @@ var Type = Backbone.Model.extend({
 var NodeType = Type.extend({
     // init
     initialize: function(attrs, options){
+        Cello.get(this, "count");
         Cello.get(this, "name");
         Cello.get(this, "properties");
         
@@ -1784,6 +1786,7 @@ var EdgeType = Type.extend({
     // init
     initialize: function(attrs, options){
         Cello.get(this, "name");
+        Cello.get(this, "count");
         Cello.get(this, "properties");
         Cello.get(this, "label", function(){
             var label = this.get('name');

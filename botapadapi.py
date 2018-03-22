@@ -8,6 +8,9 @@ import igraph
 import pickle
 import json
 
+import datetime
+from collections import Counter
+
 from reliure.types import GenericType, Text, Numeric, Boolean
 from reliure.web import ReliureAPI, EngineView, ComponentView, RemoteApi
 from reliure.pipeline import Optionable, Composable
@@ -26,6 +29,120 @@ def db_graph(graphdb, query ):
     gid = query['graph']
     graph = graphdb.get_graph(gid)
     return graph
+
+   
+def pad2pdg(gid, url, host, key, delete, debug=False):
+    description = "imported from %s" % url
+    bot = Botagraph()
+    botapad = Botapad(bot, gid, description, delete=delete)
+    return botapad.parse(url, separator='auto', debug=debug)
+
+@Composable
+def pad2igraph(gid, url, format="csv"):
+    graph = _pad2igraph(gid, url, format, delete=True)
+    graph['meta']['owner'] = None
+    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+    return graph
+
+def types_stats( items , opt={}):
+    counter = Counter(items)
+    return dict(counter)  
+    print counter
+
+@Composable
+def graph_stats(graph, **kwargs):
+    graph['meta']['stats'] = {}
+
+    stats = types_stats(graph.vs['nodetype'])
+    print stats
+    for e in graph['nodetypes']:
+        e['count'] = stats.get(e['uuid'], 0)
+    graph['meta']['stats']['nodetypes'] = stats
+    
+    stats = types_stats(graph.es['edgetype'])
+    for e in graph['edgetypes']:
+        e['count'] = stats.get(e['uuid'], 0)
+    graph['meta']['stats']['edgetypes'] = stats
+    return graph
+
+from cello.graphs import pedigree
+
+@Composable
+def compute_pedigree(graph, **kwargs):
+    graph['meta']['pedigree'] = pedigree.compute(graph)
+    return graph
+    
+
+from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
+from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
+
+def _pad2igraph(gid, url, format, delete=False):
+
+    print ("format", gid, url, format )
+    
+    if format == 'csv':
+        
+        try : 
+            description = "imported from %s" % url
+            if url[0:4] != 'http':
+                url = "%s/%s.%s" % (LOCAL_PADS_STORE, url, format) 
+            bot = BotaIgraph(directed=True)
+            botapad = Botapad(bot , gid, description, delete=delete, verbose=True, debug=False)
+            #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
+            botapad.parse(url, separator='auto', debug=False)
+            graph = bot.get_igraph(weight_prop="weight")
+
+            if graph.vcount() == 0 :
+                raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
+
+            return graph
+            
+        except BotapadParseError as e :
+            log = botapad.get_log()
+            e.log = log
+            raise e
+            
+        except OSError as e :
+            raise BotapadURLError( "No such File or Directory : %s " % url, url)
+            
+        
+    elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
+        content = None
+        if url[0:4] == 'http':
+            try :
+                url = convert_url(path)
+                if format in ( 'pickle', 'picklez'):
+                    raise ValueError('no pickle from HTTP : %s ' % url )
+                log( " * Downloading %s %s\n" % (url, separator))
+                content = requests.get(url).text
+            except :
+                raise BotapadURLError("Can't download %s" % url, url)
+
+        elif DEBUG : 
+            try : 
+                content = open("%s/%s.%s" % (LOCAL_PADS_STORE, url, format) , 'rb').read()
+            except Exception as err :
+                raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
+
+        print (" === reading  %s/%s.%s" % (LOCAL_PADS_STORE, url, format) )
+
+        try :
+            with named_temporary_file(text=False) as tmpf: 
+                outf = open(tmpf, "wt") 
+                outf.write(content) 
+                outf.close() 
+            
+                graph =  igraph.read(tmpf, format=format) 
+  
+            return graph
+        
+        except Exception as err :
+            raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err.message ))
+
+    else :
+        raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
+    
+    
 
 def _weights(weightings):
 
