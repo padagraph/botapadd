@@ -20,156 +20,6 @@
       }
       
               
-      #keb {
-          min-width:350px;
-      }
-      
-      #keb .close{
-          background: #FFF;
-          text-align:right;
-          padding: 4px ;
-      }
-      
-      a.ui.active.refresh.button {
-          position:absolute;
-          right: 56px;
-          bottom: 22px;
-      }
-      
-      padagraph-node-search {
-          position: absolute;
-          bottom: 22px;
-      }
-      
-      .footer.segment {
-        padding: 5em 0em;
-      }
-      
-      @media only screen and (max-width: 700px) {
-        .ui.fixed.menu {
-          display: none !important;
-        }
-        .secondary.pointing.menu .item,
-        .secondary.pointing.menu .menu {
-          display: none;
-        }
-        .secondary.pointing.menu .toc.item {
-          display: block;
-        }
-      }
-      
-      a.inverted { color:white;}
-      
-      iframe {
-          border: none;
-          }
-      
-      pre {
-          background: darkcyan;
-          padding: 6px;
-          margin: 0px 30px 10px 0px;
-      }
-      
-      code.log {
-          background: none;
-          white-space:pre-wrap;
-      }
-      
-      form .ui.checkbox label {
-          font-size: 24px;
-          padding-left: 24px;
-          color: white;
-      }
-      
-      form h3 {
-          margin-top: 2px
-      }
-      
-      input[type=radio] {
-          margin:20px;
-      }
-      
-      #importform.ui.form .field label {
-          color:white !important;
-      }
-      
-      input[type=checkbox], input[type=radio]
-      {
-        /* Double-sized Checkboxes */
-        -ms-transform: scale(2); /* IE */
-        -moz-transform: scale(2); /* FF */
-        -webkit-transform: scale(2); /* Safari and Chrome */
-        -o-transform: scale(2); /* Opera */
-        padding: 10px;
-      }
-      
-      
-      span.bold { font-weight: bold }
-      
-      .column.vz { height: 50% !important }
-      a.multi {            
-          position: absolute !important;
-          margin  : 12px;
-      }
-      
-      #menu {
-        position:absolute;
-        background: {{color}};
-        top: 176px;
-      }
-      
-      #menu .divider { margin:3px }
-      
-      .nofoot #menu {
-        top: 24px;
-      }
-      
-      .ui.icon.menu {
-        margin: 12px;
-        text-align: right;
-        top: 24px;
-      }
-      
-      #gviz {
-          margin:auto;
-          margin-bottom:4px;
-          
-          text-align:left;
-          width:100%;
-          height:100%;
-      }
-      
-      #viz {
-          height: 100%;
-          width: 100%;
-      }
-      
-      #labels {
-        position:absolute;
-        bottom: 12px;
-        padding:12px;
-        margin:18px;
-      }
-      #labels .segment {
-          margin-left: -14px;
-          margin-bottom: 24px;
-      }
-      
-      padagraph-model-popup {
-          position:absolute;
-          top: 264px;
-          right:0px;
-          margin:12px;
-          max-height: calc(100% - 24px);
-          overflow-y: auto;
-          z-index:10;
-      }
-      
-      .nofoot padagraph-model-popup {
-          top: 20px;
-      }
-      
-      padagraph-model-popup .propvalue {  color: #333; }
       
     </style>
   </head>
@@ -261,78 +111,243 @@
             </tbody>
           </table>
         </div>{% elif complete and not fail  %}
-        <div class="ui container">{% if footer%}  
-          <h4 class="ui inverted horizontal divider">
-            <Import>complete</Import>
-          </h4>
+        <!--.ui.container-->
+        <div>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
+          <style>
+            #keb {
+                min-width:350px;
+            }
+            
+            #keb .close{
+                background: #FFF;
+                text-align:right;
+                padding: 4px ;
+            }
+            
+            .pusher .segment {
+                padding: 0px ;
+            }
+            
+            a.ui.active.refresh.button {    }
+            
+            padagraph-node-search {
+            }
+            
+            .footer.segment {
+              padding: 5em 0em;
+            }
+            
+            @media only screen and (max-width: 700px) {
+              .ui.fixed.menu {
+                display: none !important;
+              }
+              .secondary.pointing.menu .item,
+              .secondary.pointing.menu .menu {
+                display: none;
+              }
+              .secondary.pointing.menu .toc.item {
+                display: block;
+              }
+            }
+            
+            a.inverted { color:white;}
+            
+            pre {
+                background: darkcyan;
+                padding: 6px;
+                margin: 0px 30px 10px 0px;
+            }
+            
+            code.log {
+                background: none;
+                white-space:pre-wrap;
+            }
+            
+            form .ui.checkbox label {
+                font-size: 24px;
+                padding-left: 24px;
+                color: white;
+            }
+            
+            form h3 {
+                margin-top: 2px
+            }
+            
+            input[type=radio] {
+                margin:20px;
+            }
+            
+            #importform.ui.form .field label {
+                color:white !important;
+            }
+            
+            input[type=checkbox], input[type=radio]
+            {
+              /* Double-sized Checkboxes */
+              -ms-transform: scale(2); /* IE */
+              -moz-transform: scale(2); /* FF */
+              -webkit-transform: scale(2); /* Safari and Chrome */
+              -o-transform: scale(2); /* Opera */
+              padding: 10px;
+            }
+            
+            
+            span.bold { font-weight: bold }
+            
+            .column.vz { height: 50% !important }
+            a.multi {            
+                position: absolute !important;
+                margin  : 12px;
+            }
+            
+            #menu {
+              position:absolute;
+              background: {{color}};
+              top: 176px;
+            }
+            
+            #menu .divider { margin:3px }
+            
+            .nofoot #menu {
+              top: 24px;
+            }
+            
+            .ui.icon.menu {
+              margin: 12px;
+              text-align: right;
+              top: 24px;
+            }
+            
+            #gviz {
+                margin:auto;        
+                text-align:left;
+                width:100%;
+                height:100%;
+            }
+            
+            #viz {
+                height: 100%;
+                width: 100%;
+            }
+            
+            #labels {
+              position:absolute;
+              bottom: 12px;
+              padding:0px;
+              margin-left:18px;
+              width:100%;
+            }
+            
+            #labels .segment {
+              margin-left: -14px;
+              margin-bottom: 24px;
+              position:absolute;
+              bottom: 32px;
+            }
+            
+            padagraph-model-popup {
+                position:absolute;
+                top: 264px;
+                right:0px;
+                margin:12px;
+                max-height: calc(100% - 24px);
+                overflow-y: auto;
+                z-index:10;
+            }
+            
+            .nofoot padagraph-model-popup {
+                top: 20px;
+            }
+            
+            padagraph-model-popup .propvalue {  color: #333; }
+            
+          </style>{% if footer%}  
+          <h4 class="ui inverted horizontal divider"></h4>
+          <Import>complete</Import>
           <p></p>
-          <div class="ui inverted link list"><a href="{{padurl}}" class="active item">Imported from {{padurl}}</a></div>{% endif %}  
+          <div class="ui inverted link list"></div><a href="{{padurl}}" class="active item">Imported from {{padurl}}</a>{% endif %}  
           <script src="{{static_host}}/static/webcomponents-lite.js"></script>
           <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
           <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
-          <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
-            <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
-              <padagraph-gviz options="{{options}}">
-                <div id="viz"></div>
-                <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
-                <div id="menu" class="ui icon borderless vertical menu">
-                  <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
-                  <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
-                  <div class="ui divider">         </div>
-                  <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
-                  <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
-                  <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
-                  <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
-                </div>
-                <div id="labels">
-                  <padagraph-labels-control></padagraph-labels-control>
-                </div>
-              </padagraph-gviz>
-            </padagraph-gviz-json>
-            <script>
-              var _window_resized = function(){
-                  var e = document.getElementById('gviz');
-                  e.style.height = ( window.innerHeight - 32 )+ "px";
-                  var app = document.querySelector('padagraph-gviz').app
-                  if ( app.gviz ) app.gviz.resize_rendering();
-              }
-              
-              window.onresize = _window_resized;
-              
-              document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
-              
-                      console.log(e.detail.app); // true
-                      var app = e.detail.app;
-                      
-                      var engines = [];
-                      var app_engines = {
-                          'explore':app.engines.explore,
-                          'layout':app.engines.layout,
-                          'clustering':app.engines.clustering,
-                      };
-                      
-                      for (var k in app_engines){
-                          var engine = app_engines[k]
-                          engine.name = k;
-                          engines.push(engine);
-                      }
-                      
-                      var keb = document.createElement("padagraph-keb")
-                      keb.engines = engines;
-                      $("#keb")
-                          .sidebar('setting', 'dimPage', false)
-                          .sidebar('setting', 'transition', 'overlay')
-                      $("#kebcontent").append(keb)
-              
-                      $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
-                      $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
-              
-                      _window_resized();
-                  })
-              
-            </script>
+          <div id="keb" style="background:#FAFAFA" class="ui left vertical sidebar"><a name="kebup"></a>
+            <div class="close"><a class="ui link icon"><i class="close icon"></i></a></div>
+            <div id="kebcontent">
+              <padagraph-gviz-control></padagraph-gviz-control>
+            </div>
+            <div class="close"><a href="#kebup" class="ui link icon"><i class="caret up icon"></i></a></div>
           </div>
-          <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui active refresh button">refresh</a>{% endif %}
+          <div class="pusher">
+            <div class="ui vertical center aligned segment">
+              <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
+                <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
+                  <padagraph-gviz options="{{options}}">
+                    <div id="viz"></div>
+                    <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
+                    <div id="menu" class="ui icon borderless vertical menu">
+                      <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
+                      <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                      <div class="ui divider">         </div>
+                      <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
+                      <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
+                      <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
+                      <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
+                    </div>
+                    <div id="labels" class="ui grid">
+                      <div class="six wide column">
+                        <padagraph-labels-control></padagraph-labels-control>
+                      </div>
+                      <div class="six wide column">
+                        <padagraph-node-search actions="add,explore"></padagraph-node-search>
+                      </div>
+                      <div class="four wide column">{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}</div>
+                    </div>
+                  </padagraph-gviz>
+                </padagraph-gviz-json>
+              </div>
+              <script>
+                var _window_resized = function(){
+                    var e = document.getElementById('gviz');
+                    //e.style.height = ( window.innerHeight - 32 )+ "px";
+                    e.style.height = ( window.innerHeight )+ "px";
+                    var app = document.querySelector('padagraph-gviz').app
+                    if ( app.gviz ) app.gviz.resize_rendering();
+                }
+                
+                window.onresize = _window_resized;
+                
+                document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
+                
+                        console.log(e.detail.app); // true
+                        var app = e.detail.app;
+                        
+                        var engines = [];
+                        var app_engines = {
+                            'explore':app.engines.explore,
+                            'layout':app.engines.layout,
+                            'clustering':app.engines.clustering,
+                        };
+                        
+                        for (var k in app_engines){
+                            var engine = app_engines[k]
+                            engine.name = k;
+                            engines.push(engine);
+                        }
+                        
+                        var keb = document.createElement("padagraph-keb")
+                        keb.engines = engines;
+                        $("#keb")
+                            .sidebar('setting', 'dimPage', false)
+                            .sidebar('setting', 'transition', 'overlay')
+                        $("#kebcontent").append(keb)
+                        $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+                        $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+                
+                        _window_resized();
+                    })
+              </script>
+            </div>
+          </div>
         </div>{% elif error %}
         <div class="ui text container">
           <h3 class="ui inverted horizontal divider">Import error </h3>

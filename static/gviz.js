@@ -2224,7 +2224,7 @@ gviz.ThreeVizHelpers = {
 
         /*  Text */
         // if ((viz.show_text && (!viz.MOUSEHASMOVED|| !viz.MOUSEDOWN ))  ){
-        if ( viz.show_text ){
+        if ( viz.show_text && material.textVisible ){
             context.save();
 
             //var text_lines = get_text_lines(node, material);                       
@@ -2392,6 +2392,7 @@ node_materials : [
         'textLength' : 20,
 
         // font properties
+        'textVisible' : true,
         'textAlign'  : 'center',
         'textVerticalAlign'  : 'center', 
         'fontScale'  :  0.1,

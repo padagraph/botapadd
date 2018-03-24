@@ -44,10 +44,12 @@ ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
 PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
 DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
 
+# redis flag
 REDIS_STORAGE = os.environ.get('REDIS_STORAGE', False) == "true"
+# local path for csv pickle
 LOCAL_PADS_STORE = "./pads"
 
-
+# padagraph.io n4j key
 try:
     KEY  = codecs.open("secret/key.txt", 'r', encoding='utf8').read().strip()
 except:
@@ -462,8 +464,9 @@ def botimport(repo, padurl, gid, content_type):
                         pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
                         print pzeros , graph.summary()
                         
-                        subgraph = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
-                                                 
+                        subg = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
+                    else :
+                        subg = graph
                     complete = True 
 
                     
@@ -472,7 +475,7 @@ def botimport(repo, padurl, gid, content_type):
                     response.headers["Content-Disposition"] = "attachment; filename=%s.pickle" % gid
                     return response
                 else : 
-                    data = export_graph(subgraph, id_attribute='uuid')
+                    data = export_graph(subg, id_attribute='uuid')
                     if content_type == "json":
                         return jsonify(data)
                     else :
@@ -531,7 +534,7 @@ def botimport(repo, padurl, gid, content_type):
 
     print graphurl, gid
 
-    return render_template('botapadapp.html',
+    return render_template('graph.html',
         static_host=STATIC_HOST, color=bgcolor,
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
