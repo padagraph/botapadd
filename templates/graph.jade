@@ -114,11 +114,30 @@ style.
         height:100%;
     }
 
-    #liste {
-      position:absolute;
-      top: 12px;
-      right: 12px;
-      
+    #cardmenu {
+        position: absolute;
+        top: 4px;
+        right: 12px;      
+        min-height: 25px;
+    }
+    
+    #cardmenu .item {
+        line-height: 0.1;
+        padding: 12px;
+    }
+    
+    #cardmenu i.icon {
+        height:0px;
+        padding-right: 4px;
+    }
+
+    padagraph-collection {
+        position: absolute;
+        top: 35px;
+        right: 12px;
+        width: 360px;
+        background-color: #FAFAFA;
+        height: calc(100% - 42px);
     }
 
     #viz {
@@ -170,33 +189,27 @@ script( data-main="{{static_host}}/static/main" src="{{static_host}}/static/requ
 link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
 
 
-
-#keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
-  a(name="kebup")
-  .close
-    a.ui.link.icon
-      i.close.icon
-  #kebcontent
-    padagraph-gviz-control
+dom-module(id='graph-app')
+  template
   
-  .close
-    a.ui.link.icon(href="#kebup")
-      i.caret.up.icon
-
-.pusher
-  .ui.vertical.center.aligned.segment
-    div#gviz(class="{{ 'nofoot' if not footer else '' }}")
-
      padagraph-gviz-json( sync="{{sync}}" routes="{{routes}}" data="{{data}}" )
       padagraph-gviz( options="{{options}}")
         div#viz()
 
-        padagraph-model-popup( id="gvizpopup" )
-        
-        //.ui.card#liste
-        //   padagraph-collection(mode="node")
-       
+        // liste and card details 
+        .ui.compact.menu#cardmenu
+            a.link.item#listbutton( on-click="togglelist" )
+                i.list.alternate.outline.icon
+                | list
+            a.link.item#cardbutton( on-click="togglecard" )
+                i.id.card.outline.icon
+                | details
 
+        padagraph-model-popup( id="gvizpopup" hidden$="{{'\{{is_hidden(display_card)}\}'}}" )
+        
+        padagraph-collection(mode="node" hidden$="{{'\{{is_hidden(display_list)}\}'}}" )
+
+       
         .ui.icon.borderless.vertical.menu#menu
               padagraph-collection-filter( mode="node" asitem="asitem")
               padagraph-collection-filter( mode="edge" asitem="asitem")
@@ -221,9 +234,51 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
           a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
           {% endif %}
          .four.wide.column
+  script.
+    require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const ) {
+     Polymer({
+      is: "graph-app",
 
-    script.
+      properties : {
+        display_card : Boolean,
+        display_list : Boolean,
+      },
+      
+      togglecard(){
+          
+        var element = document.getElementById("cardbutton");
+        element.classList.toggle("active");
+        
+        var card = document.getElementById("listbutton")
+        if ( element.classList.contains("active") && card.classList.contains("active") )
+            card.classList.remove("active")
 
+        this.toggle();
+      },
+      
+      togglelist(){
+        var e ="listbutton"
+        var element = document.getElementById(e);
+        element.classList.toggle("active");
+
+        var card = document.getElementById("cardbutton")
+        if ( element.classList.contains("active") && card.classList.contains("active") )
+            card.classList.remove("active") 
+
+        this.toggle();
+      },
+      
+      toggle(){
+        this.display_card = document.getElementById("cardbutton").classList.contains("active");
+        this.display_list = document.getElementById("listbutton").classList.contains("active");
+      },
+
+      is_hidden(e) { return !e },
+
+      
+      ready() {
+        this.toggle();
+        
         var _window_resized = function(){
             var e = document.getElementById('gviz');
             //e.style.height = ( window.innerHeight - 32 )+ "px";
@@ -236,34 +291,57 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
 
         document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
 
-                console.log(e.detail.app); // true
-                var app = e.detail.app;
-                
-                var engines = [];
-                var app_engines = {
-                    'explore':app.engines.explore,
-                    'layout':app.engines.layout,
-                    'clustering':app.engines.clustering,
-                };
-                
-                for (var k in app_engines){
-                    var engine = app_engines[k]
-                    engine.name = k;
-                    engines.push(engine);
-                }
+            console.log(e.detail.app); // true
+            var app = e.detail.app;
+            
+            var engines = [];
+            var app_engines = {
+                'explore':app.engines.explore,
+                'layout':app.engines.layout,
+                'clustering':app.engines.clustering,
+            };
+            
+            for (var k in app_engines){
+                var engine = app_engines[k]
+                engine.name = k;
+                engines.push(engine);
+            }
 
-                 $('padagraph-collection')[0].app = app;
-                 $('padagraph-collection')[0].graph = app.models.graph;
-                
-                var keb = document.createElement("padagraph-keb")
-                keb.engines = engines;
-                $("#keb")
-                    .sidebar('setting', 'dimPage', false)
-                    .sidebar('setting', 'transition', 'overlay')
-                $("#kebcontent").append(keb)
-                $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
-                $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+             $('padagraph-collection')[0].app = app;
+             $('padagraph-collection')[0].graph = app.models.graph;
+            
+            var keb = document.createElement("padagraph-keb")
+            keb.engines = engines;
+            $("#keb")
+                .sidebar('setting', 'dimPage', false)
+                .sidebar('setting', 'transition', 'overlay')
+            $("#kebcontent").append(keb)
+            $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+            $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
 
-                _window_resized();
-            })
+            _window_resized();
+        })
+      }
+     })
+    });
+
+
+
+#keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
+  a(name="kebup")
+  .close
+    a.ui.link.icon
+      i.close.icon
+  #kebcontent
+    padagraph-gviz-control
+  
+  .close
+    a.ui.link.icon(href="#kebup")
+      i.caret.up.icon
+
+.pusher
+  .ui.vertical.center.aligned.segment
+    div#gviz(class="{{ 'nofoot' if not footer else '' }}")
+
+        graph-app
 
