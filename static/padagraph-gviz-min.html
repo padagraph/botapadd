@@ -8760,6 +8760,10 @@ require(['backbone'], function (Backbone) {
 .ui.comments .comment {  padding: 0em; }
 .ui.comments .comment .author { font-size: 0.9em; font-weight: initial; }
 .ui.comments.vertex-actions { padding-top: 0.3em; }
+.ui.comments.vertex-actions .actions {
+    margin-left: 40px;
+    margin-top: 4px;
+}
 </style><template><div on-mouseover="intersect" on-mouseout="desintersect" class="ui items"><div class="item"><div on-click="select" class="ui mini image"><template is="dom-if" if="{{is_selected}}"><svg width="36px" height="36px"><circle cx="18" cy="18" r="15" fill$="{{rgb_color}}" stroke="white" stroke-width="3"></circle><text x="50%" y="55%" alignment-baseline="middle" text-anchor="middle" fill="black">{{letter}}</text></svg></template><template is="dom-if" if="{{!is_selected}}"><svg width="36px" height="36px"><circle cx="18" cy="18" r="15" fill$="{{rgb_color}}"></circle><text x="50%" y="55%" alignment-baseline="middle" text-anchor="middle" fill="black">{{letter}}</text></svg></template></div><div on-click="select" class="content"><div title="{{model.id}}" class="header">{{model.label}}</div><div class="meta"><div class="date">{{ model.nodetype.label }}</div></div></div><div style="height:12px" data-rating="1" on-click="toggle_star" class="ui star rating"><i class="icon"></i></div></div><!--.ui.accordion.vertex-actions
   .title
     b Node attributes
@@ -8774,7 +8778,9 @@ require(['backbone'], function (Backbone) {
             span.metadata
                 .rating {{item.value}}
   
---><template is="dom-if" if="{{actions}}"><div class="ui comments vertex-actions"><div class="comment"><div class="content"><div class="actions"><a on-click="edit"><i class="edit icon"></i> Edit</a><a on-click="add_link"><i class="linkify icon"></i> Link</a><a on-click="expand"><i class="share alternate icon"></i> Expand</a><a on-click="explore"><i class="eye icon"></i> Explore</a><a on-click="remove"><i class="remove icon"></i> Hide</a></div></div></div></div></template></div></template><script>'use strict';
+--><template is="dom-if" if="{{actions}}"><div class="ui comments vertex-actions"><div class="comment"><div class="content"><div class="actions"><!--a(on-click='edit')//| <i class="edit icon"></i> Edit
+--><!--a(on-click='add_link')//| <i class="linkify icon"></i> Link
+  --><a on-click="expand"><i class="share alternate icon"></i> Expand</a><a on-click="explore"><i class="eye icon"></i> Explore</a><a on-click="remove"><i class="remove icon"></i> Hide</a></div></div></div></div></template></div></template><script>'use strict';
 
 require(['backbone', 'jquery', 'pdgconst'], function (Backbone, $, Const) {
   Polymer({
@@ -9821,7 +9827,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
     }
 
   });
-});</script></dom-module><dom-module id="padagraph-collection-popup" assetpath="./"><style>.card { width:400px}
+});</script></dom-module><dom-module id="padagraph-collection-popup" assetpath="./"><style>.card { width:360px !important}
      </style><template><template is="dom-if" if="{{ graph }}"> <div class="ui card"><padagraph-collection app="{{app}}" mode="node" graph="{{graph}}"></padagraph-collection></div></template></template><script>'use strict';
 
 require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const) {
@@ -10800,7 +10806,7 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 .dropdown.item .menu {
     left:-50px !important;
 }
-</style><div style="margin:6px" class="ui secondary menu"><padagraph-collection-filter app="{{app}}" graph="{{graph}}" mode="{{mode}}" class="item"></padagraph-collection-filter><div class="hidden divider"></div><div class="ui right dropdown item"><i class="sort icon"></i>{{orderBy}}<div class="menu"><template is="dom-repeat" items="[[sorters]]"><div on-click="set_sort" class="item">{{item}}</div></template></div></div></div><div id="contentpan" style="max-height: calc(100% - 22px); margin-top:0px; overflow-x: hidden;" class="ui scrollable"><template is="dom-if" if="{{is_mode_node}}"> <template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(needs_update)}}"><padagraph-vertex-card-m model="{{item}}" intersects="intersects" actions="actions"></padagraph-vertex-card-m><div class="ui divider"></div></template></template><template is="dom-if" if="{{is_mode_edge}}"><template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(elements, needs_update)}}"><padagraph-edge-card-xs model="{{item}}" class="ui item comments"></padagraph-edge-card-xs><div class="ui divider"></div></template></template></div></template><script>'use strict';
+</style><div style="margin:6px;    border-bottom: 2px solid #AAA;" class="ui secondary menu"><padagraph-collection-filter app="{{app}}" graph="{{graph}}" mode="{{mode}}" class="item"></padagraph-collection-filter><div class="hidden divider"></div><div class="ui right dropdown item"><i class="sort icon"></i>{{orderBy}}<div class="menu"><template is="dom-repeat" items="[[sorters]]"><div on-click="set_sort" class="item">{{item}}</div></template></div></div></div><div id="contentpan" style="max-height: calc(100% - 22px); margin-top:0px; overflow-x: hidden;" class="ui scrollable"><template is="dom-if" if="{{is_mode_node}}"> <template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(needs_update)}}"><padagraph-vertex-card-m model="{{item}}" intersects="intersects" actions="actions"></padagraph-vertex-card-m><div class="ui divider"></div></template></template><template is="dom-if" if="{{is_mode_edge}}"><template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(elements, needs_update)}}"><padagraph-edge-card-xs model="{{item}}" class="ui item comments"></padagraph-edge-card-xs><div class="ui divider"></div></template></template></div></template><script>'use strict';
 
 require(['backbone', 'jquery', 'semantic'], function (Backbone, $, semantic) {
 
