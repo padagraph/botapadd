@@ -347,7 +347,8 @@ def import2pdg(repo='igraph', content="html"):
     
 def botimport(repo, padurl, gid, content_type):
 
-    print repo, content_type, gid, padurl
+
+    print " *** botimport ", repo, content_type, gid, padurl
     
     action = "%s?%s" % (repo, request.query_string)
     routes = "%s/engines" % ENGINES_HOST

@@ -114,6 +114,13 @@ style.
         height:100%;
     }
 
+    #liste {
+      position:absolute;
+      top: 12px;
+      right: 12px;
+      
+    }
+
     #viz {
         height: 100%;
         width: 100%;
@@ -185,6 +192,10 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
         div#viz()
 
         padagraph-model-popup( id="gvizpopup" )
+        
+        //.ui.card#liste
+        //   padagraph-collection(mode="node")
+       
 
         .ui.icon.borderless.vertical.menu#menu
               padagraph-collection-filter( mode="node" asitem="asitem")
@@ -206,10 +217,10 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
           padagraph-labels-control
          .six.wide.column
           padagraph-node-search(actions="add,explore")
+          {% if graphurl %}   
+          a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
+          {% endif %}
          .four.wide.column
-              {% if graphurl %}   
-              a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
-              {% endif %}
 
     script.
 
@@ -240,6 +251,9 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
                     engine.name = k;
                     engines.push(engine);
                 }
+
+                 $('padagraph-collection')[0].app = app;
+                 $('padagraph-collection')[0].graph = app.models.graph;
                 
                 var keb = document.createElement("padagraph-keb")
                 keb.engines = engines;

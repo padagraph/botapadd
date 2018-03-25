@@ -226,6 +226,13 @@
                 height:100%;
             }
             
+            #liste {
+              position:absolute;
+              top: 12px;
+              right: 12px;
+              
+            }
+            
             #viz {
                 height: 100%;
                 width: 100%;
@@ -284,6 +291,9 @@
                   <padagraph-gviz options="{{options}}">
                     <div id="viz"></div>
                     <padagraph-model-popup id="gvizpopup"></padagraph-model-popup>
+                    <!--.ui.card#liste-->
+                    <!--   padagraph-collection(mode="node")-->
+                    
                     <div id="menu" class="ui icon borderless vertical menu">
                       <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
                       <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
@@ -298,9 +308,9 @@
                         <padagraph-labels-control></padagraph-labels-control>
                       </div>
                       <div class="six wide column">
-                        <padagraph-node-search actions="add,explore"></padagraph-node-search>
+                        <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
                       </div>
-                      <div class="four wide column">{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}</div>
+                      <div class="four wide column"></div>
                     </div>
                   </padagraph-gviz>
                 </padagraph-gviz-json>
@@ -333,6 +343,9 @@
                             engine.name = k;
                             engines.push(engine);
                         }
+                
+                         $('padagraph-collection')[0].app = app;
+                         $('padagraph-collection')[0].graph = app.models.graph;
                         
                         var keb = document.createElement("padagraph-keb")
                         keb.engines = engines;
