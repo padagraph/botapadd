@@ -17,8 +17,7 @@
   
   a.ui.active.refresh.button {    }
   
-  padagraph-node-search {
-  }
+  
   
   .footer.segment {
     padding: 5em 0em;
@@ -131,11 +130,15 @@
   
   padagraph-collection {
       position: absolute;
-      top: 35px;
+      top: 37px;
       right: 12px;
       width: 360px;
-      background-color: #FAFAFA;
-      height: calc(100% - 42px);
+      background-color: #FEFEFE;
+      height: calc(100% - 110px);
+  
+  }
+  
+  padagraph-node-search {
   }
   
   #viz {
@@ -158,18 +161,19 @@
     bottom: 32px;
   }
   
-  padagraph-model-popup {
-      position:absolute;
-      top: 264px;
-      right:0px;
-      margin:12px;
-      max-height: calc(100% - 24px);
-      overflow-y: auto;
-      z-index:10;
+  padagraph-model-popup[hidden] {
+      display:none;
   }
-  
-  .nofoot padagraph-model-popup {
-      top: 20px;
+  padagraph-model-popup {
+      display:block;
+      position:absolute;
+      width: 360px;
+      top: 21px;
+      right:0px;
+      margin: 12px;
+      overflow-y: auto;
+      z-index: 10;
+      height: calc(100% - 36px);
   }
   
   padagraph-model-popup .propvalue {  color: #333; }
@@ -188,7 +192,7 @@
       <padagraph-gviz options="{{options}}">
         <div id="viz"></div>
         <!-- liste and card details -->
-        <div id="cardmenu" class="ui compact menu"><a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a><a id="cardbutton" on-click="togglecard" class="link item"><i class="id card outline icon"></i>details</a></div>
+        <div id="cardmenu" class="ui compact menu"><a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a><a id="cardbutton" on-click="togglecard" class="link item active"><i class="id card outline icon"></i>details</a></div>
         <padagraph-model-popup id="gvizpopup" hidden$="{{'{{is_hidden(display_card)}}'}}"></padagraph-model-popup>
         <padagraph-collection mode="node" hidden$="{{'{{is_hidden(display_list)}}'}}"></padagraph-collection>
         <div id="menu" class="ui icon borderless vertical menu">
@@ -256,6 +260,7 @@
       
       ready() {
         this.toggle();
+        document.querySelector('padagraph-model-popup').hidden = true;
         
         var _window_resized = function(){
             var e = document.getElementById('gviz');

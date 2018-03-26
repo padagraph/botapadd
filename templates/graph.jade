@@ -19,8 +19,7 @@ style.
     
     a.ui.active.refresh.button {    }
     
-    padagraph-node-search {
-    }
+  
     
     .footer.segment {
       padding: 5em 0em;
@@ -133,11 +132,15 @@ style.
 
     padagraph-collection {
         position: absolute;
-        top: 35px;
+        top: 37px;
         right: 12px;
         width: 360px;
-        background-color: #FAFAFA;
-        height: calc(100% - 42px);
+        background-color: #FEFEFE;
+        height: calc(100% - 110px);
+
+    }
+
+    padagraph-node-search {
     }
 
     #viz {
@@ -160,20 +163,21 @@ style.
       bottom: 32px;
     }
 
+    padagraph-model-popup[hidden] {
+        display:none;
+    }
     padagraph-model-popup {
+        display:block;
         position:absolute;
-        top: 264px;
+        width: 360px;
+        top: 21px;
         right:0px;
-        margin:12px;
-        max-height: calc(100% - 24px);
+        margin: 12px;
         overflow-y: auto;
-        z-index:10;
+        z-index: 10;
+        height: calc(100% - 36px);
     }
-
-    .nofoot padagraph-model-popup {
-        top: 20px;
-    }
-    
+   
     padagraph-model-popup .propvalue {  color: #333; }
 
 {% if footer%}  
@@ -201,7 +205,7 @@ dom-module(id='graph-app')
             a.link.item#listbutton( on-click="togglelist" )
                 i.list.alternate.outline.icon
                 | list
-            a.link.item#cardbutton( on-click="togglecard" )
+            a.link.item.active#cardbutton( on-click="togglecard" )
                 i.id.card.outline.icon
                 | details
 
@@ -278,6 +282,7 @@ dom-module(id='graph-app')
       
       ready() {
         this.toggle();
+        document.querySelector('padagraph-model-popup').hidden = true;
         
         var _window_resized = function(){
             var e = document.getElementById('gviz');
