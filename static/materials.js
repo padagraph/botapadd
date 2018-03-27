@@ -1,11 +1,25 @@
 !!!define([], function() {
 
-
+    lineTypes = [ 'plain', 'dashed', 'dotted' ]
     Materials =  {
         'edge' : [
             {'default' : {
-                'lineWidth'  : 2,
-                'color'    : "#666",
+                'lineWidth' : function(edge){
+                        var w = edge.properties.get('width');
+                        if (!w) w = 1;
+                        return w;
+                    },
+                'color' : function(edge){
+                        var w = edge.properties.get('color');
+                        if (!w) w = "#666";
+                        return w;
+                    },
+                'lineType' : function(edge){
+                        var w = edge.properties.get('line');
+                        if (!w) w = "plain";
+                        return w;
+                    },
+
                 'opacity'  : 1, //.4
                 'label_visible' : false,
                 'fontColor': "#4C4D00",
@@ -13,10 +27,8 @@
                 'orientation_visible' : true,
                 'label_visible' : false,
 
-                //'lineType' : "dashed",
                 //'dashSize' : 2,
                 //'gapSize'  : 5,
-                'lineType' : "plain",
 
             }},
 
@@ -43,7 +55,7 @@
                     'opacity'    : 1,
                     //'label_visible' : true,
                     //'orientation_visible' : true,
-                    'lineType' : "plain",
+                    //'lineType' : "plain",
                 }
             },
 
@@ -98,7 +110,6 @@
                 'lineType' : "dashed",
                 'dashSize' : .1,
                 'gapSize'  : .5,
-                'line_max_length': 12,
 
                 'fontScale'  :  0.12,
                 'font' : "normal 10px sans-serif",
@@ -112,7 +123,8 @@
                 'textPaddingX'  : 0.5,
                 
                 // text length
-                'textLength' : 20,
+                'line_max_length': 14,
+                'textLength' : 29,
                 
             } },
 
@@ -151,7 +163,7 @@
                 'fontScale'  :  0.1,
                 'scale':1.2,
                 'opacity' : 1,
-                'line_max_length': 18,
+                'line_max_length': 20,
                 'textLength' : 100,
 
             } },
@@ -162,7 +174,7 @@
                 'opacity'   : 1,
                 //'fontScale'  :  0.4,
                 'paddingX': 200,
-                'line_max_length': 24,
+                'line_max_length': 20,
             } },
 
             { '.target': {

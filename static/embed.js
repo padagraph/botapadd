@@ -466,13 +466,37 @@ Models.ExpandNodesQuery = Backbone.Model.extend({
     defaults : {
         graph : null,
         nodes: [], // uuids
+        expand: [], // uuids
         weights: [],
     },
     
     export_for_engine: function(){
+        var nodes = _.map( this.get('graph').vs.models, function(e){ return e.get('uuid') } );
         return { graph: this.get('graph').get('gid'),
-                 nodes: this.get('nodes'),
+                 nodes: nodes,
+                 expand: this.get('expand'),
                  weights: this.get('weights'),
+               };
+    },
+
+});
+
+Models.ClustersLabelsQuery = Backbone.Model.extend({
+    defaults : {
+        graph : null,
+        clustering: [], // clustering model
+    },
+    
+    export_for_engine: function(){
+        var model = this.get('clustering')
+        var cls = model.clusters.models;
+        var clusters = cls.map( function(e){
+            var uuids = e.members.vs.models.map(function(v){ return v.id });
+            return uuids;
+        });
+        
+        return { graph: this.get('graph').get('gid'),
+                 clusters: clusters,
                };
     },
 
@@ -1060,6 +1084,7 @@ App.Base = Backbone.View.extend({
         app.listenTo( Backbone, Const.remove_node, function(vertex){
             app.set_auto_compute(false);
             if( vertex ){
+                graph.vs.set_selected([]);
                 graph.vs.remove(vertex);
             }
             app.set_auto_compute(true);
@@ -1163,7 +1188,7 @@ App.Base = Backbone.View.extend({
             app.engines.expand_prox.register_input("request", expand_query);
             app.listenTo(Backbone, 'engine:expand_prox', function(data){
                 console.log('engine:expand_prox', data);
-                expand_query.set('nodes', data.nodes);
+                expand_query.set('expand', data.nodes);
                 expand_query.set('weights', data.weights);
                 app.engines.expand_prox.play();
             });
@@ -1396,7 +1421,8 @@ App.Base = Backbone.View.extend({
     },
 
     expand_graph: function(response){
-
+        // gets 10 first high score
+        // force uuid when scores== 1.
         console.log('expand_graph', response.results)
 
         if ( !response | !('results' in response)  )
@@ -1406,15 +1432,19 @@ App.Base = Backbone.View.extend({
         var uuids = [];
         
         var r = _.pairs(response.results.scores)
-        r.sort( function(a,b){ return (a[1]<b[1]) ?1 : -1 } )
+        r.sort( function(a,b){ return (a[1]<b[1]) ? 1 : -1 } )
 
         for ( var i in r ){
             var k = r[i][0];
             var v = r[i][1];
             
             if ( graph.vs.get(k) == null ){
+                if(uuids.length >= 10 )
+                    if (v < 1.)
+                        break;
+                        
+                console.log('expand_graph adding vertex : ' + k , v)
                 uuids.push(k);
-                if(uuids.length >= 10 ) break;
             }
         } 
 
@@ -1423,8 +1453,11 @@ App.Base = Backbone.View.extend({
         
     },
 
-    merge_graph: function(response, options){
+    clusters_labels: function(response, options){
+        this.models.clustering.set_labels(response.results, options);
+    },
 
+    merge_graph: function(response, options){
                     
         if ( !response | !('results' in response)  | !('graph' in response.results))
             return;
@@ -1435,13 +1468,17 @@ App.Base = Backbone.View.extend({
         //Backbone.trigger( Const.unselect_edges );
         //Backbone.trigger('engine:request_animation');
 
-        // merge graph
-        this.models.graph.merge(response.results.graph);
+        options || (options = {});
+        // merge/reset graph
+        if (options && options.reset)
+            this.models.graph.reset(response.results.graph);
+        else
+            this.models.graph.merge(response.results.graph);
+        
         this.models.graph.vs.each(function(vtx){
             vtx.add_flag("form");
         });
 
-        options || (options = {});
         if ( options.callback )
             options.callback();
 

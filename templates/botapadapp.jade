@@ -1,0 +1,254 @@
+doctype html
+html
+  head
+    // Standard Meta
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0')
+    // Site Properties
+
+    title Botapad
+
+    //
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.css">
+      <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.js"></script>
+      <link rel="stylesheet" href="static/Semantic-UI-CSS-master/semantic.min.css">
+
+    link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css')
+
+    
+    style(type='text/css').
+
+        body, .pusher .ui.segment {
+            background: #127777;
+        }
+
+                
+        
+  body
+    // Page Contents
+    #keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
+      a(name="kebup")
+      .close
+        a.ui.link.icon
+          i.close.icon
+      #kebcontent
+        padagraph-gviz-control
+      
+      .close
+        a.ui.link.icon(href="#kebup")
+          i.caret.up.icon
+    
+    .pusher
+      .ui.vertical.center.aligned.segment
+
+        {% if footer %}  
+        .ui.text.container
+          h1.ui.inverted.header padagraph.io
+          h2 Open a pad and a graph will follow 
+        {% endif %}
+        
+        {% if readme %}
+        .ui.left.aligned.text.container
+          h4.ui.inverted.horizontal.divider
+            | readme
+          |       {% filter markdown %}
+          |             {{readme}}
+          |       {% endfilter %}
+          
+        {% elif promote %}
+        h4.ui.hidden.divider
+        .ui.left.aligned.text.container
+          h5.ui.inverted.horizontal.divider
+            i.icon.announcement
+            |     Call for participation !
+          .ui.inverted.one.statistics
+            .statistic
+              .value    {{promote.count }} 
+              .label  datasets 
+          table.ui.compact.single.line.table
+            thead
+              tr
+                th date
+                th pad url
+                th graph
+            tbody
+              {% for item in promote.rows %}
+              tr
+                td {{ item.date }}{{ item.time }}
+                td
+                  a(href='{{ item.padurl}}', target='_blank') {{ item.padurl }}
+                td
+                  a(href='{{ item.graph_url}}', target='_blank') {{ item.gid }}
+              {% endfor %}
+
+        {% elif stats %}
+        .ui.left.aligned.text.container
+          h4.ui.inverted.horizontal.divider
+            | stats
+          .ui.inverted.three.statistics
+            .statistic
+              .value  {{stats.success }} 
+              .label  imported 
+            .statistic
+              .value  {{ stats.fails }} 
+              .label  fails 
+            .statistic
+              .value {{ stats.tries  }} 
+              .label  tries 
+        h4.ui.hidden.divider
+        .ui.left.aligned.container
+          h5.ui.inverted.horizontal.divider
+            | rows
+          table.ui.compact.single.line.table
+            thead
+              tr
+                th date
+                th pad url
+                th graph
+                th.center.aligned promote
+                th.center.aligned status
+            tbody
+              {% for item in stats.rows %}
+              tr(class="{% if not item.status %}error{% endif %}")
+                td {{ item.date }}{{ item.time }}
+                td
+                  a(href='{{ item.padurl}}', target='_blank') {{ item.padurl }}
+                td
+                  a(href='{{ item.graph_url}}', target='_blank') {{ item.gid }}
+                td.center.aligned
+                  | {% if item.help %}
+                  i.icon.announcement
+                  | {% endif %}
+                td.center.aligned
+                  | {% if item.status %}
+                  i.icon.checkmark
+                  | {%else%}
+                  i.icon.close {% endif %}
+              {% endfor %}
+
+        {% elif complete and not fail  %}
+        //.ui.container
+        div
+          include graph.jade
+
+
+        {% elif error %}
+        .ui.text.container
+          h3.ui.inverted.horizontal.divider Import error 
+          .ui.error.icon.message
+            i.cloud.download.icon
+            .content
+              h4 {{error.class}} 
+              {% if error.class == "BotLoginError" %}
+              ul.list
+                li
+                  | The server could not verify that you are authorized to access the URL requested. You either supplied the wrong credentials malformed or expired token. Try logging in and generate a new token
+                li
+                  a(href='{{error.url}}', target='_blank') {{error.url}}
+                li {{error.message}}
+                
+              {% elif error.class == "BotapadURLError" %}
+              ul.list
+                li URL is malformed or website may not respond ... 
+                li
+                  | Can't download document at 
+                  a(href='{{error.url}}') {{error.url}}
+
+              {% elif error.class == "BotapadCsvError" %}
+              ul.list
+                li
+                  | Error while parsing 
+                  a(href='{{error.url}}', target='_blank') {{error.url}}
+                li Parsing data failed in {{error.url}}
+                li {{error.message}}
+                li
+                  | we used the character 
+                  code {{error.separator}}
+                  |  as a separator
+
+              {% elif error.class == "BotapadParseError" %}
+              ul.list
+                li
+                  a(href='{{error.url}}', target='_blank') {{error.url}}
+                li {{error.message}}
+
+                {%if error.line %}
+                table.ui.padded.celled.table
+                  tr
+                   {% for e in error.line %}
+                   th {{e}}
+                   {%endfor%}
+                {%endif%}
+                
+                li parser log   
+                code.log {{error.log}}
+                   
+              {% else %}
+              ul.list
+                li
+                  a(href='{{error.url}}', target='_blank') {{error.url}}
+                li {{error.message}}
+              {%endif%}
+        .ui.horizontal.divider
+        i.teal.cloud.icon
+
+        {% else %}
+        .ui.text.container
+          h4.ui.inverted.horizontal.divider
+            | Import to {{repo}}
+          h3.ui.inverted.header Choose a name and fill the pad url
+          form.ui.form(method='post', action='{{repo}}.html')
+            .field
+              .ui.huge.input
+                input(type='text', name='gid', placeholder='graph name')
+            .field
+              .ui.huge.input
+                input(type='text', name='url', placeholder='pad url')
+
+              h4.ui.inverted.horizontal.divider
+    
+            .field.center.aligned
+              input(type='checkbox', tabindex='0', name='promote')
+              h4 Promote this pad, call for participants 
+            .field.center.aligned
+              a.ui.large.button(href='/readme') readme
+              button.ui.huge.primary.submit.button(type='submit', value='Subscribe')
+                | Import this pad
+        {% endif%}
+ 
+
+ 
+      {% if footer%}  
+  
+      .ui.inverted.vertical.footer.segment
+        h4.ui.inverted.horizontal.divider  the bottom  
+        .ui.container
+          .ui.stackable.inverted.equal.height.grid
+
+            .three.wide.column
+              h4.ui.inverted.header About
+              .ui.inverted.link.list
+                a.item(href='#') You are here
+                a.item(href='#') Contact Us
+
+            .four.wide.column
+              h4.ui.inverted.header Services
+              .ui.inverted.link.list
+                a.active.item(href='/import/igraph') Import a pad 
+                a.active.item(href='/import/padagraph') Import to padagraph
+                a.active.item(href='/promote') Call for participation
+                a.active.item(href='/stats') Service statistiqs
+
+            .three.wide.column
+              h4.ui.inverted.header Next 
+              .ui.inverted.link.list
+                a.active.item(href='https://github.com/padagraph/botapadd') Github
+                a.item(href='') donate
+
+            .three.wide.column
+              h4.ui.inverted.header  
+              .ui.inverted.link.list
+                a.active.item(href='//padagraph.io') padagraph.io @2017
+      {% endif%}
+ 

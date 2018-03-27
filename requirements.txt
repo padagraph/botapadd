@@ -6,6 +6,8 @@ Flask-Markdown
 flask_login
 flask_cors
 
+redis
+
 # cello reliure Botagraph & BotaIgraph
 reliure
 https://github.com/ynnk/cello/archive/master.zip
