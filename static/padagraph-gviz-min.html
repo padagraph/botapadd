@@ -9885,10 +9885,6 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
       is_edge: { type: Boolean, computed: 'isEdge(model)' }
     },
 
-    ready: function ready() {
-      this.hidden = true;
-    },
-
     created: function created() {
       this._listener = {};
       _.extend(this._listener, Backbone.Events);
@@ -10813,7 +10809,7 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, S) {
 
 .dropdown.item .menu {
     left:-50px !important;
-}</style><div class="ui card"><div style="margin:6px;" class="ui secondary menu"><padagraph-collection-filter app="{{app}}" graph="{{graph}}" mode="{{mode}}" class="item"></padagraph-collection-filter><div class="hidden divider"></div><div class="ui right dropdown item"><i class="sort icon"></i>{{orderBy}}<div class="menu"><template is="dom-repeat" items="[[sorters]]"><div on-click="set_sort" class="item">{{item}}</div></template></div></div></div><div class="ui divider"></div><div id="contentpan" style="max-height: calc(100% - 22px); margin-top:0px; overflow-x: hidden;" class="ui scrollable"><template is="dom-if" if="{{is_mode_node}}"> <template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(needs_update)}}"><padagraph-vertex-card-m model="{{item}}" intersects="intersects" actions="actions"></padagraph-vertex-card-m><div class="ui divider"></div></template></template><template is="dom-if" if="{{is_mode_edge}}"><template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(elements, needs_update)}}"><padagraph-edge-card-xs model="{{item}}" class="ui item comments"></padagraph-edge-card-xs><div class="ui divider"></div></template></template></div></div></template><script>'use strict';
+}</style><div class="ui card"><div style="margin:6px; margin-bottom: -1rem;" class="ui secondary menu"><padagraph-collection-filter app="{{app}}" graph="{{graph}}" mode="{{mode}}" class="item"></padagraph-collection-filter><div class="hidden divider"></div><div class="ui right dropdown item"><i class="sort icon"></i>{{orderBy}}<div class="menu"><template is="dom-repeat" items="[[sorters]]"><div on-click="set_sort" class="item">{{item}}</div></template></div></div></div><div class="ui divider"></div><div id="contentpan" style="max-height: calc(100% - 22px); margin-top:0px; overflow-x: hidden;" class="ui scrollable"><template is="dom-if" if="{{is_mode_node}}"> <template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(needs_update)}}"><padagraph-vertex-card-m model="{{item}}" intersects="intersects" actions="actions"></padagraph-vertex-card-m><div class="ui divider"></div></template></template><template is="dom-if" if="{{is_mode_edge}}"><template is="dom-repeat" items="[[elements]]" sort="{{sorted(orderBy, reverse)}}" filter="{{filtered(elements, needs_update)}}"><padagraph-edge-card-xs model="{{item}}" class="ui item comments"></padagraph-edge-card-xs><div class="ui divider"></div></template></template></div></div></template><script>'use strict';
 
 require(['backbone', 'jquery', 'semantic'], function (Backbone, $, semantic) {
 
@@ -11072,7 +11068,7 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
 
             this.show = !this.show;
             this.async(function () {
-                $('.tabular.menu .item', _this2).tab();
+                $('.secondary.pointing.menu .item', _this2).tab();
             });
         }
 
