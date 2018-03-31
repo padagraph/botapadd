@@ -217,7 +217,11 @@
           <div class="six wide column">
             <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
           </div>
-          <div class="four wide column"></div>
+          <div class="four wide column">
+            <div id="loading">
+              <p>Loading...</p>
+            </div>
+          </div>
         </div>
       </padagraph-gviz>
     </padagraph-gviz-json>
@@ -277,6 +281,16 @@
         }
         
         window.onresize = _window_resized;
+    
+        var loading = function(e, name, engine, show){
+            console.log("loading",e,  name, engine, show)
+            var element = document.getElementById("loading");
+            if ( show && !element.classList.contains("show") )
+                element.classList.toggle("show");
+            if ( !show && element.classList.contains("show") )
+                element.classList.toggle("show");
+        };      
+        
     
         document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
     

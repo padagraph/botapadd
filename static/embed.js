@@ -765,7 +765,7 @@ function install_navigation_shortcuts(context, graph, prefix){
                 var vs = graph.vs.by_flag('selected');
                 if( vs.length == 1)
                 {
-                    var params = { graph: graph.id, nodes: [vs[0].id], weights:[] };
+                    var params = { graph: graph.id, expand: [vs[0].id], weights:[] };
                     Backbone.trigger('engine:expand_prox', params);
                 }
             }
@@ -1188,7 +1188,7 @@ App.Base = Backbone.View.extend({
             app.engines.expand_prox.register_input("request", expand_query);
             app.listenTo(Backbone, 'engine:expand_prox', function(data){
                 console.log('engine:expand_prox', data);
-                expand_query.set('expand', data.nodes);
+                expand_query.set('expand', data.expand);
                 expand_query.set('weights', data.weights);
                 app.engines.expand_prox.play();
             });

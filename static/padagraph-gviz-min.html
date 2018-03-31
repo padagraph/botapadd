@@ -8909,7 +8909,8 @@ require(['backbone', 'jquery', 'pdgconst'], function (Backbone, $, Const) {
     },
 
     expand: function expand() {
-      var params = { graph: this.graph, nodes: [this.model.id], weights: [] };
+
+      var params = { graph: this.graph, expand: [this.model.id], weights: [] };
       Backbone.trigger('engine:expand_prox', params);
     },
 
@@ -9611,7 +9612,7 @@ require(['backbone', 'pdgconst'], function (Backbone, Const) {
                     Backbone.trigger('engine:explore', params);
                 }
             } else if (action == 'expand') {
-                var params = { graph: this.model.graph.id, nodes: [this.model.id], weights: [] };
+                var params = { graph: this.model.graph.id, expand: [this.model.id], weights: [] };
                 Backbone.trigger('engine:expand_prox', params);
             } else if (action == 'remove') {
                 Backbone.trigger(Const.remove_node, this.model);
@@ -9961,7 +9962,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 
     expand: function expand() {
       var graph = this.model.graph;
-      var params = { graph: graph.id, nodes: [this.model.id], weights: [] };
+      var params = { graph: graph.id, expand: [this.model.id], weights: [] };
       Backbone.trigger('engine:expand_prox', params);
     },
 
@@ -11038,7 +11039,8 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
 
                     nodetypes: graph.nodetypes.models.map(function (e) {
                         return {
-                            model: e, name: e.name, count: stats.nodetypes[e.id] | 0,
+                            model: e, name: e.name,
+                            count: stats && 'nodetypes' in stats ? stats.nodetypes[e.id] | 0 : "-",
                             properties: e.properties.models.map(function (e) {
                                 return (e.otype.multi ? "+" : "") + e.name + (e.otype['default'] ? "[" + e.otype['default'] + "]" : "");
                             }).join(', ')
@@ -11047,7 +11049,8 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'pdgconst'], function (Backb
 
                     edgetypes: graph.edgetypes.models.map(function (e) {
                         return {
-                            model: e, name: e.name, count: stats.edgetypes[e.id] | 0,
+                            model: e, name: e.name,
+                            count: stats && 'edgetypes' in stats ? stats.edgetypes[e.id] | 0 : "-",
                             properties: e.properties.models.map(function (e) {
                                 return e.name;
                             }).join(' - ')

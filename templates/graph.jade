@@ -244,6 +244,9 @@ dom-module(id='graph-app')
           a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
           {% endif %}
          .four.wide.column
+            #loading
+              p Loading...
+              
   script.
     require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const ) {
      Polymer({
@@ -299,6 +302,16 @@ dom-module(id='graph-app')
         }
         
         window.onresize = _window_resized;
+
+        var loading = function(e, name, engine, show){
+            console.log("loading",e,  name, engine, show)
+            var element = document.getElementById("loading");
+            if ( show && !element.classList.contains("show") )
+                element.classList.toggle("show");
+            if ( !show && element.classList.contains("show") )
+                element.classList.toggle("show");
+        };      
+        
 
         document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
 
