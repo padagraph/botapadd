@@ -105,51 +105,54 @@ import StringIO
 from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
 
-import redis
-class RedisGraphs(object):
-    def __init__(self, host='localhost', port=6379):
-        # initialize the redis connection pool
-        self.redis = redis.Redis(host=host, port=port)
 
-    def __setitem__(self, gid, graph):
-        # pickle and set in redis
-        # todo ttl = 10
-        self.redis.set(gid, pickle.dumps(graph))
-
-    def get(self, gid):
-        return self.__getitem__(gid)
-
-    def __getitem__(self, gid):
-        # get from redis and unpickle
-        
-        start = time.time()
-        graph = pickle.loads(self.redis.get(gid))
-        print "loading %s from redis" % gid
-        
-        if graph is None : 
-            path = self.conf.get(gid, None)
-            if path is None :
-                raise GraphError('no such graph %s' % gid) 
-            else:
-                print "opening graph %s@%s" %(gid, path)
-                graph = IgraphGraph.Read(path)
-
-        end = time.time()
-
-        print "redis time GET %s" % (end - start)
-        if graph is not None:
-            print graph.summary()
-            return graph
-
-        raise GraphError('%s' % gid)
-
-    def keys(self):
-        return []
-        
 graphdb = IGraphDB( graphs={} )
 
+
 if REDIS_STORAGE:
+    import redis
+    class RedisGraphs(object):
+        def __init__(self, host='localhost', port=6379):
+            # initialize the redis connection pool
+            self.redis = redis.Redis(host=host, port=port)
+
+        def __setitem__(self, gid, graph):
+            # pickle and set in redis
+            # todo ttl = 10
+            self.redis.set(gid, pickle.dumps(graph))
+
+        def get(self, gid):
+            return self.__getitem__(gid)
+
+        def __getitem__(self, gid):
+            # get from redis and unpickle
+            
+            start = time.time()
+            graph = pickle.loads(self.redis.get(gid))
+            print "loading %s from redis" % gid
+            
+            if graph is None : 
+                path = self.conf.get(gid, None)
+                if path is None :
+                    raise GraphError('no such graph %s' % gid) 
+                else:
+                    print "opening graph %s@%s" %(gid, path)
+                    graph = IgraphGraph.Read(path)
+
+            end = time.time()
+
+            print "redis time GET %s" % (end - start)
+            if graph is not None:
+                print graph.summary()
+                return graph
+
+            raise GraphError('%s' % gid)
+
+        def keys(self):
+            return []
+
     graphdb = IGraphDB( graphs=RedisGraphs() )
+        
 
 graphdb.open_database()
 
