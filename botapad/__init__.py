@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from botapad  import Botapad
-    
+try : 
+    from botapad  import Botapad
+except:    
+    from .botapad  import Botapad
 
 
 
@@ -20,7 +22,7 @@ class BotapadParseError(Exception):
         self.message = message
         self.line = line
         self.log = ""
-        print path, message, line
+        #print path, message, line
     
 class BotapadCsvError(Exception):
     def __init__(self, path, separator, message):
@@ -32,3 +34,4 @@ class BotapadURLError(Exception):
     def __init__(self, message, url):
         self.message = message
         self.url = url
+

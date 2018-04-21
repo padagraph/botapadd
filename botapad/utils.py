@@ -45,7 +45,10 @@ def calc2igraph(gid, url, description="", verbose=True, debug=False):
     botapad = Botapad(bot , gid, description, delete=False, verbose=verbose, debug=debug)
     botapad.parse(url, separator='auto', debug=False)
     graph = bot.get_igraph(weight_prop="weight")
+    graph['starred'] = []
+    graph['queries'] = []
     return graph
+    
 
 @Composable
 def merge(gid, graph, g, index=None, vid=None, **kwargs):

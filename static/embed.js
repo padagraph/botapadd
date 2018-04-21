@@ -126,24 +126,6 @@ Models.Vertex = Cello.Vertex.extend({
 
     classname : "Models.Vertex",
 
-    constructor: function() {
-        Backbone.Model.apply(this, arguments);
-        Cello.get(this, "type", function(){ return this.nodetype});
-        Cello.get(this, "properties", function(){ return this.get('properties')});
-        Cello.get(this, "label", function() {
-            return this.properties.get('label');
-        });
-        if ( !this.properties )
-            this.set('properties',  new Backbone.Model());
-
-        this.on("change:cl_color", function(vtx){
-            vtx.set('color', vtx.get('cl_color')) ;
-        });
-        this.on("change", function(vtx){
-            vtx._neighbors = null;
-        });
-    },
-    
     defaults: {
          uuid : null,
          nodetype : null,
@@ -152,10 +134,7 @@ Models.Vertex = Cello.Vertex.extend({
          color: [0,0,0]
     },
 
-    
-    idAttribute: "uuid",
-
-    url : function(){
+    url : function() {
         return this.graph.url() + "/node" + (this.id ? ("/"+ this.id ) : "");
     },
 
@@ -313,6 +292,7 @@ Models.EdgeType = Cello.EdgeType.extend({
             e.family = label.indexOf('/') >= 0 ? label.substring(0,label.indexOf('/')) : "";
             e.name = label.indexOf('/') > 0  ? label.substring(label.indexOf('/')) : label;
             e.subscript = "";
+            //e.cdata = this.get('type_attributes')['cdata'];
             return e;
         }
 
@@ -322,21 +302,6 @@ Models.EdgeType = Cello.EdgeType.extend({
 
 Models.Edge = Cello.Edge.extend({
 
-    constructor: function() {
-        Backbone.Model.apply(this, arguments);
-        Cello.get(this, "type", function(){ return this.edgetype});
-        Cello.get(this, "properties", function(){ return this.get('properties')});
-        Cello.get(this, "label", function(){
-            var label = this.properties.get('label');
-            if ( label == null || label.length == 0  )
-                if (this.edgetype)
-                    return this.edgetype.name
-            return label;
-        });
-        if ( !this.properties )
-            this.set('properties',  new Backbone.Model());
-    },
-    
     url : function(){
         return this.graph.url() + "/edge" + (this.id ? ("/"+ this.id ) : "");
     },
@@ -854,6 +819,7 @@ function arrayMax(arr) {
         return ( p > v ? p : v );
     });
 }
+
 function arrayMin(arr) {
     return arr.reduce(function (p, v) {
         return ( p < v ? p : v );
@@ -892,6 +858,7 @@ function add_model_image(model){
         }
     }
 }
+
 function change_model_image(model){
     if (model.id && model.properties) {
 
@@ -935,7 +902,6 @@ function apply_layout(graph, response){
     }
 
     Q_new = Utils.rotate_graph(P, Q);
-    // Q_new =Q;
 
     for (var i in coords){
         var vtx = vs.get(i);
@@ -1411,7 +1377,6 @@ App.Base = Backbone.View.extend({
             app.models.graph.vs.each(function(vtx){
                 vtx.add_flag("form");
             });
-
         }
 
         // auto ask for layout & clustering

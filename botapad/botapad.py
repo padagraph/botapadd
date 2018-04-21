@@ -7,7 +7,7 @@ from reliure.types import Text , Numeric
 
 import collections 
 import codecs
-from StringIO import StringIO
+from six import StringIO
 import requests
 import re
 import csv
@@ -154,7 +154,7 @@ class Botapad(object):
         if len(args) == 1 and type(args) in (tuple,list):
             args = args[0]
         if self.verbose:
-            self._log.write( args )
+            self._log.write( "; ".join([ "*%s" % e for e in args ]))
             self._log.write( "\n" )
             print(args)
 
@@ -288,7 +288,7 @@ class Botapad(object):
         # ( name, type indexed, projection )
         def _w(e):
             isproj="%" in e
-            w =  re.findall( "\(([0-9]?\.?[0-9]+)\)", e  )
+            w =  re.findall( "\((-?[0-9]?\.?[0-9]+)\)", e  )
             if isproj and len(w) :
                 w = float(w[0])
             elif isproj :
@@ -465,7 +465,7 @@ class Botapad(object):
                 for e in self.bot.post_edges(self.gid, iter(edges)) : 
                     self.debug(e)
             except :
-                print row
+                print( row )
                 raise BotapadPostError("Error while posting edges ", edges, row)
         # Vertex
         
@@ -499,7 +499,6 @@ class Botapad(object):
                 node = None
                 self.log( "    [POST] @ %s %s [%s] (%s)" % (len(payload), label , ", ".join(names)  ,  ", ".join(["%s" % e for e in index_props]) )) 
 
-                
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload), key=[names[i] for i in index_props]):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
                     self.idx[ key ] = uuid
