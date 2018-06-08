@@ -1,3 +1,8 @@
+    
+## Installation
+
+    $ make install 
+
 
 # botapad
 
@@ -5,18 +10,6 @@ Import data in padagraph.io
 
     * command line
     * flask app
-    
-## Installation
-
-    # Native:
-    $ pip install -r requirements.txt
-
-    # Docker:
-    $ make docker-build
-    $ make docker-push  # unncessary if on same host as build
-    $ make docker-pull  # unncessary if on same host as build
-    $ ./deploy-prod.sh
-
 
 # Command Line
 

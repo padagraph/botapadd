@@ -1220,6 +1220,8 @@ gviz.ThreeViz = Backbone.View.extend({
         this.wedges = [];
         this.wnidx  = {};
         this.weidx  = {};
+
+        this.request_animation();
     },
 
     /** create visualisation model from Graph
@@ -2227,12 +2229,6 @@ gviz.ThreeVizHelpers = {
         if ( viz.show_text && material.textVisible ){
             context.save();
 
-            //var text_lines = get_text_lines(node, material);                       
-
-            // TODO : setup background
-            //var letter_width = context.measureText("B").width;
-            //var sumY = 0, maxX = 0;ode
-
             var text_lines = material.text_lines;
             // draw text
             for (var i in text_lines){
@@ -2242,7 +2238,7 @@ gviz.ThreeVizHelpers = {
                 var x = 0,
                     y = 0,
                     
-                    text_width = 0, //compute the text width
+                    text_width = 0, //compute the text width 
                     userPaddingX = material.textPaddingX | 0,
                     userPaddingY = material.textPaddingY | 0,
                     paddingX = 0, paddingY = 0;
@@ -2286,21 +2282,21 @@ gviz.ThreeVizHelpers = {
                 // text scale
                 context.scale(material.fontScale, material.fontScale);
 
-                var token = text_lines[0][0];
-                var css = _this.node_materials[token.css];
-                var paddingRelX = css.paddingRelX | 0;
-                var paddingRelY = css.paddingRelY | 0;
-
-                // position & draw
-                var font = get_font(css.font, viz.user_font_size)
-                var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
-                context.font = font ;
-        
                 var text_height = context.measureText('M').width;
 
                 y = y - ( (text_lines.length - 1) * text_height / 2. ) + ( i * text_height )
                 
                 _.each(text_lines[i], function (token, j){
+                    // font, position & draw
+                    var css = _this.node_materials[token.css];
+                    var paddingRelX = css.paddingRelX | 0;
+                    var paddingRelY = css.paddingRelY | 0;
+
+                    // position & draw
+                    var font = get_font(css.font, viz.user_font_size)
+                    var fontsize = parseInt(/([0-9]*)px/.exec(font)[1])
+                    context.font = font ;
+
                     var xi = x + userPaddingX + paddingRelX;
                     var yi = y - userPaddingY;
                     
@@ -2464,7 +2460,7 @@ Gviz.SimpleViz = function(graph, attrs){
     gviz.on( 'vertex:dblclick', function(vertex, event){
       if (vertex && vertex.id && vertex.has_flag && (vertex.has_flag('disabled') == false)) 
         Backbone.trigger('engine:expand_prox',
-                { nodes : [vertex.id] , weights : [1] }
+                { expand : [vertex.id] , weights : [1] }
             );
     });
     

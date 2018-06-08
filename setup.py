@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 
 
 """
+0.7   moved __init__ botapad.py
 0.6.1 log formating
       visualisation url parameters 
 0.6   added edge direction with reification > or < where % === %<
@@ -20,7 +21,7 @@ required = []
 
 setup(
     name='botapad',
-    version='0.6.1',
+    version='0.6.9',
     description='padagraph pad parser',
     author='ynnk, a-tsioh',
     author_email='contact@padagraph.io',

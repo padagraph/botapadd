@@ -244,6 +244,9 @@ dom-module(id='graph-app')
           a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
           {% endif %}
          .four.wide.column
+            #loading
+              p Loading...
+              
   script.
     require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const ) {
      Polymer({
@@ -252,6 +255,11 @@ dom-module(id='graph-app')
       properties : {
         display_card : Boolean,
         display_list : Boolean,
+      },
+
+      ready(){
+        this.display_card = true;
+        this.display_list = false;
       },
       
       togglecard(){
@@ -279,14 +287,17 @@ dom-module(id='graph-app')
       },
       
       toggle(){
-        this.display_card = document.getElementById("cardbutton").classList.contains("active");
-        this.display_list = document.getElementById("listbutton").classList.contains("active");
+        this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
+        this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
       },
 
       is_hidden(e) { return !e },
 
       
-      ready() {
+      attached() {
+        this.async( this.startapp );
+      },
+      startapp() {
         this.toggle();
         document.querySelector('padagraph-model-popup').hidden = true;
         
@@ -300,6 +311,16 @@ dom-module(id='graph-app')
         
         window.onresize = _window_resized;
 
+        var loading = function(e, name, engine, show){
+            console.log("loading",e,  name, engine, show)
+            var element = document.getElementById("loading");
+            if ( show && !element.classList.contains("show") )
+                element.classList.toggle("show");
+            if ( !show && element.classList.contains("show") )
+                element.classList.toggle("show");
+        };      
+        
+
         document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
 
             console.log(e.detail.app); // true
@@ -308,6 +329,7 @@ dom-module(id='graph-app')
             var engines = [];
             var app_engines = {
                 'explore':app.engines.explore,
+                //'expand':app.engines.expand_px,
                 'layout':app.engines.layout,
                 'clustering':app.engines.clustering,
             };

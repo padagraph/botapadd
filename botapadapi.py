@@ -22,15 +22,15 @@ from cello.graphs.prox import ProxSubgraph, ProxExtract, pure_prox, sortcut
 from cello.layout import export_layout
 from cello.clustering import export_clustering
 
-from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, export_graph, layout_api, clustering_api
+from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, layout_api, clustering_api
 
+from botapad.utils import export_graph
 
 def db_graph(graphdb, query ):
     gid = query['graph']
     graph = graphdb.get_graph(gid)
     return graph
 
-   
 def pad2pdg(gid, url, host, key, delete, debug=False):
     description = "imported from %s" % url
     bot = Botagraph()
@@ -43,36 +43,7 @@ def pad2igraph(gid, url, format="csv"):
     graph['meta']['owner'] = None
     graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
     return graph
-
-def types_stats( items , opt={}):
-    counter = Counter(items)
-    return dict(counter)  
-    print counter
-
-@Composable
-def graph_stats(graph, **kwargs):
-    graph['meta']['stats'] = {}
-
-    stats = types_stats(graph.vs['nodetype'])
-    print stats
-    for e in graph['nodetypes']:
-        e['count'] = stats.get(e['uuid'], 0)
-    graph['meta']['stats']['nodetypes'] = stats
     
-    stats = types_stats(graph.es['edgetype'])
-    for e in graph['edgetypes']:
-        e['count'] = stats.get(e['uuid'], 0)
-    graph['meta']['stats']['edgetypes'] = stats
-    return graph
-
-from cello.graphs import pedigree
-
-@Composable
-def compute_pedigree(graph, **kwargs):
-    graph['meta']['pedigree'] = pedigree.compute(graph)
-    return graph
-    
-
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 

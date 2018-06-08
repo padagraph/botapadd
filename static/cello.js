@@ -200,7 +200,6 @@
                 if ( !options || !options.silent) {
                     this.trigger("addflag", flag, this);
                     this.trigger("addflag:"+flag, this);
-                    this.collection.trigger("addflag:"+flag, this, options);
                 }
             }
         };
@@ -214,7 +213,6 @@
                 if ( !options || !options.silent) {
                     this.trigger("rmflag", flag, this);
                     this.trigger("rmflag:"+flag, this);
-                    this.collection.trigger("rmflag:"+flag, this);
                 }
             }
         };
@@ -1377,11 +1375,11 @@ var Graph = Backbone.Model.extend({
 
         if (data.nodetypes)
         {
-            this.nodetypes.set({ 'nodetypes': data.nodetypes } , {parse:true});
+            this.nodetypes.set({ 'nodetypes': data.nodetypes } , { merge: true, remove:false, parse:true });
         }
         if (data.edgetypes)
         {
-            this.edgetypes.set({ 'edgetypes': data.edgetypes }, {parse:true});
+            this.edgetypes.set({ 'edgetypes': data.edgetypes }, { merge: true, remove:false, parse:true });
         }
         if (data.properties)
             this.properties.set(data.properties, {parse:true})
@@ -1432,11 +1430,11 @@ var Graph = Backbone.Model.extend({
     get_node_type: function(uuid){
         var nt = this.nodetypes.get(uuid);
         if (nt) return nt;
-        if (uuid) {
-            var nt =  new this.nodetype_model({name:uuid, uuid:uuid});
-            this.nodetypes.add(nt)
-            return nt;
-        }
+        //if (uuid) {
+            //var nt =  new this.nodetype_model({name:uuid, uuid:uuid});
+            //this.nodetypes.add(nt)
+            //return nt;
+        //}
     },
 
     summary: function(){
@@ -1704,6 +1702,7 @@ var Graph = Backbone.Model.extend({
 });
 
 var Type = Backbone.Model.extend({
+
     idAttribute: "uuid",
 
     defaults: {
@@ -1711,6 +1710,7 @@ var Type = Backbone.Model.extend({
         name: "",
         count: 0,
         description: "",
+        type_attributes: {},    //  attrs
         properties: new Cello.Options(),    // Collection of options
         material:  {},    // Collection of options
     },
@@ -1734,6 +1734,7 @@ var Type = Backbone.Model.extend({
                 
         }
         return  {
+                type_attributes : data.type_attributes,
                 properties : new Cello.Options( props, {parse:true}),
                 name : data.name,
                 description : data.description || "",
@@ -1746,7 +1747,7 @@ var Type = Backbone.Model.extend({
     },
 
     toJSON: function(options) {
-      var data =  _.pick(this.attributes, 'name', 'description', 'uuid');
+      var data =  _.pick(this.attributes, 'name', 'description', 'uuid', 'type_attributes');
       var models = this.get('properties').models;
       var props = {}
       for (var i in models ){
@@ -1765,6 +1766,9 @@ var NodeType = Type.extend({
         Cello.get(this, "count");
         Cello.get(this, "name");
         Cello.get(this, "properties");
+        Cello.get(this, "type_attributes", function() {
+            return this.get('type_attributes');
+        });
         
         Cello.get(this, "label", function(){
             var label = this.get('name');
@@ -1787,6 +1791,10 @@ var EdgeType = Type.extend({
     initialize: function(attrs, options){
         Cello.get(this, "name");
         Cello.get(this, "count");
+        Cello.get(this, "type_attributes", function() {
+            return this.get('type_attributes');
+        });
+        
         Cello.get(this, "properties");
         Cello.get(this, "label", function(){
             var label = this.get('name');
@@ -1815,43 +1823,50 @@ var Vertex = Backbone.Model.extend({
         label: "",
         color: [0,0,0],
         coords:[0,0,0], 
-        clusters: null //{clustering_cid: [list of {cluster: , [opt_attr: , ...]}], ...}
     },
-
-    // init
-    initialize: function(attrs, options){
+    
+    initialize: function(attrs, oprions) {
+        
         var vertex = this;
-        
-        Cello.getset(this, "color");
-        
-        Cello.getset(this, "clusters");
-        this.clusters = {};
-
+      
         Cello.get(this, "graph", function(){
                 return vertex.collection != null ? vertex.collection.graph : null;
-            });
-            
+            });            
+        Cello.get(this, "type", function(){ return this.nodetype});
         Cello.get(this, "nodetype",  function(){
                 return vertex.graph ? vertex.graph.get_node_type( vertex.get('nodetype') ): null;
             });
 
-
-        /* <str> vertex.label */
+        Cello.get(this, "properties", function(){ return vertex.get('properties')});
+        if ( !this.properties )
+            this.set('properties', new Backbone.Model());
+            
         Cello.get(this, "label", function(){
-            var label = this.get('label');
+            var label = vertex.properties.get('label');
             return  label === undefined ? "" : label;
         });
-
-        Cello.Flagable(this);
-
-        _.bindAll(this, 'degree', 'format_label', 'neighbors', 'strength');
-        
         Cello.get(this, "formatted_label", this.format_label);
+
+
+        this.clusters = {} //{clustering_cid: [list of {cluster: , [opt_attr: , ...]}], ...}
+
+        Cello.getset(vertex, "color");
+
 
         this.on("sync", function(model, resp, options){
             //if (! (options || options.is_cancel) )
             Backbone.trigger("node:save", vertex, resp, options)
         });
+        this.on("change:cl_color", function(vtx){
+            vtx.set('color', vtx.get('cl_color')) ;
+        });
+        this.on("change", function(vtx){
+            vtx._neighbors = null;
+        });
+        
+        Cello.Flagable(this);
+        _.bindAll(this, 'degree', 'format_label', 'neighbors', 'strength');
+
     },
 
     getHexColor : function(){
@@ -1914,19 +1929,16 @@ var Edge = Backbone.Model.extend({
     idAttribute: "uuid",
     
     defaults : {
-        label:"",
-        edgetype: null,
-        source: null,
-        target: null,
     },
-    
-    initialize: function(attrs, options){
+
+    constructor: function() {
+        Backbone.Model.apply(this, arguments);
         var edge = this;
-        attrs || (attrs = {});
 
         Cello.get(this, "graph", function(){
                 return edge.collection != null ? edge.collection.graph : null;
             });
+        Cello.get(this, "type", function(){ return edge.edgetype});
         Cello.get(this, "edgetype",  function(){
                 return edge.graph ? edge.graph.get_edge_type( edge.get('edgetype') ): null;
             });
@@ -1936,23 +1948,30 @@ var Edge = Backbone.Model.extend({
         Cello.get(this, "target", function(){
                 return edge.graph ? edge.graph.vs.get(edge.get("target")) : null;
             } );
-        /* <str> edge.label */
-        Cello.get(this, "label", function(){ return edge.get('label')} );
+        Cello.get(this, "weight", function(){
+                return edge.graph ? edge.graph.vs.get(edge.get("weight")) : null;
+            } );
 
         Cello.get(this, "sym", this.sym);
-
-        if (attrs.w)
-            this.weight =  attrs.w;
+        
+        Cello.get(this, "properties", function(){ return edge.get('properties')});
+        Cello.get(this, "label", function(){
+            var label = edge.properties.get('label');
+            if ( label == null || label.length == 0  )
+                if (edge.edgetype)
+                    return edge.edgetype.name
+            return label;
+        });
+        if ( !this.properties )
+            this.set('properties',  new Backbone.Model());
 
         Cello.Flagable(this);
 
         this.on("sync", function(model, resp, options){
             Backbone.trigger("edge:save", model, resp, options)
         });
-        
     },
-
-
+    
     str: function(){
         var func = function(v, k){ return k+ ": "+ v; };
         return   "("+this.get('s') + "," + this.get('t')+")  " +

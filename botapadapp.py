@@ -16,9 +16,10 @@ from functools import wraps
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
+from botapadapi import pad2igraph, pad2pdg
 from botapi import BotApiError, BotLoginError
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
-from botapadapi import pad2igraph, pad2pdg, compute_pedigree, graph_stats
+from botapad.utils import export_graph, prepare_graph, compute_pedigree, graph_stats
 
 from cello.graphs import IN, OUT, ALL
 from cello.graphs.prox import ProxSubgraph
@@ -102,7 +103,7 @@ import igraph
 from igraph.utils import named_temporary_file 
 import cPickle as pickle
 import StringIO
-from pdgapi.explor import export_graph, prepare_graph, igraph2dict, EdgeList
+from pdgapi.explor import EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
 
 

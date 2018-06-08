@@ -217,7 +217,11 @@
           <div class="six wide column">
             <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
           </div>
-          <div class="four wide column"></div>
+          <div class="four wide column">
+            <div id="loading">
+              <p>Loading...</p>
+            </div>
+          </div>
         </div>
       </padagraph-gviz>
     </padagraph-gviz-json>
@@ -230,6 +234,11 @@
       properties : {
         display_card : Boolean,
         display_list : Boolean,
+      },
+    
+      ready(){
+        this.display_card = true;
+        this.display_list = false;
       },
       
       togglecard(){
@@ -257,14 +266,17 @@
       },
       
       toggle(){
-        this.display_card = document.getElementById("cardbutton").classList.contains("active");
-        this.display_list = document.getElementById("listbutton").classList.contains("active");
+        this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
+        this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
       },
     
       is_hidden(e) { return !e },
     
       
-      ready() {
+      attached() {
+        this.async( this.startapp );
+      },
+      startapp() {
         this.toggle();
         document.querySelector('padagraph-model-popup').hidden = true;
         
@@ -278,6 +290,16 @@
         
         window.onresize = _window_resized;
     
+        var loading = function(e, name, engine, show){
+            console.log("loading",e,  name, engine, show)
+            var element = document.getElementById("loading");
+            if ( show && !element.classList.contains("show") )
+                element.classList.toggle("show");
+            if ( !show && element.classList.contains("show") )
+                element.classList.toggle("show");
+        };      
+        
+    
         document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
     
             console.log(e.detail.app); // true
@@ -286,6 +308,7 @@
             var engines = [];
             var app_engines = {
                 'explore':app.engines.explore,
+                //'expand':app.engines.expand_px,
                 'layout':app.engines.layout,
                 'clustering':app.engines.clustering,
             };

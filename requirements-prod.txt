@@ -1,6 +1,9 @@
 #gunicorn
 
+redis
+
 flask
+flask-login
 flask-runner
 Flask-Markdown
 flask_cors
