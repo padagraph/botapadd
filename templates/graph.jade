@@ -201,7 +201,7 @@ link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
 
 dom-module(id='graph-app')
   template
-  
+   #boo
      padagraph-gviz-json( sync="{{sync}}" routes="{{routes}}" data="{{data}}" )
       padagraph-gviz( options="{{options}}")
         div#viz()
@@ -248,7 +248,7 @@ dom-module(id='graph-app')
               p Loading...
               
   script.
-    require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const ) {
+    require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
      Polymer({
       is: "graph-app",
 
@@ -295,11 +295,18 @@ dom-module(id='graph-app')
 
       
       attached() {
-        this.async( this.startapp );
+        var start = this.startapp.bind(this);  
+        this._observer =
+            Polymer.dom(this.$.boo).observeNodes(function(info) {
+             info.addedNodes.filter(function(node) {
+              if (node.tagName === "PADAGRAPH-GVIZ-JSON")
+                document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', start );
+             });
+        });
       },
-      startapp() {
-        this.toggle();
+      startapp(e) {
         document.querySelector('padagraph-model-popup').hidden = true;
+        this.toggle();
         
         var _window_resized = function(){
             var e = document.getElementById('gviz');
@@ -320,40 +327,36 @@ dom-module(id='graph-app')
                 element.classList.toggle("show");
         };      
         
+        console.log(e.detail.app); // true
+        var app = e.detail.app;
+        
+        var engines = [];
+        var app_engines = {
+            'explore':app.engines.explore,
+            //'expand':app.engines.expand_px,
+            'layout':app.engines.layout,
+            'clustering':app.engines.clustering,
+        };
+        
+        for (var k in app_engines){
+            var engine = app_engines[k]
+            engine.name = k;
+            engines.push(engine);
+        }
 
-        document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
+         $('padagraph-collection')[0].app = app;
+         $('padagraph-collection')[0].graph = app.models.graph;
+        
+        var keb = document.createElement("padagraph-keb")
+        keb.engines = engines;
+        $("#keb")
+            .sidebar('setting', 'dimPage', false)
+            .sidebar('setting', 'transition', 'overlay')
+        $("#kebcontent").append(keb)
+        $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+        $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
 
-            console.log(e.detail.app); // true
-            var app = e.detail.app;
-            
-            var engines = [];
-            var app_engines = {
-                'explore':app.engines.explore,
-                //'expand':app.engines.expand_px,
-                'layout':app.engines.layout,
-                'clustering':app.engines.clustering,
-            };
-            
-            for (var k in app_engines){
-                var engine = app_engines[k]
-                engine.name = k;
-                engines.push(engine);
-            }
-
-             $('padagraph-collection')[0].app = app;
-             $('padagraph-collection')[0].graph = app.models.graph;
-            
-            var keb = document.createElement("padagraph-keb")
-            keb.engines = engines;
-            $("#keb")
-                .sidebar('setting', 'dimPage', false)
-                .sidebar('setting', 'transition', 'overlay')
-            $("#kebcontent").append(keb)
-            $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
-            $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
-
-            _window_resized();
-        })
+        _window_resized();
       }
      })
     });
