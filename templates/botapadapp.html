@@ -308,40 +308,42 @@
           <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html">
           <dom-module id="graph-app">
             <template>
-              <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
-                <padagraph-gviz options="{{options}}">
-                  <div id="viz"></div>
-                  <!-- liste and card details -->
-                  <div id="cardmenu" class="ui compact menu"><a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a><a id="cardbutton" on-click="togglecard" class="link item active"><i class="id card outline icon"></i>details</a></div>
-                  <padagraph-model-popup id="gvizpopup" hidden$="{{'{{is_hidden(display_card)}}'}}"></padagraph-model-popup>
-                  <padagraph-collection mode="node" hidden$="{{'{{is_hidden(display_list)}}'}}"></padagraph-collection>
-                  <div id="menu" class="ui icon borderless vertical menu">
-                    <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
-                    <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
-                    <div class="ui divider">         </div>
-                    <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
-                    <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
-                    <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
-                    <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
-                  </div>
-                  <div id="labels" class="ui grid">
-                    <div class="six wide column">
-                      <padagraph-labels-control></padagraph-labels-control>
+              <div id="boo">
+                <padagraph-gviz-json sync="{{sync}}" routes="{{routes}}" data="{{data}}">
+                  <padagraph-gviz options="{{options}}">
+                    <div id="viz"></div>
+                    <!-- liste and card details -->
+                    <div id="cardmenu" class="ui compact menu"><a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a><a id="cardbutton" on-click="togglecard" class="link item active"><i class="id card outline icon"></i>details</a></div>
+                    <padagraph-model-popup id="gvizpopup" hidden$="{{'{{is_hidden(display_card)}}'}}"></padagraph-model-popup>
+                    <padagraph-collection mode="node" hidden$="{{'{{is_hidden(display_list)}}'}}"></padagraph-collection>
+                    <div id="menu" class="ui icon borderless vertical menu">
+                      <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
+                      <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                      <div class="ui divider">         </div>
+                      <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
+                      <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
+                      <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
+                      <div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a>
                     </div>
-                    <div class="six wide column">
-                      <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
-                    </div>
-                    <div class="four wide column">
-                      <div id="loading">
-                        <p>Loading...</p>
+                    <div id="labels" class="ui grid">
+                      <div class="six wide column">
+                        <padagraph-labels-control></padagraph-labels-control>
+                      </div>
+                      <div class="six wide column">
+                        <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
+                      </div>
+                      <div class="four wide column">
+                        <div id="loading">
+                          <p>Loading...</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </padagraph-gviz>
-              </padagraph-gviz-json>
+                  </padagraph-gviz>
+                </padagraph-gviz-json>
+              </div>
             </template>
             <script>
-              require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, Cello, Gviz, Materials, Const ) {
+              require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
                Polymer({
                 is: "graph-app",
               
@@ -388,11 +390,18 @@
               
                 
                 attached() {
-                  this.async( this.startapp );
+                  var start = this.startapp.bind(this);  
+                  this._observer =
+                      Polymer.dom(this.$.boo).observeNodes(function(info) {
+                       info.addedNodes.filter(function(node) {
+                        if (node.tagName === "PADAGRAPH-GVIZ-JSON")
+                          document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', start );
+                       });
+                  });
                 },
-                startapp() {
-                  this.toggle();
+                startapp(e) {
                   document.querySelector('padagraph-model-popup').hidden = true;
+                  this.toggle();
                   
                   var _window_resized = function(){
                       var e = document.getElementById('gviz');
@@ -413,40 +422,36 @@
                           element.classList.toggle("show");
                   };      
                   
+                  console.log(e.detail.app); // true
+                  var app = e.detail.app;
+                  
+                  var engines = [];
+                  var app_engines = {
+                      'explore':app.engines.explore,
+                      //'expand':app.engines.expand_px,
+                      'layout':app.engines.layout,
+                      'clustering':app.engines.clustering,
+                  };
+                  
+                  for (var k in app_engines){
+                      var engine = app_engines[k]
+                      engine.name = k;
+                      engines.push(engine);
+                  }
               
-                  document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {
+                   $('padagraph-collection')[0].app = app;
+                   $('padagraph-collection')[0].graph = app.models.graph;
+                  
+                  var keb = document.createElement("padagraph-keb")
+                  keb.engines = engines;
+                  $("#keb")
+                      .sidebar('setting', 'dimPage', false)
+                      .sidebar('setting', 'transition', 'overlay')
+                  $("#kebcontent").append(keb)
+                  $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+                  $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
               
-                      console.log(e.detail.app); // true
-                      var app = e.detail.app;
-                      
-                      var engines = [];
-                      var app_engines = {
-                          'explore':app.engines.explore,
-                          //'expand':app.engines.expand_px,
-                          'layout':app.engines.layout,
-                          'clustering':app.engines.clustering,
-                      };
-                      
-                      for (var k in app_engines){
-                          var engine = app_engines[k]
-                          engine.name = k;
-                          engines.push(engine);
-                      }
-              
-                       $('padagraph-collection')[0].app = app;
-                       $('padagraph-collection')[0].graph = app.models.graph;
-                      
-                      var keb = document.createElement("padagraph-keb")
-                      keb.engines = engines;
-                      $("#keb")
-                          .sidebar('setting', 'dimPage', false)
-                          .sidebar('setting', 'transition', 'overlay')
-                      $("#kebcontent").append(keb)
-                      $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
-                      $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
-              
-                      _window_resized();
-                  })
+                  _window_resized();
                 }
                })
               });
