@@ -290,6 +290,9 @@ dom-module(id='graph-app')
 
       
       attached() {
+        this.async( this.startapp );
+      },
+      startapp() {
         this.toggle();
         document.querySelector('padagraph-model-popup').hidden = true;
         

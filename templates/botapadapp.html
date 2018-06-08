@@ -383,6 +383,9 @@
               
                 
                 attached() {
+                  this.async( this.startapp );
+                },
+                startapp() {
                   this.toggle();
                   document.querySelector('padagraph-model-popup').hidden = true;
                   
