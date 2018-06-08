@@ -382,7 +382,7 @@
                 is_hidden(e) { return !e },
               
                 
-                ready() {
+                attached() {
                   this.toggle();
                   document.querySelector('padagraph-model-popup').hidden = true;
                   
@@ -414,7 +414,7 @@
                       var engines = [];
                       var app_engines = {
                           'explore':app.engines.explore,
-                          'expand':app.engines.expand_px,
+                          //'expand':app.engines.expand_px,
                           'layout':app.engines.layout,
                           'clustering':app.engines.clustering,
                       };
