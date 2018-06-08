@@ -60,6 +60,10 @@
     width:100%;
 }
 
+.padagraph-collection-filter.ui.form.groups {
+    overflow-y: scroll;
+    max-height: 350px;
+}
 
 #padagraph-viz .dimmer {
     background: hsla(60,100%,30%,0.6);

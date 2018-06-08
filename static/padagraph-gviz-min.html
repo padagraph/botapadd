@@ -62,9 +62,10 @@ settings.useNativeImports = settings.hasNativeImports;
 settings.useNativeCustomElements = !window.CustomElements || window.CustomElements.useNative;
 settings.useNativeShadow = settings.useShadow && settings.nativeShadow;
 settings.usePolyfillProto = !settings.useNativeCustomElements && !Object.__proto__;
-settings.hasNativeCSSProperties = !navigator.userAgent.match('AppleWebKit/601') && window.CSS && CSS.supports && CSS.supports('box-shadow', '0 0 0 var(--foo)');
+settings.hasNativeCSSProperties = !navigator.userAgent.match(/AppleWebKit\/601|Edge\/15/) && window.CSS && CSS.supports && CSS.supports('box-shadow', '0 0 0 var(--foo)');
 settings.useNativeCSSProperties = settings.hasNativeCSSProperties && settings.lazyRegister && settings.useNativeCSSProperties;
 settings.isIE = navigator.userAgent.match('Trident');
+settings.passiveTouchGestures = settings.passiveTouchGestures || false;
 return settings;
 }()
 };(function () {
@@ -76,15 +77,15 @@ prototype = prototype.prototype;
 if (!prototype) {
 prototype = {};
 }
-var factory = desugar(prototype);
-prototype = factory.prototype;
+prototype = desugar(prototype);
+var customCtor = prototype === prototype.constructor.prototype ? prototype.constructor : null;
 var options = { prototype: prototype };
 if (prototype.extends) {
 options.extends = prototype.extends;
 }
 Polymer.telemetry._registrate(prototype);
-document.registerElement(prototype.is, options);
-return factory;
+var ctor = document.registerElement(prototype.is, options);
+return customCtor || ctor;
 };
 var desugar = function (prototype) {
 var base = Polymer.Base;
@@ -93,14 +94,20 @@ base = Polymer.Base._getExtendedPrototype(prototype.extends);
 }
 prototype = Polymer.Base.chainObject(prototype, base);
 prototype.registerCallback();
-return prototype.constructor;
+return prototype;
 };
 if (userPolymer) {
 for (var i in userPolymer) {
 Polymer[i] = userPolymer[i];
 }
 }
-Polymer.Class = desugar;
+Polymer.Class = function (prototype) {
+if (!prototype.factoryImpl) {
+prototype.factoryImpl = function () {
+};
+}
+return desugar(prototype).constructor;
+};
 }());
 Polymer.telemetry = {
 registrations: [],
@@ -197,7 +204,7 @@ var settings = Polymer.Settings;
 Polymer.Base = {
 __isPolymerInstance__: true,
 _addFeature: function (feature) {
-this.extend(this, feature);
+this.mixin(this, feature);
 },
 registerCallback: function () {
 if (settings.lazyRegister === 'max') {
@@ -206,7 +213,15 @@ this.beforeRegister();
 }
 } else {
 this._desugarBehaviors();
-this._doBehavior('beforeRegister');
+for (var i = 0, b; i < this.behaviors.length; i++) {
+b = this.behaviors[i];
+if (b.beforeRegister) {
+b.beforeRegister.call(this);
+}
+}
+if (this.beforeRegister) {
+this.beforeRegister();
+}
 }
 this._registerFeatures();
 if (!settings.lazyRegister) {
@@ -214,12 +229,33 @@ this.ensureRegisterFinished();
 }
 },
 createdCallback: function () {
+if (settings.disableUpgradeEnabled) {
+if (this.hasAttribute('disable-upgrade')) {
+this._propertySetter = disableUpgradePropertySetter;
+this._configValue = null;
+this.__data__ = {};
+return;
+} else {
+this.__hasInitialized = true;
+}
+}
+this.__initialize();
+},
+__initialize: function () {
 if (!this.__hasRegisterFinished) {
 this._ensureRegisterFinished(this.__proto__);
 }
 Polymer.telemetry.instanceCount++;
 this.root = this;
-this._doBehavior('created');
+for (var i = 0, b; i < this.behaviors.length; i++) {
+b = this.behaviors[i];
+if (b.created) {
+b.created.call(this);
+}
+}
+if (this.created) {
+this.created();
+}
 this._initFeatures();
 },
 ensureRegisterFinished: function () {
@@ -229,13 +265,26 @@ _ensureRegisterFinished: function (proto) {
 if (proto.__hasRegisterFinished !== proto.is || !proto.is) {
 if (settings.lazyRegister === 'max') {
 proto._desugarBehaviors();
-proto._doBehaviorOnly('beforeRegister');
+for (var i = 0, b; i < proto.behaviors.length; i++) {
+b = proto.behaviors[i];
+if (b.beforeRegister) {
+b.beforeRegister.call(proto);
+}
+}
 }
 proto.__hasRegisterFinished = proto.is;
 if (proto._finishRegisterFeatures) {
 proto._finishRegisterFeatures();
 }
-proto._doBehavior('registered');
+for (var j = 0, pb; j < proto.behaviors.length; j++) {
+pb = proto.behaviors[j];
+if (pb.registered) {
+pb.registered.call(proto);
+}
+}
+if (proto.registered) {
+proto.registered();
+}
 if (settings.usePolyfillProto && proto !== this) {
 proto.extend(this, proto);
 }
@@ -245,23 +294,43 @@ attachedCallback: function () {
 var self = this;
 Polymer.RenderStatus.whenReady(function () {
 self.isAttached = true;
-self._doBehavior('attached');
+for (var i = 0, b; i < self.behaviors.length; i++) {
+b = self.behaviors[i];
+if (b.attached) {
+b.attached.call(self);
+}
+}
+if (self.attached) {
+self.attached();
+}
 });
 },
 detachedCallback: function () {
 var self = this;
 Polymer.RenderStatus.whenReady(function () {
 self.isAttached = false;
-self._doBehavior('detached');
+for (var i = 0, b; i < self.behaviors.length; i++) {
+b = self.behaviors[i];
+if (b.detached) {
+b.detached.call(self);
+}
+}
+if (self.detached) {
+self.detached();
+}
 });
 },
 attributeChangedCallback: function (name, oldValue, newValue) {
 this._attributeChangedImpl(name);
-this._doBehavior('attributeChanged', [
-name,
-oldValue,
-newValue
-]);
+for (var i = 0, b; i < this.behaviors.length; i++) {
+b = this.behaviors[i];
+if (b.attributeChanged) {
+b.attributeChanged.call(this, name, oldValue, newValue);
+}
+}
+if (this.attributeChanged) {
+this.attributeChanged(name, oldValue, newValue);
+}
 },
 _attributeChangedImpl: function (name) {
 this._setAttributeToProperty(this, name);
@@ -332,6 +401,23 @@ object.__proto__ = inherited;
 return object;
 };
 Polymer.Base = Polymer.Base.chainObject(Polymer.Base, HTMLElement.prototype);
+Polymer.BaseDescriptors = {};
+var disableUpgradePropertySetter;
+if (settings.disableUpgradeEnabled) {
+disableUpgradePropertySetter = function (property, value) {
+this.__data__[property] = value;
+};
+var origAttributeChangedCallback = Polymer.Base.attributeChangedCallback;
+Polymer.Base.attributeChangedCallback = function (name, oldValue, newValue) {
+if (!this.__hasInitialized && name === 'disable-upgrade') {
+this.__hasInitialized = true;
+this._propertySetter = Polymer.Bind._modelApi._propertySetter;
+this._configValue = Polymer.Base._configValue;
+this.__initialize();
+}
+origAttributeChangedCallback.call(this, name, oldValue, newValue);
+};
+}
 if (window.CustomElements) {
 Polymer.instanceof = CustomElements.instanceof;
 } else {
@@ -353,8 +439,7 @@ var DomModule = function () {
 return document.createElement('dom-module');
 };
 DomModule.prototype = Object.create(HTMLElement.prototype);
-Polymer.Base.extend(DomModule.prototype, {
-constructor: DomModule,
+Polymer.Base.mixin(DomModule.prototype, {
 createdCallback: function () {
 this.register();
 },
@@ -379,6 +464,11 @@ m = m.querySelector(selector);
 return m;
 }
 }
+});
+Object.defineProperty(DomModule.prototype, 'constructor', {
+value: DomModule,
+configurable: true,
+writable: true
 });
 var cePolyfill = window.CustomElements && !CustomElements.useNative;
 document.registerElement('dom-module', DomModule);
@@ -444,9 +534,14 @@ return flat;
 },
 _mixinBehavior: function (b) {
 var n$ = Object.getOwnPropertyNames(b);
+var useAssignment = b._noAccessors;
 for (var i = 0, n; i < n$.length && (n = n$[i]); i++) {
 if (!Polymer.Base._behaviorProperties[n] && !this.hasOwnProperty(n)) {
+if (useAssignment) {
+this[n] = b[n];
+} else {
 this.copyOwnProperty(n, b, this);
+}
 }
 }
 },
@@ -458,23 +553,6 @@ for (var i = 0, l = behaviors.length; i < l; i++) {
 this._prepBehavior(behaviors[i]);
 }
 this._prepBehavior(this);
-},
-_doBehavior: function (name, args) {
-for (var i = 0; i < this.behaviors.length; i++) {
-this._invokeBehavior(this.behaviors[i], name, args);
-}
-this._invokeBehavior(this, name, args);
-},
-_doBehaviorOnly: function (name, args) {
-for (var i = 0; i < this.behaviors.length; i++) {
-this._invokeBehavior(this.behaviors[i], name, args);
-}
-},
-_invokeBehavior: function (b, name, args) {
-var fn = b[name];
-if (fn) {
-fn.apply(this, args || Polymer.nar);
-}
 },
 _marshalBehaviors: function () {
 for (var i = 0; i < this.behaviors.length; i++) {
@@ -494,7 +572,8 @@ created: true,
 attached: true,
 detached: true,
 attributeChanged: true,
-ready: true
+ready: true,
+_noAccessors: true
 };Polymer.Base._addFeature({
 _getExtendedPrototype: function (tag) {
 return this._getExtendedNativePrototype(tag);
@@ -503,8 +582,14 @@ _nativePrototypes: {},
 _getExtendedNativePrototype: function (tag) {
 var p = this._nativePrototypes[tag];
 if (!p) {
-var np = this.getNativePrototype(tag);
-p = this.extend(Object.create(np), Polymer.Base);
+p = Object.create(this.getNativePrototype(tag));
+var p$ = Object.getOwnPropertyNames(Polymer.Base);
+for (var i = 0, n; i < p$.length && (n = p$[i]); i++) {
+if (!Polymer.BaseDescriptors[n]) {
+p[n] = Polymer.Base[n];
+}
+}
+Object.defineProperties(p, Polymer.BaseDescriptors);
 this._nativePrototypes[tag] = p;
 }
 return p;
@@ -540,7 +625,6 @@ return elt;
 }
 });Polymer.nob = Object.create(null);
 Polymer.Base._addFeature({
-properties: {},
 getPropertyInfo: function (property) {
 var info = this._getPropertyInfo(property, this.properties);
 if (!info) {
@@ -597,7 +681,17 @@ t.readOnly = s.readOnly;
 }
 }
 }
-});Polymer.CaseMap = {
+});
+(function () {
+var propertiesDesc = {
+configurable: true,
+writable: true,
+enumerable: true,
+value: {}
+};
+Polymer.BaseDescriptors.properties = propertiesDesc;
+Object.defineProperty(Polymer.Base, 'properties', propertiesDesc);
+}());Polymer.CaseMap = {
 _caseMap: {},
 _rx: {
 dashToCamel: /-[a-z]/g,
@@ -721,7 +815,7 @@ default:
 return value != null ? value : undefined;
 }
 }
-});Polymer.version = "1.7.1";Polymer.Base._addFeature({
+});Polymer.version = "1.11.3";Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
 this._prepBehaviors();
@@ -749,10 +843,83 @@ this._marshalBehaviors();
 
 
 
-<script>Polymer.Base._addFeature({
+<script>(function () {
+function resolveCss(cssText, ownerDocument) {
+return cssText.replace(CSS_URL_RX, function (m, pre, url, post) {
+return pre + '\'' + resolve(url.replace(/["']/g, ''), ownerDocument) + '\'' + post;
+});
+}
+function resolveAttrs(element, ownerDocument) {
+for (var name in URL_ATTRS) {
+var a$ = URL_ATTRS[name];
+for (var i = 0, l = a$.length, a, at, v; i < l && (a = a$[i]); i++) {
+if (name === '*' || element.localName === name) {
+at = element.attributes[a];
+v = at && at.value;
+if (v && v.search(BINDING_RX) < 0) {
+at.value = a === 'style' ? resolveCss(v, ownerDocument) : resolve(v, ownerDocument);
+}
+}
+}
+}
+}
+function resolve(url, ownerDocument) {
+if (url && ABS_URL.test(url)) {
+return url;
+}
+var resolver = getUrlResolver(ownerDocument);
+resolver.href = url;
+return resolver.href || url;
+}
+var tempDoc;
+var tempDocBase;
+function resolveUrl(url, baseUri) {
+if (!tempDoc) {
+tempDoc = document.implementation.createHTMLDocument('temp');
+tempDocBase = tempDoc.createElement('base');
+tempDoc.head.appendChild(tempDocBase);
+}
+tempDocBase.href = baseUri;
+return resolve(url, tempDoc);
+}
+function getUrlResolver(ownerDocument) {
+return ownerDocument.body.__urlResolver || (ownerDocument.body.__urlResolver = ownerDocument.createElement('a'));
+}
+function pathFromUrl(url) {
+return url.substring(0, url.lastIndexOf('/') + 1);
+}
+var CSS_URL_RX = /(url\()([^)]*)(\))/g;
+var URL_ATTRS = {
+'*': [
+'href',
+'src',
+'style',
+'url'
+],
+form: ['action']
+};
+var ABS_URL = /(^\/)|(^#)|(^[\w-\d]*:)/;
+var BINDING_RX = /\{\{|\[\[/;
+Polymer.ResolveUrl = {
+resolveCss: resolveCss,
+resolveAttrs: resolveAttrs,
+resolveUrl: resolveUrl,
+pathFromUrl: pathFromUrl
+};
+Polymer.rootPath = Polymer.Settings.rootPath || pathFromUrl(document.baseURI || window.location.href);
+}());Polymer.Base._addFeature({
 _prepTemplate: function () {
+var module;
 if (this._template === undefined) {
-this._template = Polymer.DomModule.import(this.is, 'template');
+module = Polymer.DomModule.import(this.is);
+this._template = module && module.querySelector('template');
+}
+if (module) {
+var assetPath = module.getAttribute('assetpath') || '';
+var importURL = Polymer.ResolveUrl.resolveUrl(assetPath, module.ownerDocument.baseURI);
+this._importPath = Polymer.ResolveUrl.pathFromUrl(importURL);
+} else {
+this._importPath = '';
 }
 if (this._template && this._template.hasAttribute('is')) {
 this._warn(this._logf('_prepTemplate', 'top-level Polymer template ' + 'must not be a type-extension, found', this._template, 'Move inside simple <template>.'));
@@ -772,6 +939,7 @@ return dom;
 }
 });(function () {
 var baseAttachedCallback = Polymer.Base.attachedCallback;
+var baseDetachedCallback = Polymer.Base.detachedCallback;
 Polymer.Base._addFeature({
 _hostStack: [],
 ready: function () {
@@ -824,7 +992,15 @@ c._ready();
 this._finishDistribute();
 },
 _readySelf: function () {
-this._doBehavior('ready');
+for (var i = 0, b; i < this.behaviors.length; i++) {
+b = this.behaviors[i];
+if (b.ready) {
+b.ready.call(this);
+}
+}
+if (this.ready) {
+this.ready();
+}
 this._readied = true;
 if (this._attachedPending) {
 this._attachedPending = false;
@@ -843,6 +1019,13 @@ this._beforeAttached();
 baseAttachedCallback.call(this);
 } else {
 this._attachedPending = true;
+}
+},
+detachedCallback: function () {
+if (this._readied) {
+baseDetachedCallback.call(this);
+} else {
+this._attachedPending = false;
 }
 }
 });
@@ -1437,7 +1620,7 @@ return;
 }
 var nativeCloneNode = Element.prototype.cloneNode;
 var nativeImportNode = Document.prototype.importNode;
-Polymer.Base.extend(DomApi.prototype, {
+Polymer.Base.mixin(DomApi.prototype, {
 _lazyDistribute: function (host) {
 if (host.shadyRoot && host.shadyRoot._distributionClean) {
 host.shadyRoot._distributionClean = false;
@@ -1901,7 +2084,7 @@ var DomApi = Polymer.DomApi;
 if (!Settings.useShadow) {
 return;
 }
-Polymer.Base.extend(DomApi.prototype, {
+Polymer.Base.mixin(DomApi.prototype, {
 querySelectorAll: function (selector) {
 return TreeApi.arrayCopy(this.node.querySelectorAll(selector));
 },
@@ -2011,7 +2194,7 @@ forwardProperties([
 'nextElementSibling',
 'previousElementSibling'
 ]);
-}());Polymer.Base.extend(Polymer.dom, {
+}());Polymer.Base.mixin(Polymer.dom, {
 _flushGuard: 0,
 _FLUSH_MAX: 100,
 _needsTakeRecords: !Polymer.Settings.useNativeCustomElements,
@@ -2312,7 +2495,7 @@ enableShadowAttributeTracking: function () {
 if (Settings.useShadow) {
 var baseSetup = DomApi.EffectiveNodesObserver.prototype._setup;
 var baseCleanup = DomApi.EffectiveNodesObserver.prototype._cleanup;
-Polymer.Base.extend(DomApi.EffectiveNodesObserver.prototype, {
+Polymer.Base.mixin(DomApi.EffectiveNodesObserver.prototype, {
 _setup: function () {
 if (!this._observer) {
 var self = this;
@@ -2374,7 +2557,7 @@ DomApi.DistributedNodesObserver = function (domApi) {
 DomApi.EffectiveNodesObserver.call(this, domApi);
 };
 DomApi.DistributedNodesObserver.prototype = Object.create(DomApi.EffectiveNodesObserver.prototype);
-Polymer.Base.extend(DomApi.DistributedNodesObserver.prototype, {
+Polymer.Base.mixin(DomApi.DistributedNodesObserver.prototype, {
 _setup: function () {
 },
 _cleanup: function () {
@@ -2386,7 +2569,7 @@ return this.domApi.getDistributedNodes();
 }
 });
 if (Settings.useShadow) {
-Polymer.Base.extend(DomApi.DistributedNodesObserver.prototype, {
+Polymer.Base.mixin(DomApi.DistributedNodesObserver.prototype, {
 _setup: function () {
 if (!this._observer) {
 var root = this.domApi.getOwnerRoot();
@@ -2463,10 +2646,6 @@ TreeApi.Logical.saveChildNodes(c);
 TreeApi.Logical.saveChildNodes(c.parentNode);
 }
 this.shadyRoot.host = this;
-},
-get domHost() {
-var root = Polymer.dom(this).getOwnerRoot();
-return root && root.host;
 },
 distributeContent: function (updateInsertionPoints) {
 if (this.shadyRoot) {
@@ -2654,6 +2833,15 @@ _elementAdd: function () {
 _elementRemove: function () {
 }
 });
+var domHostDesc = {
+get: function () {
+var root = Polymer.dom(this).getOwnerRoot();
+return root && root.host;
+},
+configurable: true
+};
+Object.defineProperty(Polymer.Base, 'domHost', domHostDesc);
+Polymer.BaseDescriptors.domHost = domHostDesc;
 function distributeNodeInto(child, insertionPoint) {
 insertionPoint._distributedNodes.push(child);
 var points = child._destinationInsertionPoints;
@@ -2886,12 +3074,14 @@ this._tryReady();
 },
 _marshalBehavior: function (b) {
 }
-});</script><script>Polymer.nar = [];
+});</script><script>(function () {
+Polymer.nar = [];
+var disableUpgradeEnabled = Polymer.Settings.disableUpgradeEnabled;
 Polymer.Annotations = {
-parseAnnotations: function (template) {
+parseAnnotations: function (template, stripWhiteSpace) {
 var list = [];
 var content = template._content || template.content;
-this._parseNodeAnnotations(content, list, template.hasAttribute('strip-whitespace'));
+this._parseNodeAnnotations(content, list, stripWhiteSpace || template.hasAttribute('strip-whitespace'));
 return list;
 },
 _parseNodeAnnotations: function (node, list, stripWhiteSpace) {
@@ -3002,7 +3192,7 @@ var i = 0;
 while (node) {
 var next = node.nextSibling;
 if (node.localName === 'template' && !node.hasAttribute('preserve-content')) {
-this._parseTemplate(node, i, list, annote);
+this._parseTemplate(node, i, list, annote, stripWhiteSpace);
 }
 if (node.localName == 'slot') {
 node = this._replaceSlotWithContent(node);
@@ -3049,9 +3239,9 @@ content.setAttribute('select', '[slot=\'' + name + '\']');
 slot.parentNode.replaceChild(content, slot);
 return content;
 },
-_parseTemplate: function (node, index, list, parent) {
+_parseTemplate: function (node, index, list, parent, stripWhiteSpace) {
 var content = document.createDocumentFragment();
-content._notes = this.parseAnnotations(node);
+content._notes = this.parseAnnotations(node, stripWhiteSpace);
 content.appendChild(node.content);
 list.push({
 bindings: Polymer.nar,
@@ -3096,6 +3286,9 @@ node.setAttribute(name, literal);
 if (node.localName === 'input' && origName === 'value') {
 node.setAttribute(origName, '');
 }
+if (disableUpgradeEnabled && origName === 'disable-upgrade$') {
+node.setAttribute(name, '');
+}
 node.removeAttribute(origName);
 var propertyName = Polymer.CaseMap.dashToCamelCase(name);
 if (kind === 'property') {
@@ -3123,64 +3316,6 @@ return n;
 return root;
 }
 }
-};(function () {
-function resolveCss(cssText, ownerDocument) {
-return cssText.replace(CSS_URL_RX, function (m, pre, url, post) {
-return pre + '\'' + resolve(url.replace(/["']/g, ''), ownerDocument) + '\'' + post;
-});
-}
-function resolveAttrs(element, ownerDocument) {
-for (var name in URL_ATTRS) {
-var a$ = URL_ATTRS[name];
-for (var i = 0, l = a$.length, a, at, v; i < l && (a = a$[i]); i++) {
-if (name === '*' || element.localName === name) {
-at = element.attributes[a];
-v = at && at.value;
-if (v && v.search(BINDING_RX) < 0) {
-at.value = a === 'style' ? resolveCss(v, ownerDocument) : resolve(v, ownerDocument);
-}
-}
-}
-}
-}
-function resolve(url, ownerDocument) {
-if (url && ABS_URL.test(url)) {
-return url;
-}
-var resolver = getUrlResolver(ownerDocument);
-resolver.href = url;
-return resolver.href || url;
-}
-var tempDoc;
-var tempDocBase;
-function resolveUrl(url, baseUri) {
-if (!tempDoc) {
-tempDoc = document.implementation.createHTMLDocument('temp');
-tempDocBase = tempDoc.createElement('base');
-tempDoc.head.appendChild(tempDocBase);
-}
-tempDocBase.href = baseUri;
-return resolve(url, tempDoc);
-}
-function getUrlResolver(ownerDocument) {
-return ownerDocument.body.__urlResolver || (ownerDocument.body.__urlResolver = ownerDocument.createElement('a'));
-}
-var CSS_URL_RX = /(url\()([^)]*)(\))/g;
-var URL_ATTRS = {
-'*': [
-'href',
-'src',
-'style',
-'url'
-],
-form: ['action']
-};
-var ABS_URL = /(^\/)|(^#)|(^[\w-\d]*:)/;
-var BINDING_RX = /\{\{|\[\[/;
-Polymer.ResolveUrl = {
-resolveCss: resolveCss,
-resolveAttrs: resolveAttrs,
-resolveUrl: resolveUrl
 };
 }());Polymer.Path = {
 root: function (path) {
@@ -3481,6 +3616,9 @@ return new MouseEvent('test', { buttons: 1 }).buttons === 1;
 return false;
 }
 }();
+function isMouseEvent(name) {
+return MOUSE_EVENTS.indexOf(name) > -1;
+}
 var SUPPORTS_PASSIVE = false;
 (function () {
 try {
@@ -3494,6 +3632,14 @@ window.removeEventListener('test', null, opts);
 } catch (e) {
 }
 }());
+function PASSIVE_TOUCH(eventName) {
+if (isMouseEvent(eventName) || eventName === 'touchend') {
+return;
+}
+if (HAS_NATIVE_TA && SUPPORTS_PASSIVE && Polymer.Settings.passiveTouchGestures) {
+return { passive: true };
+}
+}
 var IS_TOUCH_ONLY = navigator.userAgent.match(/iP(?:[oa]d|hone)|Android/);
 var mouseCanceller = function (mouseEvent) {
 var sc = mouseEvent.sourceCapabilities;
@@ -3503,9 +3649,11 @@ return;
 mouseEvent[HANDLED_OBJ] = { skip: true };
 if (mouseEvent.type === 'click') {
 var path = Polymer.dom(mouseEvent).path;
+if (path) {
 for (var i = 0; i < path.length; i++) {
 if (path[i] === POINTERSTATE.mouse.target) {
 return;
+}
 }
 }
 mouseEvent.preventDefault();
@@ -3537,7 +3685,7 @@ POINTERSTATE.mouse.mouseIgnoreJob = Polymer.Debounce(POINTERSTATE.mouse.mouseIgn
 }
 function hasLeftMouseButton(ev) {
 var type = ev.type;
-if (MOUSE_EVENTS.indexOf(type) === -1) {
+if (!isMouseEvent(type)) {
 return false;
 }
 if (type === 'mousemove') {
@@ -3714,7 +3862,7 @@ node[GESTURE_KEY] = gobj = {};
 }
 for (var i = 0, dep, gd; i < deps.length; i++) {
 dep = deps[i];
-if (IS_TOUCH_ONLY && MOUSE_EVENTS.indexOf(dep) > -1 && dep !== 'click') {
+if (IS_TOUCH_ONLY && isMouseEvent(dep) && dep !== 'click') {
 continue;
 }
 gd = gobj[dep];
@@ -3722,7 +3870,7 @@ if (!gd) {
 gobj[dep] = gd = { _count: 0 };
 }
 if (gd._count === 0) {
-node.addEventListener(dep, this.handleNative);
+node.addEventListener(dep, this.handleNative, PASSIVE_TOUCH(dep));
 }
 gd[name] = (gd[name] || 0) + 1;
 gd._count = (gd._count || 0) + 1;
@@ -3746,7 +3894,7 @@ if (gd && gd[name]) {
 gd[name] = (gd[name] || 1) - 1;
 gd._count = (gd._count || 1) - 1;
 if (gd._count === 0) {
-node.removeEventListener(dep, this.handleNative);
+node.removeEventListener(dep, this.handleNative, PASSIVE_TOUCH(dep));
 }
 }
 }
@@ -4500,7 +4648,7 @@ element.addEventListener(event, function (e) {
 return context._notifyListener(changedFn, e);
 });
 }
-};Polymer.Base.extend(Polymer.Bind, {
+};Polymer.Base.mixin(Polymer.Bind, {
 _shouldAddListener: function (effect) {
 return effect.name && effect.kind != 'attribute' && effect.kind != 'text' && !effect.isCompound && effect.parts[0].mode === '{';
 },
@@ -4846,7 +4994,7 @@ var pinfo = node._propertyInfo && node._propertyInfo[property];
 if (pinfo && pinfo.readOnly) {
 return;
 }
-this.__setProperty(property, value, false, node);
+this.__setProperty(property, value, Polymer.Settings.suppressBindingNotifications, node);
 }
 },
 _computeFinalAnnotationValue: function (node, property, value, info) {
@@ -4875,6 +5023,7 @@ this._effectEffects('__static__', null, this._propertyEffects.__static__);
 }
 });(function () {
 var usePolyfillProto = Polymer.Settings.usePolyfillProto;
+var avoidInstanceProperties = Boolean(Object.getOwnPropertyDescriptor(document.documentElement, 'properties'));
 Polymer.Base._addFeature({
 _setupConfigure: function (initialConfig) {
 this._config = {};
@@ -4912,7 +5061,7 @@ var config = {};
 for (var i = 0; i < this.behaviors.length; i++) {
 this._configureProperties(this.behaviors[i].properties, config);
 }
-this._configureProperties(this.properties, config);
+this._configureProperties(avoidInstanceProperties ? this.__proto__.properties : this.properties, config);
 this.mixin(config, this._aboveConfig);
 this._config = config;
 if (this._clients && this._clients.length) {
@@ -4966,6 +5115,8 @@ node._configValue(name, value);
 }
 },
 _afterClientsReady: function () {
+this.importPath = this._importPath;
+this.rootPath = Polymer.rootPath;
 this._executeStaticEffects();
 this._applyConfig(this._config, this._aboveConfig);
 this._flushHandlers();
@@ -5304,13 +5455,7 @@ _getPathParts: Polymer.Base._getPathParts
 });
 }());Polymer.Base._addFeature({
 resolveUrl: function (url) {
-var module = Polymer.DomModule.import(this.is);
-var root = '';
-if (module) {
-var assetPath = module.getAttribute('assetpath') || '';
-root = Polymer.ResolveUrl.resolveUrl(assetPath, module.ownerDocument.baseURI);
-}
-return Polymer.ResolveUrl.resolveUrl(url, root);
+return Polymer.ResolveUrl.resolveUrl(url, this._importPath);
 }
 });Polymer.CssParse = function () {
 return {
@@ -5459,6 +5604,8 @@ AT_START: '@'
 }();Polymer.StyleUtil = function () {
 var settings = Polymer.Settings;
 return {
+unscopedStyleImports: new WeakMap(),
+SHADY_UNSCOPED_ATTR: 'shady-unscoped',
 NATIVE_VARIABLES: Polymer.Settings.useNativeCSSProperties,
 MODULE_STYLES_SELECTOR: 'style, link[rel=import][type~=css], template',
 INCLUDE_ATTR: 'include',
@@ -5566,7 +5713,7 @@ this.__lastHeadApplyNode = placeHolder;
 return placeHolder;
 },
 cssFromModules: function (moduleIds, warnIfNotFound) {
-var modules = moduleIds.trim().split(' ');
+var modules = moduleIds.trim().split(/\s+/);
 var cssText = '';
 for (var i = 0; i < modules.length; i++) {
 cssText += this.cssFromModule(modules[i], warnIfNotFound);
@@ -5601,13 +5748,61 @@ cssText += this.cssFromModules(include, true);
 }
 e = e.__appliedElement || e;
 e.parentNode.removeChild(e);
-cssText += this.resolveCss(e.textContent, element.ownerDocument);
+var css = this.resolveCss(e.textContent, element.ownerDocument);
+if (!settings.useNativeShadow && e.hasAttribute(this.SHADY_UNSCOPED_ATTR)) {
+e.textContent = css;
+document.head.insertBefore(e, document.head.firstChild);
+} else {
+cssText += css;
+}
 } else if (e.import && e.import.body) {
-cssText += this.resolveCss(e.import.body.textContent, e.import);
+var importCss = this.resolveCss(e.import.body.textContent, e.import);
+if (!settings.useNativeShadow && e.hasAttribute(this.SHADY_UNSCOPED_ATTR)) {
+if (!this.unscopedStyleImports.has(e.import)) {
+this.unscopedStyleImports.set(e.import, true);
+var importStyle = document.createElement('style');
+importStyle.setAttribute(this.SHADY_UNSCOPED_ATTR, '');
+importStyle.textContent = importCss;
+document.head.insertBefore(importStyle, document.head.firstChild);
+}
+} else {
+cssText += importCss;
+}
 }
 }
 }
 return cssText;
+},
+styleIncludesToTemplate: function (targetTemplate) {
+var styles = targetTemplate.content.querySelectorAll('style[include]');
+for (var i = 0, s; i < styles.length; i++) {
+s = styles[i];
+s.parentNode.insertBefore(this._includesToFragment(s.getAttribute('include')), s);
+}
+},
+_includesToFragment: function (styleIncludes) {
+var includeArray = styleIncludes.trim().split(' ');
+var frag = document.createDocumentFragment();
+for (var i = 0; i < includeArray.length; i++) {
+var t = Polymer.DomModule.import(includeArray[i], 'template');
+if (t) {
+this._addStylesToFragment(frag, t.content);
+}
+}
+return frag;
+},
+_addStylesToFragment: function (frag, source) {
+var s$ = source.querySelectorAll('style');
+for (var i = 0, s; i < s$.length; i++) {
+s = s$[i];
+var include = s.getAttribute('include');
+if (include) {
+frag.appendChild(this._includesToFragment(include));
+}
+if (s.textContent) {
+frag.appendChild(s.cloneNode(true));
+}
+}
 },
 isTargetedBuild: function (buildType) {
 return settings.useNativeShadow ? buildType === 'shadow' : buildType === 'shady';
@@ -5726,6 +5921,7 @@ var self = this;
 cb = function (rule) {
 rule.selector = self._slottedToContent(rule.selector);
 rule.selector = rule.selector.replace(ROOT, ':host > *');
+rule.selector = self._dirShadowTransform(rule.selector);
 if (callback) {
 callback(rule);
 }
@@ -5767,8 +5963,31 @@ this._transformRule(rule, this._transformComplexSelector, scope, hostScope);
 _transformRule: function (rule, transformer, scope, hostScope) {
 rule.selector = rule.transformedSelector = this._transformRuleCss(rule, transformer, scope, hostScope);
 },
+_splitSelectorList: function (selector) {
+var parts = [];
+var part = '';
+for (var i = 0; i >= 0 && i < selector.length; i++) {
+if (selector[i] === '(') {
+var end = styleUtil._findMatchingParen(selector, i);
+part += selector.slice(i, end + 1);
+i = end;
+} else if (selector[i] === COMPLEX_SELECTOR_SEP) {
+parts.push(part);
+part = '';
+} else {
+part += selector[i];
+}
+}
+if (part) {
+parts.push(part);
+}
+if (parts.length === 0) {
+parts.push(selector);
+}
+return parts;
+},
 _transformRuleCss: function (rule, transformer, scope, hostScope) {
-var p$ = rule.selector.split(COMPLEX_SELECTOR_SEP);
+var p$ = this._splitSelectorList(rule.selector);
 if (!styleUtil.isKeyframesSelector(rule)) {
 for (var i = 0, l = p$.length, p; i < l && (p = p$[i]); i++) {
 p$[i] = transformer.call(this, p, scope, hostScope);
@@ -5776,19 +5995,36 @@ p$[i] = transformer.call(this, p, scope, hostScope);
 }
 return p$.join(COMPLEX_SELECTOR_SEP);
 },
+_ensureScopedDir: function (s) {
+var m = s.match(DIR_PAREN);
+if (m && m[1] === '' && m[0].length === s.length) {
+s = '*' + s;
+}
+return s;
+},
+_additionalDirSelectors: function (dir, after, prefix) {
+if (!dir || !after) {
+return '';
+}
+prefix = prefix || '';
+return COMPLEX_SELECTOR_SEP + prefix + ' ' + dir + ' ' + after;
+},
 _transformComplexSelector: function (selector, scope, hostScope) {
 var stop = false;
 var hostContext = false;
+var dir = false;
 var self = this;
 selector = selector.trim();
 selector = this._slottedToContent(selector);
 selector = selector.replace(ROOT, ':host > *');
 selector = selector.replace(CONTENT_START, HOST + ' $1');
+selector = this._ensureScopedDir(selector);
 selector = selector.replace(SIMPLE_SELECTOR_SEP, function (m, c, s) {
 if (!stop) {
 var info = self._transformCompoundSelector(s, c, scope, hostScope);
 stop = stop || info.stop;
 hostContext = hostContext || info.hostContext;
+dir = dir || info.dir;
 c = info.combinator;
 s = info.value;
 } else {
@@ -5798,14 +6034,28 @@ return c + s;
 });
 if (hostContext) {
 selector = selector.replace(HOST_CONTEXT_PAREN, function (m, pre, paren, post) {
-return pre + paren + ' ' + hostScope + post + COMPLEX_SELECTOR_SEP + ' ' + pre + hostScope + paren + post;
+var replacement = pre + paren + ' ' + hostScope + post + COMPLEX_SELECTOR_SEP + ' ' + pre + hostScope + paren + post;
+if (dir) {
+replacement += self._additionalDirSelectors(paren, post, hostScope);
+}
+return replacement;
 });
 }
 return selector;
 },
+_transformDir: function (s) {
+s = s.replace(HOST_DIR, HOST_DIR_REPLACE);
+s = s.replace(DIR_PAREN, DIR_REPLACE);
+return s;
+},
 _transformCompoundSelector: function (selector, combinator, scope, hostScope) {
 var jumpIndex = selector.search(SCOPE_JUMP);
 var hostContext = false;
+var dir = false;
+if (selector.match(DIR_PAREN)) {
+selector = this._transformDir(selector);
+dir = true;
+}
 if (selector.indexOf(HOST_CONTEXT) >= 0) {
 hostContext = true;
 } else if (selector.indexOf(HOST) >= 0) {
@@ -5825,7 +6075,8 @@ return {
 value: selector,
 combinator: combinator,
 stop: stop,
-hostContext: hostContext
+hostContext: hostContext,
+dir: dir
 };
 },
 _transformSimpleSelector: function (selector, scope) {
@@ -5862,12 +6113,31 @@ this._transformRule(rule, this._transformDocumentSelector);
 },
 normalizeRootSelector: function (rule) {
 rule.selector = rule.selector.replace(ROOT, 'html');
+var parts = this._splitSelectorList(rule.selector);
+parts = parts.filter(function (part) {
+return !part.match(HOST_OR_HOST_GT_STAR);
+});
+rule.selector = parts.join(COMPLEX_SELECTOR_SEP);
 },
 _transformDocumentSelector: function (selector) {
-return selector.match(SCOPE_JUMP) ? this._transformComplexSelector(selector, SCOPE_DOC_SELECTOR) : this._transformSimpleSelector(selector.trim(), SCOPE_DOC_SELECTOR);
+return this._transformComplexSelector(selector, SCOPE_DOC_SELECTOR);
 },
 _slottedToContent: function (cssText) {
 return cssText.replace(SLOTTED_PAREN, CONTENT + '> $1');
+},
+_dirShadowTransform: function (selector) {
+if (!selector.match(/:dir\(/)) {
+return selector;
+}
+return this._splitSelectorList(selector).map(function (s) {
+s = this._ensureScopedDir(s);
+s = this._transformDir(s);
+var m = HOST_CONTEXT_PAREN.exec(s);
+if (m) {
+s += this._additionalDirSelectors(m[2], m[3], '');
+}
+return s;
+}, this).join(COMPLEX_SELECTOR_SEP);
 },
 SCOPE_NAME: 'style-scope'
 };
@@ -5891,6 +6161,11 @@ var CLASS = 'class';
 var CONTENT_START = new RegExp('^(' + CONTENT + ')');
 var SELECTOR_NO_MATCH = 'should_not_match';
 var SLOTTED_PAREN = /(?:::slotted)(?:\(((?:\([^)(]*\)|[^)(]*)+?)\))/g;
+var HOST_OR_HOST_GT_STAR = /:host(?:\s*>\s*\*)?/;
+var DIR_PAREN = /(.*):dir\((ltr|rtl)\)/;
+var DIR_REPLACE = ':host-context([dir="$2"]) $1';
+var HOST_DIR = /:host\(:dir\((rtl|ltr)\)\)/g;
+var HOST_DIR_REPLACE = ':host-context([dir="$1"])';
 return api;
 }();Polymer.StyleExtends = function () {
 var styleUtil = Polymer.StyleUtil;
@@ -6193,6 +6468,9 @@ _prepShimStyles: function () {
 if (this._template) {
 var hasTargetedCssBuild = styleUtil.isTargetedBuild(this.__cssBuild);
 if (settings.useNativeCSSProperties && this.__cssBuild === 'shadow' && hasTargetedCssBuild) {
+if (settings.preserveStyleIncludes) {
+styleUtil.styleIncludesToTemplate(this._template);
+}
 return;
 }
 this._styles = this._styles || this._collectStyles();
@@ -6563,18 +6841,23 @@ return cssText.replace(keyframesRule.keyframesNameRx, keyframesRule.transformedK
 };
 },
 _scopeKeyframes: function (rule, scopeId) {
-rule.keyframesNameRx = new RegExp(rule.keyframesName, 'g');
+rule.keyframesNameRx = new RegExp('\\b' + rule.keyframesName + '(?!\\B|-)', 'g');
 rule.transformedKeyframesName = rule.keyframesName + '-' + scopeId;
 rule.transformedSelector = rule.transformedSelector || rule.selector;
 rule.selector = rule.transformedSelector.replace(rule.keyframesName, rule.transformedKeyframesName);
 },
+_hasDirOrHostContext: function (parsedSelector) {
+return /:host-context|:dir/.test(parsedSelector);
+},
 _scopeSelector: function (rule, hostRx, hostSelector, viaAttr, scopeId) {
 rule.transformedSelector = rule.transformedSelector || rule.selector;
 var selector = rule.transformedSelector;
-var scope = viaAttr ? '[' + styleTransformer.SCOPE_NAME + '~=' + scopeId + ']' : '.' + scopeId;
+var scope = styleTransformer._calcElementScope(scopeId, viaAttr);
+var hostScope = styleTransformer._calcElementScope(hostSelector, viaAttr);
 var parts = selector.split(',');
+var isDirOrHostContextSelector = this._hasDirOrHostContext(rule.parsedSelector);
 for (var i = 0, l = parts.length, p; i < l && (p = parts[i]); i++) {
-parts[i] = p.match(hostRx) ? p.replace(hostSelector, scope) : scope + ' ' + p;
+parts[i] = p.match(hostRx) ? p.replace(hostSelector, scope) : isDirOrHostContextSelector ? p.replace(hostScope, scope + ' ' + hostScope) : scope + ' ' + p;
 }
 rule.selector = parts.join(',');
 },
@@ -6957,7 +7240,9 @@ var XSCOPE_NAME = propertyUtils.XSCOPE_NAME;
 }());Polymer.Base._addFeature({
 _registerFeatures: function () {
 this._prepIs();
+if (this.factoryImpl) {
 this._prepConstructor();
+}
 this._prepStyles();
 },
 _finishRegisterFeatures: function () {
@@ -6977,7 +7262,7 @@ this._addHostAttributes(b.hostAttributes);
 },
 _initFeatures: function () {
 this._setupGestures();
-this._setupConfigure();
+this._setupConfigure(this.__data__);
 this._setupStyleProperties();
 this._setupDebouncers();
 this._setupShady();
@@ -7021,6 +7306,9 @@ this.__appliedElement = this.__appliedElement || this;
 this.__cssBuild = styleUtil.getCssBuildType(this);
 if (this.__appliedElement !== this) {
 this.__appliedElement.__cssBuild = this.__cssBuild;
+}
+if (this.ownerDocument !== window.document && this.__appliedElement === this) {
+document.head.appendChild(this);
 }
 this._tryApply();
 },
@@ -7199,8 +7487,8 @@ archetype._addPropertyEffect(prop, 'function', this._createInstancePropEffector(
 }
 },
 _customPrepAnnotations: function (archetype, template) {
-archetype._template = template;
-var c = template._content;
+var t = archetype._template = document.createElement('template');
+var c = t._content = template._content;
 if (!c._notes) {
 var rootDataHost = archetype._rootDataHost;
 if (rootDataHost) {
@@ -7243,6 +7531,8 @@ fn: Polymer.Bind._notifyEffect,
 effect: { event: Polymer.CaseMap.camelToDashCase(parentProp) + '-changed' }
 }
 ];
+proto._propertyEffects = proto._propertyEffects || {};
+proto._propertyEffects[parentProp] = effects;
 Polymer.Bind._createAccessors(proto, parentProp, effects);
 }
 }
@@ -7284,10 +7574,15 @@ template._propertySetter = proto._propertySetter;
 }
 for (var i = 0, n; i < n$.length && (n = n$[i]); i++) {
 var val = template[n];
+if (val && n == '_propertyEffects') {
+var pe = Polymer.Base.mixin({}, val);
+template._propertyEffects = Polymer.Base.mixin(pe, proto._propertyEffects);
+} else {
 var pd = Object.getOwnPropertyDescriptor(proto, n);
 Object.defineProperty(template, n, pd);
 if (val !== undefined) {
 template._propertySetter(n, val);
+}
 }
 }
 },
@@ -7555,7 +7850,7 @@ observer: '_observeChanged'
 delay: Number,
 renderedItemCount: {
 type: Number,
-notify: true,
+notify: !Polymer.Settings.suppressTemplateNotifications,
 readOnly: true
 },
 initialCount: {
@@ -7566,6 +7861,7 @@ targetFramerate: {
 type: Number,
 value: 20
 },
+notifyDomChange: { type: Boolean },
 _targetFrameTime: {
 type: Number,
 computed: '_computeFrameTime(targetFramerate)'
@@ -7591,9 +7887,17 @@ this._detachInstance(i);
 attached: function () {
 if (this.__isDetached) {
 this.__isDetached = false;
-var parent = Polymer.dom(Polymer.dom(this).parentNode);
+var refNode;
+var parentNode = Polymer.dom(this).parentNode;
+if (parentNode.localName == this.is) {
+refNode = parentNode;
+parentNode = Polymer.dom(parentNode).parentNode;
+} else {
+refNode = this;
+}
+var parent = Polymer.dom(parentNode);
 for (var i = 0; i < this._instances.length; i++) {
-this._attachInstance(i, parent);
+this._attachInstance(i, parent, refNode);
 }
 }
 },
@@ -7733,7 +8037,9 @@ inst.__setProperty(this.indexAs, i, true);
 }
 this._pool.length = 0;
 this._setRenderedItemCount(this._instances.length);
+if (!Polymer.Settings.suppressTemplateNotifications || this.notifyDomChange) {
 this.fire('dom-change');
+}
 this._tryRenderChunk();
 },
 _applyFullRefresh: function () {
@@ -7875,10 +8181,10 @@ Polymer.dom(inst.root).appendChild(el);
 return inst;
 }
 },
-_attachInstance: function (idx, parent) {
+_attachInstance: function (idx, parent, refNode) {
 var inst = this._instances[idx];
 if (!inst.isPlaceholder) {
-parent.insertBefore(inst.root, this);
+parent.insertBefore(inst.root, refNode);
 }
 },
 _detachAndRemoveInstance: function (idx) {
@@ -7911,6 +8217,12 @@ inst = this._stampInstance(idx, key);
 var beforeRow = this._instances[idx + 1];
 var beforeNode = beforeRow && !beforeRow.isPlaceholder ? beforeRow._children[0] : this;
 var parentNode = Polymer.dom(this).parentNode;
+if (parentNode.localName == this.is) {
+if (beforeNode == this) {
+beforeNode = parentNode;
+}
+parentNode = Polymer.dom(parentNode).parentNode;
+}
 Polymer.dom(parentNode).insertBefore(inst.root, beforeNode);
 this._instances[idx] = inst;
 return inst;
@@ -8098,14 +8410,19 @@ restamp: {
 type: Boolean,
 value: false,
 observer: '_queueRender'
-}
+},
+notifyDomChange: { type: Boolean }
 },
 behaviors: [Polymer.Templatizer],
 _queueRender: function () {
 this._debounceTemplate(this._render);
 },
 detached: function () {
-if (!this.parentNode || this.parentNode.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (!Polymer.Settings.hasShadow || !(this.parentNode instanceof ShadowRoot))) {
+var parentNode = this.parentNode;
+if (parentNode && parentNode.localName == this.is) {
+parentNode = Polymer.dom(parentNode).parentNode;
+}
+if (!parentNode || parentNode.nodeType == Node.DOCUMENT_FRAGMENT_NODE && (!Polymer.Settings.hasShadow || !(parentNode instanceof ShadowRoot))) {
 this._teardownInstance();
 }
 },
@@ -8131,25 +8448,33 @@ if (!this.restamp && this._instance) {
 this._showHideChildren();
 }
 if (this.if != this._lastIf) {
+if (!Polymer.Settings.suppressTemplateNotifications || this.notifyDomChange) {
 this.fire('dom-change');
+}
 this._lastIf = this.if;
 }
 },
 _ensureInstance: function () {
+var refNode;
 var parentNode = Polymer.dom(this).parentNode;
+if (parentNode && parentNode.localName == this.is) {
+refNode = parentNode;
+parentNode = Polymer.dom(parentNode).parentNode;
+} else {
+refNode = this;
+}
 if (parentNode) {
-var parent = Polymer.dom(parentNode);
 if (!this._instance) {
 this._instance = this.stamp();
 var root = this._instance.root;
-parent.insertBefore(root, this);
+Polymer.dom(parentNode).insertBefore(root, refNode);
 } else {
 var c$ = this._instance._children;
 if (c$ && c$.length) {
-var lastChild = Polymer.dom(this).previousSibling;
+var lastChild = Polymer.dom(refNode).previousSibling;
 if (lastChild !== c$[c$.length - 1]) {
 for (var i = 0, n; i < c$.length && (n = c$[i]); i++) {
-parent.insertBefore(n, this);
+Polymer.dom(parentNode).insertBefore(n, refNode);
 }
 }
 }
@@ -8186,6 +8511,7 @@ this._instance._notifyPath(path, value, true);
 }
 });Polymer({
 is: 'dom-bind',
+properties: { notifyDomChange: { type: Boolean } },
 extends: 'template',
 _template: null,
 created: function () {
@@ -8213,8 +8539,15 @@ _registerFeatures: function () {
 this._prepConstructor();
 },
 _insertChildren: function () {
-var parentDom = Polymer.dom(Polymer.dom(this).parentNode);
-parentDom.insertBefore(this.root, this);
+var refNode;
+var parentNode = Polymer.dom(this).parentNode;
+if (parentNode.localName == this.is) {
+refNode = parentNode;
+parentNode = Polymer.dom(parentNode).parentNode;
+} else {
+refNode = this;
+}
+Polymer.dom(parentNode).insertBefore(this.root, refNode);
 },
 _removeChildren: function () {
 if (this._children) {
@@ -8266,7 +8599,9 @@ Polymer.Base._initFeatures.call(this);
 this._children = Polymer.TreeApi.arrayCopyChildNodes(this.root);
 }
 this._insertChildren();
+if (!Polymer.Settings.suppressTemplateNotifications || this.notifyDomChange) {
 this.fire('dom-change');
+}
 }
 });</script><dom-module id="padagraph-node-completion-card" assetpath=""><template><style>:host {
     width: 100%;
@@ -10144,6 +10479,9 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgcon
       routes: Object,
       data: { type: Object, value: null },
       sync: { type: String, value: null }, // url
+      app: { type: Object, value: function value() {
+          return null;
+        } },
 
       on_complete: Object,
 
@@ -10219,6 +10557,7 @@ require(['backbone', 'jquery', 'semantic', 'cello', 'gviz', 'materials', 'pdgcon
 
       app = new App.Iframe(app_params);
       app.create_clustering_model();
+      this.app = app;
 
       if (sync) {
         var gid = sync.substring(sync.lastIndexOf('/') + 1);
@@ -11364,4 +11703,123 @@ require(['backbone', 'cello', 'pdgconst'], function (Backbone, Cello, Const) {
         }
 
     });
+});</script></dom-module><dom-module id="padagraph-graph-app" assetpath="./"><template><div id="boo"><padagraph-gviz-json sync$="{{sync}}" routes$="{{routes}}" data$="{{data}}"><padagraph-gviz options$="{{options}}"><div id="viz"></div><!-- liste and card details --><div id="cardmenu" class="ui compact menu"><a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a><a id="cardbutton" on-click="togglecard" class="link item active"><i class="id card outline icon"></i>details</a></div><padagraph-model-popup id="gvizpopup" hidden$="{{display_list}}"></padagraph-model-popup><padagraph-collection mode="node" hidden$="{{display_card}}"></padagraph-collection><div id="menu" class="ui icon borderless vertical menu"><padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter><padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter><div class="ui divider">         </div><padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control><!--padagraph-engine-control( engine="clustering" asitem="asitem")--><!--padagraph-engine-control( engine="explore" asitem="asitem")--><div class="ui divider"></div><a id="keb_settings" class="ui item"><i class="settings icon"></i></a></div><div id="labels" class="ui grid"><div class="six wide column"><padagraph-labels-control></padagraph-labels-control></div><div class="six wide column"><padagraph-node-search actions="add,explore"></padagraph-node-search><a href$="{{graphurl}}" class="ui tiny active refresh button">refresh</a></div><div class="four wide column"><div id="loading"><p>Loading...</p></div></div></div></padagraph-gviz></padagraph-gviz-json></div></template><script>require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
+ Polymer({
+  is: "padagraph-graph-app",
+
+  properties : {
+    display_card : Boolean,
+    display_list : Boolean,
+    sync : String,
+    routes : String,
+    options: Object,
+    graphurl: String,
+    data: Object,
+  },
+
+  
+  togglecard(){
+      
+    var element = document.getElementById("cardbutton");
+    element.classList.toggle("active");
+    
+    var card = document.getElementById("listbutton")
+    if ( element.classList.contains("active") && card.classList.contains("active") )
+        card.classList.remove("active")
+
+    this.toggle();
+  },
+  
+  togglelist(){
+    var e ="listbutton"
+    var element = document.getElementById(e);
+    element.classList.toggle("active");
+
+    var card = document.getElementById("cardbutton")
+    if ( element.classList.contains("active") && card.classList.contains("active") )
+        card.classList.remove("active") 
+
+    this.toggle();
+  },
+  
+  toggle(){
+    this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
+    this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
+  },
+
+  is_hidden(e) { return !e },
+
+  
+  attached() {
+    console.log("ready!")
+    this.toggle();
+    //var start = this.startapp.bind(this);  
+    //this._observer =
+    //    Polymer.dom(this.$.boo).observeNodes(function(info) {
+    //     console.log(info);
+    //     info.addedNodes.forEach(function(node) {
+    //        console.log(node)
+    //        if (node.tagName === "PADAGRAPH-GVIZ-JSON"){
+    //          console.log("OK");
+    //          console.log(document.querySelector('padagraph-gviz').app);
+    //          document.querySelector('padagraph-gviz').addEventListener('engines-complete', function(e) {console.log("coucou"); start(e)} );
+    //          }
+    //     });
+    console.log("START!")
+    document.querySelector('padagraph-model-popup').hidden = true;
+    this.toggle();
+    
+    var _window_resized = function(){
+        var e = document.getElementById('gviz');
+        //e.style.height = ( window.innerHeight - 32 )+ "px";
+        e.style.height = ( window.innerHeight )+ "px";
+        var app = document.querySelector('padagraph-gviz').app
+        if ( app.gviz ) app.gviz.resize_rendering();
+    }
+    
+    window.onresize = _window_resized;
+
+    var loading = function(e, name, engine, show){
+        console.log("loading",e,  name, engine, show)
+        var element = document.getElementById("loading");
+        if ( show && !element.classList.contains("show") )
+            element.classList.toggle("show");
+        if ( !show && element.classList.contains("show") )
+            element.classList.toggle("show");
+    };      
+   document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', function (e) {  
+    console.log(e.detail.app); // true
+    var app = e.detail.app;
+    
+    var engines = [];
+    var app_engines = {
+        'explore':app.engines.explore,
+        //'expand':app.engines.expand_px,
+        'layout':app.engines.layout,
+        'clustering':app.engines.clustering,
+    };
+    
+    for (var k in app_engines){
+        var engine = app_engines[k]
+        engine.name = k;
+        engines.push(engine);
+    }
+
+     $('padagraph-collection')[0].app = app;
+     $('padagraph-collection')[0].graph = app.models.graph;
+    document.app = app
+    
+    var keb = document.createElement("padagraph-keb")
+    keb.engines = engines;
+    $("#keb")
+        .sidebar('setting', 'dimPage', false)
+        .sidebar('setting', 'transition', 'overlay')
+    $("#kebcontent").append(keb)
+    $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+    $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+
+    _window_resized();
+    });
+  }
+ })
 });</script></dom-module></div></body></html>
