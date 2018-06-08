@@ -235,6 +235,11 @@
         display_card : Boolean,
         display_list : Boolean,
       },
+    
+      ready(){
+        this.display_card = true;
+        this.display_list = false;
+      },
       
       togglecard(){
           
@@ -261,8 +266,8 @@
       },
       
       toggle(){
-        this.display_card = document.getElementById("cardbutton").classList.contains("active");
-        this.display_list = document.getElementById("listbutton").classList.contains("active");
+        this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
+        this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
       },
     
       is_hidden(e) { return !e },
