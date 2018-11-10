@@ -1,7 +1,12 @@
     
 ## Installation
 
-    $ make install 
+    $ make install build
+
+## Run for testing/developpment
+
+    # this will launch a flask application listening on http://localhost:5000
+    $ make rundev
 
 
 # botapad
@@ -220,19 +225,6 @@ Accessible service for botapad
 
 
 
-[DEPRECATED] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
-    
-## TODO
+[SCREENSHOT] requires ../../screenshot/screenshot.py in `$PYTHONPATH`
 
-* [star] starred projected node  
-
-* [materials]nodetype materials (shape, color, size) ??   
-
-* [import]circular import @[Nodetype]#id  
-* [import]url expansion with some providers  
-      [+] navigation for humans between pad, git, cloud ...  
-      [-] url might be unaccurate with some providers  
-      ex : 
-        & https://mensuel.framapad.org/p/uspol  
-        ! is converted during import to  https://mensuel.framapad.org/p/uspol/export/txt  
 

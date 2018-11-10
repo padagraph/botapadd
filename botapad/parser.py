@@ -1,8 +1,10 @@
 
 import os
 import sys
+import json
 import argparse
 from botapi import Botagraph, BotApiError
+from botapad import *
 from reliure.types import Text , Numeric
 
 import collections 
@@ -12,6 +14,12 @@ import requests
 import re
 import csv
 from pprint import pprint
+import traceback
+
+try:
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+except : pass
 
 DIRECTIONS = ('<<','--','>>')
 EDGE = 0  
@@ -161,9 +169,8 @@ class Botapad(object):
     def debug(self, *args):
         if self._debug:
             self._log.write( "DEBUG" )
-            self._log.write( args )
+            self._log.write( json.dumps(args))
             self._log.write( "\n" )
-            print( "DEBUG:")
             pprint( args)
 
 
@@ -181,7 +188,7 @@ class Botapad(object):
                 self.log( " * Downloading %s %s" % (url, separator))
                 r = requests.get(url)
                 content = r.text
-                self.log( "   %s, %s\n" % (r, len(content)))
+                self.log( "   %s, length %s encoding %s  %s\n" % (r, len(content), r.encoding, type(r.text)))
                 
                 # bug BOM ggdoc
                 if content[0:1] == u'\ufeff':
@@ -205,11 +212,12 @@ class Botapad(object):
             try : 
                 with codecs.open(path, 'r', encoding=encoding ) as fin:
                     lines = [ line for line in fin]
+                
             except :
                 raise BotapadError("Can't read file %s" % path)
 
-        lines = [ line.strip() for line in lines ]
-        lines = [ line.encode('utf8') for line in lines if len(line)]
+        lines = [ line.strip()for line in lines ]
+        lines = [ line for line in lines if len(line)]
         
         if not len(lines):
             raise BotapadCsvError(path, separator, "Table is empty %s lines" % (len(lines) )  )
@@ -226,7 +234,7 @@ class Botapad(object):
         try : 
             reader = csv.reader(lines, delimiter=separator)
             rows = [ r for r in reader]
-            rows = [ [ e.strip().decode('utf8')  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
+            rows = [ [ e.strip()  for e in r ] for r in rows if len(r) and not all([ len(e) == 0 for e in r]) ]
         except :
             raise BotapadCsvError(path, separator, "Error while parsing data %s lines with separator %s" % (len(lines), separator )  )
 
@@ -462,10 +470,10 @@ class Botapad(object):
                         edges.append(payload)
                         
                 self.log( "    [POST] EDGE _ %s %s [%s]" % (len(edges), label , ", ".join(names)))
-                for e in self.bot.post_edges(self.gid, iter(edges)) : 
+                for e,i in self.bot.post_edges(self.gid, iter(edges) ) :
                     self.debug(e)
-            except :
-                print( row )
+            except Exception as err:
+                print( "roooo   \n %s" % traceback.format_exc(), row )
                 raise BotapadPostError("Error while posting edges ", edges, row)
         # Vertex
         

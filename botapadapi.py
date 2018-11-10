@@ -18,13 +18,16 @@ from reliure.engine import Engine
 
 from cello.graphs import export_graph, IN, OUT, ALL
 from cello.graphs.prox import ProxSubgraph, ProxExtract, pure_prox, sortcut
-
 from cello.layout import export_layout
 from cello.clustering import export_clustering
 
 from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, layout_api, clustering_api
 
-from botapad.utils import export_graph
+from botapad.utils import export_graph   
+from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError, BotapadPostError
+
+from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
+
 
 def db_graph(graphdb, query ):
     gid = query['graph']
@@ -36,18 +39,10 @@ def pad2pdg(gid, url, host, key, delete, debug=False):
     bot = Botagraph()
     botapad = Botapad(bot, gid, description, delete=delete)
     return botapad.parse(url, separator='auto', debug=debug)
+        
 
-@Composable
-def pad2igraph(gid, url, format="csv"):
-    graph = _pad2igraph(gid, url, format, delete=True)
-    graph['meta']['owner'] = None
-    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
-    return graph
-    
-from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
-from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
-
-def _pad2igraph(gid, url, format, delete=False):
+        
+def pad2igraph(gid, url, format, delete=False, debug=False, store="/pads/"):
 
     print ("format", gid, url, format )
     
@@ -56,11 +51,10 @@ def _pad2igraph(gid, url, format, delete=False):
         try : 
             description = "imported from %s" % url
             if url[0:4] != 'http':
-                url = "%s/%s.%s" % (LOCAL_PADS_STORE, url, format) 
+                url = "%s/%s.%s" % (store, url, format) 
             bot = BotaIgraph(directed=True)
             botapad = Botapad(bot , gid, description, delete=delete, verbose=True, debug=False)
-            #botapad.parse(url, separator='auto', debug=app.config['DEBUG'])
-            botapad.parse(url, separator='auto', debug=False)
+            botapad.parse(url, separator='auto', debug=debug)
             graph = bot.get_igraph(weight_prop="weight")
 
             if graph.vcount() == 0 :
@@ -75,6 +69,7 @@ def _pad2igraph(gid, url, format, delete=False):
             
         except OSError as e :
             raise BotapadURLError( "No such File or Directory : %s " % url, url)
+
             
         
     elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
@@ -164,10 +159,10 @@ def explore_engine(graphdb):
         if len(pz):
             for u in pz:
                 s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
-                vs = vs + s.keys()
+                vs = vs + list(s.keys())
         else :
             s = extract(graph, pzeros=[], weighted=weighted,mode=mode, cut=cut, length=length)
-            vs = s.keys()
+            vs = list(s.keys())
             
         return graph.subgraph(vs)
 

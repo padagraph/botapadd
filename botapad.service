@@ -1,0 +1,24 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+SourcePath= /home/botapad/botapadd
+
+[Service]
+PIDFile=/tmp/botapad.pid
+User=botapad
+Group=botapad
+Environment="LANG=en_US.UTF-8"
+Environment="ENGINES_HOST=https://botapad.padagraph.io"
+Environment='RUN_GUNICORN=1'
+
+#RuntimeDirectory=
+WorkingDirectory=/home/botapad/botapadd
+ExecStart=/usr/bin/gunicorn -t 200 --pid /tmp/botapad.pid --bind unix:/tmp/botapad.socket botapadapp:app
+ExecReload=/bin/kill -s TERM `cat /tmp/botapad.pid`
+ExecStop=/bin/kill -s INT `cat /tmp/botapad.pid`
+#PrivateTmp=true
+Type = simple
+#Restart = always
+
+[Install]
+WantedBy=multi-user.target

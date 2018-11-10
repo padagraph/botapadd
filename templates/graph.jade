@@ -1,383 +1,386 @@
-link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css')
+html
+ head
+    title "graph botapad title"
+    link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css')
 
-    
-style.
-
-    #keb {
-        min-width:350px;
-    }
-
-    #keb .close{
-        background: #FFF;
-        text-align:right;
-        padding: 4px ;
-    }
-
-    .pusher .segment {
-        padding: 0px ;
-    }
-    
-    a.ui.active.refresh.button {    }
-    
-  
-    
-    .footer.segment {
-      padding: 5em 0em;
-    }
-
-    @media only screen and (max-width: 700px) {
-      .ui.fixed.menu {
-        display: none !important;
-      }
-      .secondary.pointing.menu .item,
-      .secondary.pointing.menu .menu {
-        display: none;
-      }
-      .secondary.pointing.menu .toc.item {
-        display: block;
-      }
-    }
-
-    a.inverted { color:white;}
-
-    pre {
-        background: darkcyan;
-        padding: 6px;
-        margin: 0px 30px 10px 0px;
-    }
-
-    code.log {
-        background: none;
-        white-space:pre-wrap;
-    }
-
-    form .ui.checkbox label {
-        font-size: 24px;
-        padding-left: 24px;
-        color: white;
-    }
-
-    form h3 {
-        margin-top: 2px
-    }
-
-    input[type=radio] {
-        margin:20px;
-    }
-
-    #importform.ui.form .field label {
-        color:white !important;
-    }
-
-    input[type=checkbox], input[type=radio]
-    {
-      /* Double-sized Checkboxes */
-      -ms-transform: scale(2); /* IE */
-      -moz-transform: scale(2); /* FF */
-      -webkit-transform: scale(2); /* Safari and Chrome */
-      -o-transform: scale(2); /* Opera */
-      padding: 10px;
-    }
-
-
-    span.bold { font-weight: bold }
-
-    .column.vz { height: 50% !important }
-    a.multi {            
-        position: absolute !important;
-        margin  : 12px;
-    }
-
-    #menu {
-      position:absolute;
-      background: {{color}};
-      top: 176px;
-    }
-
-    #menu .divider { margin:3px }
-
-    .nofoot #menu {
-      top: 24px;
-    }
-
-    .ui.icon.menu {
-      margin: 12px;
-      text-align: right;
-      top: 24px;
-    }
-
-    #gviz {
-        margin:auto;        
-        text-align:left;
-        width:100%;
-        height:100%;
-    }
-
-    #cardmenu {
-        position: absolute;
-        top: 4px;
-        right: 15px;
-        min-height: 25px;
-        background: white;
-        border-radius: 4px;
-    }
-    
-    #cardmenu .item {
-        line-height: 0.1;
-        padding: 12px;
-    }
-
-    #cardmenu a.active {
-        background: #FAFAFA;
-    }
-    
-    #cardmenu i.icon {
-        height:0px;
-        padding-right: 4px;
-    }
-
-    padagraph-collection {
-        position: absolute;
-        top: 37px;
-        right: 12px;
-        width: 360px;
-        background-color: #FEFEFE;
-        height: calc(100% - 92px);
-
-    }
-
-    padagraph-node-search {
-    }
-
-    #viz {
-        height: 100%;
-        width: 100%;
-    }
-
-    #labels {
-      position:absolute;
-      bottom: 12px;
-      padding:0px;
-      margin-left:18px;
-      width:100%;
-    }
-    
-    #labels .segment {
-      margin-left: -14px;
-      margin-bottom: 24px;
-      position:absolute;
-      bottom: 32px;
-    }
-
-    padagraph-model-popup[hidden] {
-        display:none;
-    }
-    padagraph-model-popup {
-        display:block;
-        position:absolute;
-        width: 360px;
-        top: 21px;
-        right:0px;
-        margin: 12px;
-        overflow-y: auto;
-        z-index: 10;
-        height: calc(100% - 36px);
-    }
-   
-    padagraph-model-popup .propvalue {  color: #333; }
-
-{% if footer%}  
-h4.ui.inverted.horizontal.divider
-Import complete
-p
-.ui.inverted.link.list
-a.active.item( href="{{padurl}}") Imported from {{padurl}}
-{% endif %}  
-
-script( src="{{static_host}}/static/webcomponents-lite.js" )
-script( data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js")
-link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
-
-
-dom-module(id='graph-app')
-  template
-   #boo
-     padagraph-gviz-json( sync="{{sync}}" routes="{{routes}}" data="{{data}}" )
-      padagraph-gviz( options="{{options}}")
-        div#viz()
-
-        // liste and card details 
-        .ui.compact.menu#cardmenu
-            a.link.item#listbutton( on-click="togglelist" )
-                i.list.alternate.outline.icon
-                | list
-            a.link.item.active#cardbutton( on-click="togglecard" )
-                i.id.card.outline.icon
-                | details
-
-        padagraph-model-popup( id="gvizpopup" hidden$="{{'\{{is_hidden(display_card)}\}'}}" )
         
-        padagraph-collection(mode="node" hidden$="{{'\{{is_hidden(display_list)}\}'}}" )
+    style.
 
+        #keb {
+            min-width:350px;
+        }
+
+        #keb .close{
+            background: #FFF;
+            text-align:right;
+            padding: 4px ;
+        }
+
+        .pusher .segment {
+            padding: 0px ;
+        }
+        
+        a.ui.active.refresh.button {    }
+        
+      
+        
+        .footer.segment {
+          padding: 5em 0em;
+        }
+
+        @media only screen and (max-width: 700px) {
+          .ui.fixed.menu {
+            display: none !important;
+          }
+          .secondary.pointing.menu .item,
+          .secondary.pointing.menu .menu {
+            display: none;
+          }
+          .secondary.pointing.menu .toc.item {
+            display: block;
+          }
+        }
+
+        a.inverted { color:white;}
+
+        pre {
+            background: darkcyan;
+            padding: 6px;
+            margin: 0px 30px 10px 0px;
+        }
+
+        code.log {
+            background: none;
+            white-space:pre-wrap;
+        }
+
+        form .ui.checkbox label {
+            font-size: 24px;
+            padding-left: 24px;
+            color: white;
+        }
+
+        form h3 {
+            margin-top: 2px
+        }
+
+        input[type=radio] {
+            margin:20px;
+        }
+
+        #importform.ui.form .field label {
+            color:white !important;
+        }
+
+        input[type=checkbox], input[type=radio]
+        {
+          /* Double-sized Checkboxes */
+          -ms-transform: scale(2); /* IE */
+          -moz-transform: scale(2); /* FF */
+          -webkit-transform: scale(2); /* Safari and Chrome */
+          -o-transform: scale(2); /* Opera */
+          padding: 10px;
+        }
+
+
+        span.bold { font-weight: bold }
+
+        .column.vz { height: 50% !important }
+        a.multi {            
+            position: absolute !important;
+            margin  : 12px;
+        }
+
+        #menu {
+          position:absolute;
+          background: {{color}};
+          top: 176px;
+        }
+
+        #menu .divider { margin:3px }
+
+        .nofoot #menu {
+          top: 24px;
+        }
+
+        .ui.icon.menu {
+          margin: 12px;
+          text-align: right;
+          top: 24px;
+        }
+
+        #gviz {
+            margin:auto;        
+            text-align:left;
+            width:100%;
+            height:100%;
+        }
+
+        #cardmenu {
+            position: absolute;
+            top: 4px;
+            right: 15px;
+            min-height: 25px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        #cardmenu .item {
+            line-height: 0.1;
+            padding: 12px;
+        }
+
+        #cardmenu a.active {
+            background: #FAFAFA;
+        }
+        
+        #cardmenu i.icon {
+            height:0px;
+            padding-right: 4px;
+        }
+
+        padagraph-collection {
+            position: absolute;
+            top: 37px;
+            right: 12px;
+            width: 360px;
+            background-color: #FEFEFE;
+            height: calc(100% - 92px);
+
+        }
+
+        padagraph-node-search {
+        }
+
+        #viz {
+            height: 100%;
+            width: 100%;
+        }
+
+        #labels {
+          position:absolute;
+          bottom: 12px;
+          padding:0px;
+          margin-left:18px;
+          width:100%;
+        }
+        
+        #labels .segment {
+          margin-left: -14px;
+          margin-bottom: 24px;
+          position:absolute;
+          bottom: 32px;
+        }
+
+        padagraph-model-popup[hidden] {
+            display:none;
+        }
+        padagraph-model-popup {
+            display:block;
+            position:absolute;
+            width: 360px;
+            top: 21px;
+            right:0px;
+            margin: 12px;
+            overflow-y: auto;
+            z-index: 10;
+            height: calc(100% - 36px);
+        }
        
-        .ui.icon.borderless.vertical.menu#menu
-              padagraph-collection-filter( mode="node" asitem="asitem")
-              padagraph-collection-filter( mode="edge" asitem="asitem")
+        padagraph-model-popup .propvalue {  color: #333; }
+ body
+    {% if footer%}  
+    h4.ui.inverted.horizontal.divider
+    Import complete
+    p
+    .ui.inverted.link.list
+    a.active.item( href="{{padurl}}") Imported from {{padurl}}
+    {% endif %}  
 
-              .ui.divider          
-              padagraph-engine-control( engine="layout" asitem="asitem")
-              //padagraph-engine-control( engine="clustering" asitem="asitem")
-              //padagraph-engine-control( engine="explore" asitem="asitem")
-          
-              .ui.divider
-              a.ui.item#keb_settings
-                i.settings.icon
-                        
+    script( src="{{static_host}}/static/webcomponents-lite.js" )
+    script( data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js")
+    link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
 
-        .ui.grid#labels
-         .six.wide.column
 
-          padagraph-labels-control
-         .six.wide.column
-          padagraph-node-search(actions="add,explore")
-          {% if graphurl %}   
-          a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
-          {% endif %}
-         .four.wide.column
-            #loading
-              p Loading...
+    dom-module(id='graph-app')
+      template
+       #boo
+         padagraph-gviz-json( sync="{{sync}}" routes="{{routes}}" data="{{data}}" )
+          padagraph-gviz( options="{{options}}")
+            div#viz()
+
+            // liste and card details 
+            .ui.compact.menu#cardmenu
+                a.link.item#listbutton( on-click="togglelist" )
+                    i.list.alternate.outline.icon
+                    | list
+                a.link.item.active#cardbutton( on-click="togglecard" )
+                    i.id.card.outline.icon
+                    | details
+
+            padagraph-model-popup( id="gvizpopup" hidden$="{{'\{{is_hidden(display_card)}\}'}}" )
+            
+            padagraph-collection(mode="node" hidden$="{{'\{{is_hidden(display_list)}\}'}}" )
+
+           
+            .ui.icon.borderless.vertical.menu#menu
+                  padagraph-collection-filter( mode="node" asitem="asitem")
+                  padagraph-collection-filter( mode="edge" asitem="asitem")
+
+                  .ui.divider          
+                  padagraph-engine-control( engine="layout" asitem="asitem")
+                  //padagraph-engine-control( engine="clustering" asitem="asitem")
+                  //padagraph-engine-control( engine="explore" asitem="asitem")
               
-  script.
-    require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
-     Polymer({
-      is: "graph-app",
+                  .ui.divider
+                  a.ui.item#keb_settings
+                    i.settings.icon
+                            
 
-      properties : {
-        display_card : Boolean,
-        display_list : Boolean,
-      },
+            .ui.grid#labels
+             .six.wide.column
 
-      ready(){
-        this.display_card = true;
-        this.display_list = false;
-      },
-      
-      togglecard(){
+              padagraph-labels-control
+             .six.wide.column
+              padagraph-node-search(actions="add,explore")
+              {% if graphurl %}   
+              a.ui.tiny.active.refresh.button( href="{{graphurl}}") refresh
+              {% endif %}
+             .four.wide.column
+                #loading
+                  p Loading...
+                  
+      script.
+        require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
+         Polymer({
+          is: "graph-app",
+
+          properties : {
+            display_card : Boolean,
+            display_list : Boolean,
+          },
+
+          ready(){
+            this.display_card = true;
+            this.display_list = false;
+          },
           
-        var element = document.getElementById("cardbutton");
-        element.classList.toggle("active");
-        
-        var card = document.getElementById("listbutton")
-        if ( element.classList.contains("active") && card.classList.contains("active") )
-            card.classList.remove("active")
+          togglecard(){
+              
+            var element = document.getElementById("cardbutton");
+            element.classList.toggle("active");
+            
+            var card = document.getElementById("listbutton")
+            if ( element.classList.contains("active") && card.classList.contains("active") )
+                card.classList.remove("active")
 
-        this.toggle();
-      },
-      
-      togglelist(){
-        var e ="listbutton"
-        var element = document.getElementById(e);
-        element.classList.toggle("active");
+            this.toggle();
+          },
+          
+          togglelist(){
+            var e ="listbutton"
+            var element = document.getElementById(e);
+            element.classList.toggle("active");
 
-        var card = document.getElementById("cardbutton")
-        if ( element.classList.contains("active") && card.classList.contains("active") )
-            card.classList.remove("active") 
+            var card = document.getElementById("cardbutton")
+            if ( element.classList.contains("active") && card.classList.contains("active") )
+                card.classList.remove("active") 
 
-        this.toggle();
-      },
-      
-      toggle(){
-        this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
-        this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
-      },
+            this.toggle();
+          },
+          
+          toggle(){
+            this.display_card = document.getElementById("cardbutton") ? document.getElementById("cardbutton").classList.contains("active") : true; 
+            this.display_list = document.getElementById("listbutton") ? document.getElementById("listbutton").classList.contains("active") : false;
+          },
 
-      is_hidden(e) { return !e },
+          is_hidden(e) { return !e },
 
-      
-      attached() {
-        var start = this.startapp.bind(this);  
-        this._observer =
-            Polymer.dom(this.$.boo).observeNodes(function(info) {
-             info.addedNodes.filter(function(node) {
-              if (node.tagName === "PADAGRAPH-GVIZ-JSON")
-                document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', start );
-             });
+          
+          attached() {
+            var start = this.startapp.bind(this);  
+            this._observer =
+                Polymer.dom(this.$.boo).observeNodes(function(info) {
+                 info.addedNodes.filter(function(node) {
+                  if (node.tagName === "PADAGRAPH-GVIZ-JSON")
+                    document.querySelector('padagraph-gviz-json').addEventListener('engines-complete', start );
+                 });
+            });
+          },
+          startapp(e) {
+            document.querySelector('padagraph-model-popup').hidden = true;
+            this.toggle();
+            
+            var _window_resized = function(){
+                var e = document.getElementById('gviz');
+                //e.style.height = ( window.innerHeight - 32 )+ "px";
+                e.style.height = ( window.innerHeight )+ "px";
+                var app = document.querySelector('padagraph-gviz').app
+                if ( app.gviz ) app.gviz.resize_rendering();
+            }
+            
+            window.onresize = _window_resized;
+
+            var loading = function(e, name, engine, show){
+                console.log("loading",e,  name, engine, show)
+                var element = document.getElementById("loading");
+                if ( show && !element.classList.contains("show") )
+                    element.classList.toggle("show");
+                if ( !show && element.classList.contains("show") )
+                    element.classList.toggle("show");
+            };      
+            
+            console.log(e.detail.app); // true
+            var app = e.detail.app;
+            
+            var engines = [];
+            var app_engines = {
+                'explore':app.engines.explore,
+                //'expand':app.engines.expand_px,
+                'layout':app.engines.layout,
+                'clustering':app.engines.clustering,
+            };
+            
+            for (var k in app_engines){
+                var engine = app_engines[k]
+                engine.name = k;
+                engines.push(engine);
+            }
+
+             $('padagraph-collection')[0].app = app;
+             $('padagraph-collection')[0].graph = app.models.graph;
+            
+            var keb = document.createElement("padagraph-keb")
+            keb.engines = engines;
+            $("#keb")
+                .sidebar('setting', 'dimPage', false)
+                .sidebar('setting', 'transition', 'overlay')
+            $("#kebcontent").append(keb)
+            $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
+            $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
+
+            _window_resized();
+          }
+         })
         });
-      },
-      startapp(e) {
-        document.querySelector('padagraph-model-popup').hidden = true;
-        this.toggle();
-        
-        var _window_resized = function(){
-            var e = document.getElementById('gviz');
-            //e.style.height = ( window.innerHeight - 32 )+ "px";
-            e.style.height = ( window.innerHeight )+ "px";
-            var app = document.querySelector('padagraph-gviz').app
-            if ( app.gviz ) app.gviz.resize_rendering();
-        }
-        
-        window.onresize = _window_resized;
-
-        var loading = function(e, name, engine, show){
-            console.log("loading",e,  name, engine, show)
-            var element = document.getElementById("loading");
-            if ( show && !element.classList.contains("show") )
-                element.classList.toggle("show");
-            if ( !show && element.classList.contains("show") )
-                element.classList.toggle("show");
-        };      
-        
-        console.log(e.detail.app); // true
-        var app = e.detail.app;
-        
-        var engines = [];
-        var app_engines = {
-            'explore':app.engines.explore,
-            //'expand':app.engines.expand_px,
-            'layout':app.engines.layout,
-            'clustering':app.engines.clustering,
-        };
-        
-        for (var k in app_engines){
-            var engine = app_engines[k]
-            engine.name = k;
-            engines.push(engine);
-        }
-
-         $('padagraph-collection')[0].app = app;
-         $('padagraph-collection')[0].graph = app.models.graph;
-        
-        var keb = document.createElement("padagraph-keb")
-        keb.engines = engines;
-        $("#keb")
-            .sidebar('setting', 'dimPage', false)
-            .sidebar('setting', 'transition', 'overlay')
-        $("#kebcontent").append(keb)
-        $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
-        $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
-
-        _window_resized();
-      }
-     })
-    });
 
 
 
-#keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
-  a(name="kebup")
-  .close
-    a.ui.link.icon
-      i.close.icon
-  #kebcontent
-    padagraph-gviz-control
-  
-  .close
-    a.ui.link.icon(href="#kebup")
-      i.caret.up.icon
+    #keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
+      a(name="kebup")
+      .close
+        a.ui.link.icon
+          i.close.icon
+      #kebcontent
+        padagraph-gviz-control
+      
+      .close
+        a.ui.link.icon(href="#kebup")
+          i.caret.up.icon
 
-.pusher
-  .ui.vertical.center.aligned.segment
-    div#gviz(class="{{ 'nofoot' if not footer else '' }}")
+    .pusher
+      .ui.vertical.center.aligned.segment
+        div#gviz(class="{{ 'nofoot' if not footer else '' }}")
 
-        graph-app
+            graph-app
 

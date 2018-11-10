@@ -3,8 +3,6 @@
 
 import os
 import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 import time 
 import datetime 
@@ -16,9 +14,9 @@ from functools import wraps
 from flask import Flask, Response, make_response, g, current_app, request
 from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
 
-from botapadapi import pad2igraph, pad2pdg
 from botapi import BotApiError, BotLoginError
-from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError
+
+from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError, BotapadPostError
 from botapad.utils import export_graph, prepare_graph, compute_pedigree, graph_stats
 
 from cello.graphs import IN, OUT, ALL
@@ -30,7 +28,7 @@ DEBUG = os.environ.get('APP_DEBUG', "").lower() == "true"
 
 
 from reliure.utils.log import get_app_logger_color
-log_level = logging.INFO if DEBUG else logging.WARN
+log_level = logging.DEBUG if DEBUG else logging.WARN
 logger = get_app_logger_color("botapad", app_log_level=log_level, log_level=log_level)
 
 RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
@@ -63,8 +61,8 @@ except:
 print( " == Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
 print( " == Running with gunicorn : %s==" % (RUN_GUNICORN) )
 print( " == engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PADAGRAPH_HOST) )
-print( " == REDIS STORAGE : %s ==  " ) % REDIS_STORAGE
-print( " == LOCAL_PADS_STORE : %s ==  " ) % LOCAL_PADS_STORE
+print( " == REDIS STORAGE : %s ==  " % REDIS_STORAGE )
+print( " == LOCAL_PADS_STORE : %s ==  " % LOCAL_PADS_STORE)
 
 app = Flask(__name__)
 app.config['DEBUG'] = DEBUG
@@ -101,8 +99,9 @@ create table imports (
 
 import igraph
 from igraph.utils import named_temporary_file 
-import cPickle as pickle
-import StringIO
+try :
+    import cPickle as pickle
+except : import pickle
 from pdgapi.explor import EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
 
@@ -130,21 +129,21 @@ if REDIS_STORAGE:
             
             start = time.time()
             graph = pickle.loads(self.redis.get(gid))
-            print "loading %s from redis" % gid
+            print("loading %s from redis" % gid )
             
             if graph is None : 
                 path = self.conf.get(gid, None)
                 if path is None :
                     raise GraphError('no such graph %s' % gid) 
                 else:
-                    print "opening graph %s@%s" %(gid, path)
+                    print("opening graph %s@%s" %(gid, path))
                     graph = IgraphGraph.Read(path)
 
             end = time.time()
 
-            print "redis time GET %s" % (end - start)
+            print( "redis time GET %s" % (end - start) )
             if graph is not None:
-                print graph.summary()
+                print(graph.summary())
                 return graph
 
             raise GraphError('%s' % gid)
@@ -211,6 +210,9 @@ def graph_url(gid):
 
 # === app routes ===
 
+
+
+
 @app.route('/image/<string:gid>', methods=['GET', 'POST'])
 def image(gid):
     return redirect( img_url(gid) )
@@ -231,7 +233,6 @@ def promote():
     """)
     rows = []
     for row in cursor.fetchall():
-        print row
         #imported_on,  gid, padurl, status, needhelp = row
         r = dict(zip( "imported_on,gid,padurl".split(','), row ))
         r['graph_url'] = graph_url(row[1])
@@ -273,14 +274,19 @@ def get_stats():
     stats['tries'] = stats['fails'] + stats['success']
     
     cursor.execute("""
-    select imported_on, gid, padurl, status, help from imports;
+    select imported_on, gid, padurl, status, help from imports ORDER BY IMPORTED_ON DESC;
     """)
+    
+    def botapad_url(padurl, gid, **options):
+        opt = [ "%s=%s" % (k,v) for k,v in options.items() ]
+        return '/import/igraph.html?gid=%s&s=%s&%s' % ( gid,padurl, "&".join(opt) ) 
 
     rows = []
     for row in cursor.fetchall():
         #imported_on,  gid, padurl, status, needhelp = row
         r = dict(zip( "imported_on,gid,padurl,status,help".split(','), row ))
         r['graph_url'] = graph_url(row[1])
+        r['botapad_url'] = botapad_url(r['padurl'], r['gid'] )
         r['date'] = row[0].strftime(' %d %m %Y')
         r['time'] = row[0].strftime(' %H: %M')
         
@@ -304,7 +310,7 @@ def embed():
     return botimport('igraph', padurl, "graph", "embed")
     
 
-FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else "" )  for k,v in igraph.Graph._format_mapping.iteritems()]
+FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else "" )  for k,v in igraph.Graph._format_mapping.items()]
 
 
 FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
@@ -312,16 +318,23 @@ FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
 
 
 
-@app.route('/import', methods=['GET'])
-@app.route('/import/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/import', methods=['GET','POST'])
+def home():
+    url = request.form.get('url', None)
+    gid = request.form.get('gid', None)
+    if url and gid :
+        return botimport("igraph", url, gid, 'html')
+    return render_template('botapadapp.html', repo='igraph', content="html")
+
+
+
+
 @app.route('/import/<string:repo>', methods=['GET', 'POST'])
 @app.route('/import/<string:repo>.<string:content>', methods=['GET', 'POST'])
-#  
-#  name: import2pdg
-#  @param
-#  @return
-#  
 def import2pdg(repo='igraph', content="html"):
+    """
+    """
     
     if repo in ("padagraph", "igraph"):
         content = request.form.get('content_type', content)
@@ -345,14 +358,25 @@ def import2pdg(repo='igraph', content="html"):
 
             return botimport(repo, padurl, gid, content)
 
-        return botimport(repo, None, None, 'html')
+    return botimport(repo, None, None, 'html')
             
-    return botimport('igraph', None, None, 'html')
+
+
+from botapadapi import pad2igraph, pad2pdg
+from reliure.pipeline import Optionable, Composable
+
+@Composable
+def _pad2igraph(gid, url, format="csv"):
+    graph = pad2igraph(gid, url, format, delete=True,debug=DEBUG, store=LOCAL_PADS_STORE)
+    graph['meta']['owner'] = None
+    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+    return graph
+
+import traceback
     
 def botimport(repo, padurl, gid, content_type):
 
-
-    print " *** botimport ", repo, content_type, gid, padurl
+    print( " *** botimport ", repo, content_type, gid, padurl )
     
     action = "%s?%s" % (repo, request.query_string)
     routes = "%s/engines" % ENGINES_HOST
@@ -368,7 +392,7 @@ def botimport(repo, padurl, gid, content_type):
     #args
     args = request.args
      
-    bgcolor = "#" + args.get("bgcolor", "249999" )    
+    bgcolor = "#" + args.get("bgcolor", "dbdcce" )    
     if content_type == "embed":
         footer = False
     else : 
@@ -395,11 +419,11 @@ def botimport(repo, padurl, gid, content_type):
         'background_color' : bgcolor,
 
         # todo check where used
-        'initial_size' : 6,
+        'initial_size' : 4,
         'vtx_size' : args.get("vertex_size", 2 ),
 
         'user_font_size': float(args.get("font_size", 1) ), # [-5, 5]
-        'user_vtx_size' : float(args.get("vtx_size" , 2) ), # float > 0
+        'user_vtx_size' : float(args.get("vtx_size" , 1) ), # float > 0
         
         'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
         'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
@@ -447,9 +471,9 @@ def botimport(repo, padurl, gid, content_type):
     
                 else :
 
-                    builder = pad2igraph | prepare_graph | compute_pedigree | graph_stats
+                    builder = _pad2igraph | prepare_graph | compute_pedigree | graph_stats
                     
-                    graph = builder( gid, padurl, reader ) 
+                    graph = builder( gid, padurl, reader )
                     graphdb.set_graph(gid, graph)                                        
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
@@ -467,14 +491,16 @@ def botimport(repo, padurl, gid, content_type):
                         addloops = int(args.get("addloops" , 1 )) == 1
                         pzeros = args.get("pz" , "" )
                         pzeros = [] if not len(pzeros) else [int(e) for e in pzeros.split(',')]
-                        print pzeros , graph.summary()
+                        print( pzeros , graph.summary() )
                         
                         subg = subgraph(graph, length=length, cut=cut, pzeros=pzeros, add_loops=addloops, mode=mode)
                     else :
                         subg = graph
                     complete = True 
 
-                    
+                print(" .............. graph build", graphurl, gid )
+
+                
                 if content_type == "pickle":
                     response = make_response(pickle.dumps(graph))
                     response.headers["Content-Disposition"] = "attachment; filename=%s.pickle" % gid
@@ -484,7 +510,7 @@ def botimport(repo, padurl, gid, content_type):
                     if content_type == "json":
                         return jsonify(data)
                     else :
-                        data = json.dumps(data)
+                        data = json.dumps(data,  ensure_ascii=False)
 
         except BotapadCsvError as err:
             error = {
@@ -496,7 +522,7 @@ def botimport(repo, padurl, gid, content_type):
         
         except BotapadParseError as err:
             
-            print "EXCEPT BotapadParseError" , err
+            print( "EXCEPT BotapadParseError" , err )
             error = {
                 'class' : err.__class__.__name__,
                 'url' : err.path, 
@@ -521,11 +547,12 @@ def botimport(repo, padurl, gid, content_type):
             }
         except Exception as err:
             error = {
-                'class' : "Import ERROR",
-                'message' : "unexpected error",
-                'url' : padurl, 
+                'class' : err.__class__.__name__,
+                'message' : err.message if hasattr(err,'message') else "unexpected error",
+                'url' : padurl,
+                'stacktrace':traceback.format_exc()
             }
-            print err
+            print( err, traceback.format_exc() )
         finally:
             today = datetime.datetime.now()
             db = get_db()
@@ -537,7 +564,9 @@ def botimport(repo, padurl, gid, content_type):
         
         #snapshot(gid, **params)
 
-    print graphurl, gid
+    if error:
+        return render_template("botapadapp.html", error=error)
+    
 
     return render_template('graph.html',
         static_host=STATIC_HOST, color=bgcolor,
@@ -630,16 +659,6 @@ def build_app():
 
 if RUN_GUNICORN: build_app()
 
-    
-from flask_runner import Runner
-def main():
-    ## run the app
-    print "running main"
-
-    build_app()
-
-    runner = Runner(app)
-    runner.run()
 
 if __name__ == '__main__':
     sys.exit(main())

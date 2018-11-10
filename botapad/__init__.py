@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
 
-try : 
-    from botapad  import Botapad
-except:    
-    from .botapad  import Botapad
-
-
 
 class BotapadError(Exception):
     pass
@@ -34,4 +28,10 @@ class BotapadURLError(Exception):
     def __init__(self, message, url):
         self.message = message
         self.url = url
+
+
+try : 
+    from parser  import Botapad
+except:    
+    from .parser  import Botapad
 

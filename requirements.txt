@@ -1,7 +1,6 @@
 #gunicorn
 
 flask
-flask-runner
 Flask-Markdown
 flask_login
 flask_cors
@@ -20,3 +19,5 @@ https://github.com/padagraph/pdglib/archive/master.zip
 
 # used with igraph repo
 python-igraph
+numpy
+scipy

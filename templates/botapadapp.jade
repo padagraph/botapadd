@@ -10,8 +10,6 @@ html
     title Botapad
 
     //
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.css">
-      <script src="https://cdn.jsdelivr.net/semantic-ui/2.2.7/semantic.min.js"></script>
       <link rel="stylesheet" href="static/Semantic-UI-CSS-master/semantic.min.css">
 
     link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css')
@@ -93,17 +91,17 @@ html
             .statistic
               .value  {{ stats.fails }} 
               .label  fails 
-            .statistic
-              .value {{ stats.tries  }} 
-              .label  tries 
+            
         h4.ui.hidden.divider
         .ui.left.aligned.container
           h5.ui.inverted.horizontal.divider
             | rows
-          table.ui.compact.single.line.table
+          .segment
+           table.ui.compact.single.line.table
             thead
               tr
                 th date
+                th load
                 th pad url
                 th graph
                 th.center.aligned promote
@@ -113,12 +111,17 @@ html
               tr(class="{% if not item.status %}error{% endif %}")
                 td {{ item.date }}{{ item.time }}
                 td
-                  a(href='{{ item.padurl}}', target='_blank') {{ item.padurl }}
+                  a(href='import/igraph.html?s={{ item.botapad_url}}', target='_blank')
+                    i.icon.play
+                td(style="max-width:400px;overflow-x:hidden")
+                  a(href='{{ item.padurl}}',title='{{ item.padurl}}', target='_blank') {{ item.padurl }}
                 td
                   a(href='{{ item.graph_url}}', target='_blank') {{ item.gid }}
                 td.center.aligned
                   | {% if item.help %}
                   i.icon.announcement
+                  | {% else %}
+                  i.icon.minus
                   | {% endif %}
                 td.center.aligned
                   | {% if item.status %}
@@ -128,12 +131,14 @@ html
               {% endfor %}
 
         {% elif complete and not fail  %}
+        
         //.ui.container
-        div
-          include graph.jade
+        
+        include graph.jade
 
 
         {% elif error %}
+
         .ui.text.container
           h3.ui.inverted.horizontal.divider Import error 
           .ui.error.icon.message
@@ -189,16 +194,19 @@ html
                 li
                   a(href='{{error.url}}', target='_blank') {{error.url}}
                 li {{error.message}}
+                li {{error.stacktrace}}
               {%endif%}
         .ui.horizontal.divider
         i.teal.cloud.icon
+
+
 
         {% else %}
         .ui.text.container
           h4.ui.inverted.horizontal.divider
             | Import to {{repo}}
           h3.ui.inverted.header Choose a name and fill the pad url
-          form.ui.form(method='post', action='{{repo}}.html')
+          form.ui.form(method='post', action='/')
             .field
               .ui.huge.input
                 input(type='text', name='gid', placeholder='graph name')
