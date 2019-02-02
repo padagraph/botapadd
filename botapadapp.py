@@ -630,8 +630,6 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
 
 
 
-
-
 from pdgapi import graphedit
  
 edit_api = graphedit.graphedit_api("graphs", app, graphdb, login_manager, socketio )
