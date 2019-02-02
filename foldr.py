@@ -9,18 +9,66 @@ import codecs
 import re
 import csv
 
-from botapad import parse_url
-
 # dumps resource form a foldr
 # * googledoc as .txt
 # * hackmd as .md
 # * ethercalc as .csv
 # extra resource
+    
+def parse_url(url):
+    """ complete url if needed
+        framapad expension  auto add /export/txt
+
+     """
+    re_pad = "https?:\/\/docs.google.com/document/d/([0-9a-zA-Z\-_]+)/?"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://docs.google.com/document/d/%s/export?format=txt" % (pad[0]), pad[0], "txt"
+    
+    re_pad = "https?:\/\/docs.google.com/spreadsheets/d/([0-9a-zA-Z\-_]+)/"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://docs.google.com/spreadsheets/d/%s/export?format=csv" % (pad[0]), pad[0], "csv"
+    
+    re_pad = "https?:\/\/([a-z0-9]+)\.framapad.org/p/([0-9a-zA-Z\-_]+)/?([export\/txt]+)?"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) == 2 :
+            url = "https://%s.framapad.org/p/%s/export/txt" % (pad[0], pad[1])
+            return url, pad[0], "txt"
+            
+    # padagraph.io
+    re_pad = "https?:\/\/calc.padagraph.io/([0-9a-zA-Z\-_]+)([\.csv]+)?"
+    pad = re.findall(re_pad, url)
+
+    if  len(pad):
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) :
+            return "%s.csv" % url, pad[0], "csv"
+
+    # ethercald & framacalc
+    re_pad = "https?:\/\/(?:frama|ether)calc.org/([0-9a-zA-Z\-_]+)([\.csv]+)?"
+    pad = re.findall(re_pad, url)
+    
+    if  len(pad):
+        pad = [r for r in pad[0] if len(r)]
+        if  len(pad) :
+            return "%s.csv" % url, pad[0], "csv"
+
+    # hackmd
+    re_pad = "https?:\/\/hackmd.io\/(?:s/)?([0-9a-zA-Z\-_\=\+]+)"
+    pad = re.findall(re_pad, url)
+    if  len(pad) :
+        return "https://hackmd.io/%s/download" % pad[0], pad[0], "md"
+        
+    # github
+    return url, None, ""
 
 
 def mkdir_p(path, verbose=False):
     try:
-        if verbose: print "* creating directory %s " % path
+        if verbose: print("* creating directory %s " % path )
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
@@ -55,7 +103,7 @@ def main():
 
 def dump(url, foldr, path, verbose=False):
     
-    if verbose: print "## dumping foldr %s == %s ..." %( url, foldr )
+    if verbose: print("## dumping foldr %s == %s ..." %( url, foldr ))
     # create dump dir_
     mkdir_p(path, verbose)
 
@@ -66,7 +114,7 @@ def dump(url, foldr, path, verbose=False):
     with codecs.open(outfile , 'wb', encoding="utf8") as f:
         f.write(content)
         
-    if verbose: print content
+    if verbose: print(content)
 
     # parse content
     urls = []
@@ -91,7 +139,7 @@ def dump(url, foldr, path, verbose=False):
     for i, e in enumerate(urls):
         dir, name, url, gid, ftype = e
         outfile = "%s/%s-%s%s%s" % ( dir, i, name.replace('/', ''), "." if len(ftype) else "", ftype )
-        print " * Downloading %s to %s" % ( url, outfile)
+        print(" * Downloading %s to %s" % ( url, outfile))
 
         response = requests.get(url)
         if response.status_code == 200:
