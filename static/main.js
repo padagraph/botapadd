@@ -1,5 +1,9 @@
 // Filename: main.js
 
+// Require.js allows us to configure shortcut alias
+// There usage will become more apparent further along in the tutorial.
+var path = "../static/bower_components/"
+
  require.config({
       waitSeconds: 0,
       paths: {
@@ -7,10 +11,11 @@
         //underscore : path + 'underscore/underscore-min',
         //backbone   : path + 'backbone/backbone-min',
         //jquery     : path + 'jquery/dist/jquery.min',
-                
+        
         cello     : 'cello.min',
         gviz      : 'gviz.min',
-        embed     : 'embed.min',     
+        embed     : 'embed.min',
+        
         
         threejs   : 'three.min',
         numeric   : 'numeric-1.2.6.min',
