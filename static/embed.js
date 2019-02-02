@@ -283,16 +283,11 @@ Models.EdgeType = Cello.EdgeType.extend({
 
     parse_label: function(){
 
-            var label = this.label;
-            
-            var token = label.substring(label.indexOf('/') + 1);
-            
+            var label = this.label;            
             var e = {};
             e.label =  label;
             e.family = label.indexOf('/') >= 0 ? label.substring(0,label.indexOf('/')) : "";
-            e.name = label.indexOf('/') > 0  ? label.substring(label.indexOf('/')) : label;
-            e.subscript = "";
-            //e.cdata = this.get('type_attributes')['cdata'];
+            e.name = label.indexOf('/') > 0  ? label.substring(label.indexOf('/')+1) : label;           
             return e;
         }
 

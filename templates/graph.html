@@ -195,6 +195,7 @@
     <div class="ui inverted link list"></div><a href="{{padurl}}" class="active item">Imported from {{padurl}}</a>{% endif %}  
     <script src="{{static_host}}/static/webcomponents-lite.js"></script>
     <script data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js"></script>
+    <link rel="import" href="{{static_host}}/static/polymer/polymer.html"/>
     <link rel="import" href="{{static_host}}/static/padagraph-gviz-min.html"/>
     <dom-module id="graph-app">
       <template>
@@ -207,8 +208,8 @@
               <padagraph-model-popup id="gvizpopup" hidden$="{{'{{is_hidden(display_card)}}'}}"></padagraph-model-popup>
               <padagraph-collection mode="node" hidden$="{{'{{is_hidden(display_list)}}'}}"></padagraph-collection>
               <div id="menu" class="ui icon borderless vertical menu">
-                <padagraph-collection-filter mode="node" asitem="asitem"></padagraph-collection-filter>
-                <padagraph-collection-filter mode="edge" asitem="asitem"></padagraph-collection-filter>
+                <padagraph-collection-filter mode="node" asitem="asitem" filters="all selected label types"></padagraph-collection-filter>
+                <padagraph-collection-filter mode="edge" asitem="asitem" filters="all types"></padagraph-collection-filter>
                 <div class="ui divider">         </div>
                 <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
                 <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
@@ -223,9 +224,7 @@
                   <padagraph-node-search actions="add,explore"></padagraph-node-search>{% if graphurl %}   <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>{% endif %}
                 </div>
                 <div class="four wide column">
-                  <div id="loading">
-                    <p>Loading...</p>
-                  </div>
+                  <div id="loading"></div>
                 </div>
               </div>
             </padagraph-gviz>
@@ -329,9 +328,29 @@
                 engines.push(engine);
             }
         
-             $('padagraph-collection')[0].app = app;
-             $('padagraph-collection')[0].graph = app.models.graph;
+            $('padagraph-collection')[0].app = app;
+            $('padagraph-collection')[0].graph = app.models.graph;
             
+            var comps = $("padagraph-collection-filter");
+            comps.map((e)=>{
+              e.app = app;
+              e.graph = app.models.graph;                         
+            }) ;
+            
+            app.listenTo(app.engines.explore, 'play:success', function(response, args, state) {
+                $("padagraph-collection-filter").each( function(i,e) {
+                   if ( e.graph && e.reset_filters ) e.reset_filters();
+                });
+            });
+        
+            app.listenTo(app.engines.additive_nodes, 'play:success', function(response, args, state) {
+                $("padagraph-collection-filter").each( function(i,e) { if (e.graph) e.reset_filters(); });
+            });
+        
+            app.models.graph.on('sync', function(){
+              $("padagraph-collection-filter").each(function(i,e) { if (e.graph) e.reset_filters(); });
+            });
+             
             var keb = document.createElement("padagraph-keb")
             keb.engines = engines;
             $("#keb")

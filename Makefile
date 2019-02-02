@@ -11,7 +11,15 @@ install:
 
 	npm install jade --save
  
-build: jade
+
+build: jade 
+	@echo "\n ---------------------------"
+	@echo " * Building botapad   "
+	@echo " ---------------------------\n"
+	cd ../application/src/ && make build
+	cp -r ../application/src/static/bower_components/polymer static/
+	cp ../application/src/static/*.html static/
+	cp ../application/src/static/*.js static/
 
 jade:
 	@echo "\n ---------------------------"
@@ -22,7 +30,7 @@ jade:
 
 
 rundev: 
-	. venv3/bin/activate; export APP_DEBUG=true; export FLASK_APP=botapadapp.py ;export FLASK_DEBUG=1; flask run 
+	. venv3/bin/activate; export APP_DEBUG=false; export FLASK_APP=botapadapp.py ;export FLASK_DEBUG=1; flask run 
 
 
 docker-build:

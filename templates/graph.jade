@@ -199,6 +199,7 @@ html
 
     script( src="{{static_host}}/static/webcomponents-lite.js" )
     script( data-main="{{static_host}}/static/main" src="{{static_host}}/static/require.js")
+    link( rel="import" href="{{static_host}}/static/polymer/polymer.html")
     link( rel="import" href="{{static_host}}/static/padagraph-gviz-min.html")
 
 
@@ -224,8 +225,8 @@ html
 
            
             .ui.icon.borderless.vertical.menu#menu
-                  padagraph-collection-filter( mode="node" asitem="asitem")
-                  padagraph-collection-filter( mode="edge" asitem="asitem")
+                  padagraph-collection-filter( mode="node" asitem="asitem" filters="all selected label types")
+                  padagraph-collection-filter( mode="edge" asitem="asitem" filters="all types")
 
                   .ui.divider          
                   padagraph-engine-control( engine="layout" asitem="asitem")
@@ -248,7 +249,6 @@ html
               {% endif %}
              .four.wide.column
                 #loading
-                  p Loading...
                   
       script.
         require(['backbone', 'jquery', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbone, $, Cello, Gviz, Materials, Const ) {
@@ -347,9 +347,29 @@ html
                 engines.push(engine);
             }
 
-             $('padagraph-collection')[0].app = app;
-             $('padagraph-collection')[0].graph = app.models.graph;
+            $('padagraph-collection')[0].app = app;
+            $('padagraph-collection')[0].graph = app.models.graph;
             
+            var comps = $("padagraph-collection-filter");
+            comps.map((e)=>{
+              e.app = app;
+              e.graph = app.models.graph;                         
+            }) ;
+            
+            app.listenTo(app.engines.explore, 'play:success', function(response, args, state) {
+                $("padagraph-collection-filter").each( function(i,e) {
+                   if ( e.graph && e.reset_filters ) e.reset_filters();
+                });
+            });
+
+            app.listenTo(app.engines.additive_nodes, 'play:success', function(response, args, state) {
+                $("padagraph-collection-filter").each( function(i,e) { if (e.graph) e.reset_filters(); });
+            });
+
+            app.models.graph.on('sync', function(){
+              $("padagraph-collection-filter").each(function(i,e) { if (e.graph) e.reset_filters(); });
+            });
+             
             var keb = document.createElement("padagraph-keb")
             keb.engines = engines;
             $("#keb")

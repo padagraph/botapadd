@@ -2298,7 +2298,7 @@ gviz.ThreeVizHelpers = {
                     context.font = font ;
 
                     var xi = x + userPaddingX + paddingRelX;
-                    var yi = y - userPaddingY;
+                    var yi = y - userPaddingY + paddingRelY;
                     
                     /* : TODO : text background */  
                     //maxX = Math.max(maxX, dimension.width + letter_width/2);
