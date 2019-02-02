@@ -317,6 +317,9 @@ FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
 FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
 
 
+def uuid(url):
+    now = datetime.datetime.now().ctime()
+    return hex( hash(url) + hash(now) )[2:]
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/import', methods=['GET','POST'])
@@ -325,6 +328,11 @@ def home():
     gid = request.form.get('gid', None)
     if url and gid :
         return botimport("igraph", url, gid, 'html')
+    
+    url = request.args.get('s')
+    if url:
+        return botimport("igraph", url, uuid(url), 'html')
+    
     return render_template('botapadapp.html', repo='igraph', content="html")
 
 

@@ -21,9 +21,10 @@ try:
     sys.setdefaultencoding('utf-8')
 except : pass
 
-DIRECTIONS = ('<<','--','>>')
-EDGE = 0  
-VERTEX = 1
+DIRECTIONS = ('<-','<<','--',"<>",'>>', '->')
+VERTEX = 0
+EDGE = 1  
+EDGE2 = 2  
 
 def norm_key(key):
     s = re.sub( "(\[.*\])", "", key.strip() )
@@ -184,7 +185,7 @@ class Botapad(object):
         if path[0:4] == 'http':
             try : 
                 url = convert_url(path)
-                self.log( " * Converting url %s to %s" % ( path, url ) )
+                self.log( " * Converting url %s to %s" % ( path, url ))
                 self.log( " * Downloading %s %s" % (url, separator))
                 r = requests.get(url)
                 content = r.text
@@ -194,8 +195,8 @@ class Botapad(object):
                 if content[0:1] == u'\ufeff':
                     content = content[1:]
                 lines = content.split('\n')
-            except :
-                raise
+            except Exception as err :
+
                 raise BotapadURLError("Can't download %s" % url, url)
 
         else:
@@ -345,22 +346,25 @@ class Botapad(object):
                 cols = [e for e in re.split("[:;,]" , "%s" % cols, flags=re.UNICODE) if len(e)]
                 label = cols[0] # @Something
                 
-
+                start = 1
+                if cell[:1] == "_" and cell[1] == "" and cell[1] == "" : start = 3
+                
                 props = [ Prop( name=norm_key(e), type=Text(multi="+" in e, default=_v(e)),
                     isref="@" in e, isindex="#" in e, ismulti="+" in e,
                     isproj="%" in e, iscliq="+" in e and "=" in e ,
                     isignored="!" in e,
                     direction= "OUT" if ">" in e else "IN" if "<" in e else "ALL" ,
-                    weight=_w(e), value=_v(e) ) for e in cols[1:] ]
+                    weight=_w(e), value=_v(e) ) for e in cols[start:] ]
 
                 def get_prop(name):
                     for e in props :
                         if e.name == name :
                             return e
                     return None
+
                 start = 0
                 end   = None
-                props = props[start: end]
+                props = props[0: end]
                 self.log( "\n * @%s : Props " % label )
                 self.log( "  (%s)" % ",".join(Prop()._fields) )
                 for e in props:
@@ -402,7 +406,8 @@ class Botapad(object):
                         
                 elif cell[:1] == "_": # edgetype def
                     rows = []
-                    self.current = (EDGE, label, props)
+                    self.current = (EDGE2, label, props)
+                    
                     if not label in self.edgetypes:                        
 
                         if "label" not in names : props = [Prop( name="label", type=Text(), value="" )] + props
@@ -418,11 +423,17 @@ class Botapad(object):
             else: # table data
                 if self.current and self.current[2]:
                     props = self.current[2]
-                    if self.current[0] == EDGE:
-                        for i, v in enumerate(row[1:]):
+                    if self.current[0] in (EDGE, EDGE2):
+                        
+                        start = 1 # if self.current[0] == EDGE:
+                        if self.current[0] == EDGE2:
+                            start = 3
+                            
+                        for i, v in enumerate(row[start:]):
                             if i >= len(props): break
-                            if props[i].ismulti :
-                                row[i+1] = list(set([  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]))
+                            if props[i].ismulti:
+                                row[i+start] = list(set([  e.strip() for e in re.split("[,;]", v.strip(), ) if e.strip() != "" ]))
+                                
                     elif self.current[0] == VERTEX:
                         for i, v in enumerate(row):
                             if i >= len(props): break
@@ -440,13 +451,23 @@ class Botapad(object):
         mode, label, props = current
         names = [ k.name for k in props ]
 
-        if mode == EDGE:
+        if mode in (EDGE,EDGE2):
 
             edges = []
             try : 
                 for row in rows:
-                    edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
+                    edge = None
+                    values = []
+                    if mode == EDGE:
+                        edge = [ e.strip() for e in re.split("\s+", row[0], flags=re.UNICODE)]
+                        values = row[1:] if len(row)>1 else []
+
+                    elif mode == EDGE2:
+                        edge = row[0:3]
+                        values = row[3:] if len(row)>1 else []
+                                        
                     src, direction, tgt = edge
+                    
                     if direction not in DIRECTIONS :
                         raise ValueError('edge direction not in [%s]' % ", ".join(DIRECTIONS))
                     
@@ -455,7 +476,6 @@ class Botapad(object):
                         src = tgt
                         tgt = tmp
                     
-                    values = row[1:] if len(row)>1 else []
 
                     if src in self.idx and tgt in self.idx:
                         edgeprops = dict(zip(names, values))
@@ -472,8 +492,9 @@ class Botapad(object):
                 self.log( "    [POST] EDGE _ %s %s [%s]" % (len(edges), label , ", ".join(names)))
                 for e,i in self.bot.post_edges(self.gid, iter(edges) ) :
                     self.debug(e)
+                    
             except Exception as err:
-                print( "roooo   \n %s" % traceback.format_exc(), row )
+                print( "Erreur mode : %s \n %s" % (mode, traceback.format_exc()), row )
                 raise BotapadPostError("Error while posting edges ", edges, row)
         # Vertex
         
@@ -510,7 +531,7 @@ class Botapad(object):
                 for node, uuid in self.bot.post_nodes(self.gid, iter(payload), key=[names[i] for i in index_props]):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
                     self.idx[ key ] = uuid
-                    self.log(key , uuid)
+                    self.debug(key , uuid)
 
             except KeyError as e:
                 print(e)
@@ -588,7 +609,7 @@ class Botapad(object):
                     self.idx[ tgtid ] = uuid
                     self.debug(node)
                 
-            etname = "%s_%s" % (src, tgt)
+            etname = "%s/%s" % (src, tgt)
             edgeprops = { "label": Text(), 'weight' :Numeric( vtype=float, default=1. ) }
             if etname not in self.edgetypes:
                 self.log( " * [Projector] POST edgetype %s %s " % (etname, edgeprops ) )

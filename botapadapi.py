@@ -146,7 +146,7 @@ def explore_engine(graphdb):
         return db_graph(graphdb, query)
         
     @Composable
-    def subgraph(query, cut=50, weighted=True, length=3, mode=ALL, add_loops=False, ):
+    def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, ):
 
         graph = db_graph(graphdb, query)
 
@@ -170,7 +170,7 @@ def explore_engine(graphdb):
     
     searchs = []
     for k,w,l,m,n  in [
-              (u"Search", True, 3, ALL ,30 ), ]:
+              (u"Search", True, 6, ALL ,100 ), ]:
         search = Optionable("GraphSearch")
         search._func = subgraph
         search.add_option("weighted", Boolean(default=w))
