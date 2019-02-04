@@ -22,7 +22,7 @@ def empty_graph(gid, headers, **kwargs):
     botapad.parse_csvrows( headers, separator='auto', debug=False)
 
     graph = bot.get_igraph(weight_prop="weight")
-    graph = prepare_graph(graph)
+    graph = prepare_graph(gid, graph)
     graph['starred'] = []
     graph['queries'] = []
     graph['meta'] = {  
@@ -34,7 +34,6 @@ def empty_graph(gid, headers, **kwargs):
             'star_count': len( graph['starred'] ),
             'stats' : {}
         }
-    #graph['meta']['pedigree'] = pedigree.compute(graph)
 
     return graph
 
@@ -72,19 +71,19 @@ def merge(gid, graph, g, index=None, vid=None, **kwargs):
     for v in g.vs:
         _vid = vid(gid,v)
         if _vid not in idx:
-                uuid = "%s" % graph.vcount()
-                attrs = v.attributes()
-                attrs['uuid'] = uuid
+            uuid = "%s" % graph.vcount()
+            attrs = v.attributes()
+            attrs['uuid'] = uuid
 
-                nodetype = nodetypes[attrs['nodetype']]
-                properties = nodetype['properties']
-                for k in properties:
-                    if k not in attrs['properties']:
-                        attrs['properties'][k] = properties[k]['default']
-                
-                graph.add_vertex( **attrs )
-                idx[ _vid ] = graph.vs[graph.vcount()-1]
-                
+            nodetype = nodetypes[attrs['nodetype']]
+            properties = nodetype['properties']
+            for k in properties:
+                if k not in attrs['properties']:
+                    attrs['properties'][k] = properties[k]['default']
+            
+            graph.add_vertex( **attrs )
+            idx[ _vid ] = graph.vs[graph.vcount()-1]
+          
                             
     edgetypes = [ e['name'] for e in graph['edgetypes'] ]
     for k in g['edgetypes']:
@@ -151,29 +150,93 @@ def graph_stats(graph, **kwargs):
 
     
 @Composable
-def prepare_graph(graph):
+def prepare_graph(gid, graph):
 
+    if not 'starred' in graph.attributes():
+        graph['starred'] = []
     if not 'meta' in graph.attributes():
-        graph['meta'] = { 'edge_count':0,'node_count':0, }
-    if 'nodetype' not in graph.vs.attribute_names():
-        graph.vs['nodetype'] = [ "T" for e in graph.vs ]
-    if 'uuid' not in graph.vs.attribute_names():
-        graph.vs['uuid'] = range(len(graph.vs))
-    if 'properties' not in graph.vs.attribute_names():
+        graph['meta'] = {
+            'node_count': graph.vcount(),
+            'edge_count': graph.ecount(),
+            'owner': "-",
+            'star_count': len( graph['starred'] ),
+            'upvotes': 0,
+            'votes': 0
+        }
+
+    if 'properties' not in graph.attributes():    
+        graph['properties'] = {}
+    
+    v_attrs = graph.vs.attribute_names()
+    if 'nodetypes' not in graph.attributes():    
+        graph['nodetypes'] = [{
+          "_uniq_key": "_%s_T" % gid,
+          "uuid": "_%s_T" % gid,
+          "description": "T", 
+          "name": "T", 
+          'count': graph.vcount(),
+          "properties": {
+            k : {
+              "choices": None, 
+              "default": None, 
+              "encoding": "utf8", 
+              "help": "", 
+              "multi": False, 
+              "type": "Text", 
+              "uniq": False, 
+              "vtype": "unicode"
+            }  for k in v_attrs 
+          }
+        }]
+           
+    if 'nodetype' not in v_attrs:
+        graph.vs['nodetype'] = [ "_%s_T" % gid for e in graph.vs ]
+    if 'uuid' not in v_attrs:
+        if 'id' in v_attrs: 
+            graph.vs['uuid'] = [ "%s" % int(e) for e in graph.vs['id'] ]
+        else :
+            graph.vs['uuid'] = [ "%s" % e for e in range(len(graph.vs)) ]
+    
+    if 'properties' not in v_attrs:
         props = [ {  }  for i in range(len(graph.vs))]
-        attrs = graph.vs.attribute_names()
         
         for p,v  in zip(props, graph.vs):
-            for e in attrs:
-                if e not in ['nodetype', 'uuid', 'properties' ]  :
+            for e in v_attrs:
+                if e not in ( 'nodetype', 'uuid', 'properties' )  :
                     p[e] = v[e]
-            if 'label' not in attrs:
+            if 'label' not in v_attrs:
                 p['label']  = v.index
                 
         graph.vs['properties'] = props
-           
+        for k in v_attrs:
+            if k not in ( 'nodetype', 'uuid', 'properties' )  :
+                del graph.vs[k]
+    
+    
+    e_attrs = graph.es.attribute_names()
+    
+    
+    {"choices": None, "default": None, "encoding": "utf8", "help": "", "multi": False, "type": "Text", "uniq": False, "vtype": "unicode" }
+    if 'edgetypes' not in graph.attributes():    
+        graph['edgetypes'] = [{ 
+            'count': graph.ecount(),
+            'description': "E",
+            'name': "E",
+            'properties': {
+                'label': {"choices": None, "default": None, "encoding": "utf8", "help": "",
+                          "multi": False, "type": "Text", "uniq": False, "vtype": "unicode" },
+                'weight': {"choices": None, "default": None, "encoding": "utf8", "help": "",
+                          "multi": False, "type": "Numeric", "uniq": False, "vtype": "float" }
+            },
+            'type_attributes' : {},
+            'uuid' : "_%s_E" % gid,
+            '_uniq_key' : "_%s_E" % gid,
+
+    } ]
+        
+              
     if 'edgetype' not in graph.es.attribute_names():
-        graph.es['edgetype'] = [ "T" for e in graph.es ]
+        graph.es['edgetype'] = [ "_%s_E" % gid for e in graph.es ]
     if 'uuid' not in graph.es.attribute_names():
         graph.es['uuid'] = range(len(graph.es))
     if 'properties' not in graph.es.attribute_names():
@@ -181,13 +244,16 @@ def prepare_graph(graph):
         attrs = graph.es.attribute_names()
         
         for p,v  in zip(props, graph.es):
-            for e in attrs:
-                if e not in ['edgetype', 'uuid', 'properties' ]  :
+            for e in e_attrs:
+                if e not in ['edgetype', 'uuid', 'properties' ]:
                     p[e] = v[e]
-            if 'label' not in attrs:
+            if 'label' not in e_attrs:
                 p['label']  = v.index
                 
         graph.es['properties'] = props
+        for k in e_attrs:
+            if k not in ( 'edgetype', 'uuid', 'properties', 'weight' )  :
+                del graph.es[k]
 
     if 'weight' not in graph.es.attribute_names():
         graph.es['weight'] = [1. for e in graph.es ]

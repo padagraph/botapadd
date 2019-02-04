@@ -5,6 +5,7 @@ from flask import request, jsonify
 from flask import Response, make_response
 
 import igraph
+from igraph.utils import named_temporary_file
 import pickle
 import json
 
@@ -23,7 +24,7 @@ from cello.clustering import export_clustering
 
 from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, layout_api, clustering_api
 
-from botapad.utils import export_graph   
+from botapad.utils import export_graph, prepare_graph   
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError, BotapadPostError
 
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
@@ -40,9 +41,9 @@ def pad2pdg(gid, url, host, key, delete, debug=False):
     botapad = Botapad(bot, gid, description, delete=delete)
     return botapad.parse(url, separator='auto', debug=debug)
         
-
+AVAILABLE_FORMATS = ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek')
         
-def pad2igraph(gid, url, format, delete=False, debug=False, store="/pads/"):
+def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
 
     print ("format", gid, url, format )
     
@@ -60,7 +61,7 @@ def pad2igraph(gid, url, format, delete=False, debug=False, store="/pads/"):
             if graph.vcount() == 0 :
                 raise BotapadParseError(url, "Botapad can't create a graph without nodes.", None )
 
-            return graph
+            return prepare_graph(gid, graph)
             
         except BotapadParseError as e :
             log = botapad.get_log()
@@ -72,38 +73,38 @@ def pad2igraph(gid, url, format, delete=False, debug=False, store="/pads/"):
 
             
         
-    elif format in ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek'):
+    elif format in AVAILABLE_FORMATS:
         content = None
         if url[0:4] == 'http':
             try :
                 url = convert_url(path)
                 if format in ( 'pickle', 'picklez'):
                     raise ValueError('no pickle from HTTP : %s ' % url )
-                log( " * Downloading %s %s\n" % (url, separator))
+                print( " === Downloading %s %s\n" % (url, separator))
                 content = requests.get(url).text
             except :
                 raise BotapadURLError("Can't download %s" % url, url)
 
-        elif DEBUG : 
-            try : 
-                content = open("%s/%s.%s" % (LOCAL_PADS_STORE, url, format) , 'rb').read()
+        else : 
+            try :                 
+                print (" === reading  %s/%s.%s" % (store, url, format) )
+                content = open("%s/%s.%s" % (store, url, format) , 'r').read()
             except Exception as err :
-                raise BotapadURLError("Can't open file %s: %s" % (url, err.message ), url)
+                raise BotapadURLError("Can't open file %s: %s" % (url, err), url)
 
-        print (" === reading  %s/%s.%s" % (LOCAL_PADS_STORE, url, format) )
 
         try :
             with named_temporary_file(text=False) as tmpf: 
                 outf = open(tmpf, "wt") 
                 outf.write(content) 
-                outf.close() 
-            
+                outf.close()         
                 graph =  igraph.read(tmpf, format=format) 
   
-            return graph
+            return prepare_graph(gid, graph)
         
         except Exception as err :
-            raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err.message ))
+            raise
+            raise BotapadError('%s : cannot read %s file at %s : %s' % ( gid, format, url, err))
 
     else :
         raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
@@ -146,7 +147,7 @@ def explore_engine(graphdb):
         return db_graph(graphdb, query)
         
     @Composable
-    def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, ):
+    def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, **kwargs ):
 
         graph = db_graph(graphdb, query)
 
@@ -166,6 +167,17 @@ def explore_engine(graphdb):
             
         return graph.subgraph(vs)
 
+    @Composable
+    def filtering(graph, single_filtered=False, **kwargs):
+        if single_filtered :
+            to_del = []
+            for v in graph.vs:
+                if not len(v.neighbors()):
+                    to_del.add(v.index)
+            graph.vs.delete(to_del)
+        
+        return graph
+        
     from cello.graphs.transform import VtxAttr
     
     searchs = []
@@ -211,7 +223,7 @@ def expand_prox_engine(graphdb):
     engine.scores.setup(in_name="request", out_name="scores")
 
     ## Search
-    def expand(query, length=3, cut=100, nodes=False, weightings=None):
+    def expand(query, length=3, cut=300, nodes=False, weightings=None):
 
         graph = db_graph(graphdb, query)
         gid = query.get("graph")
@@ -223,17 +235,19 @@ def expand_prox_engine(graphdb):
         pz.update( { uuids[p] : 1./len(_nodes) for p in qnodes } )
         pz.update( { uuids[p] : 1. for p in qexpand })
         
-        weightings = ["1"] if weightings == None else weightings
+        print( "expand >>> %s" % pz )
+        weightings = ["1"] if weightings in ([], None) else weightings
         wneighbors = _weights(weightings)
         
         vs = pure_prox(graph, pz, length, wneighbors)
         vs = sortcut(vs, cut)
+        vs = [ (graph.vs[v[0]]['uuid'], v[1]) for v in vs ]
         return dict(vs)
 
     scores = Optionable("scores")
     scores._func = Composable(expand)
     scores.add_option("length", Numeric( vtype=int, default=3))
-    scores.add_option("cut", Numeric( vtype=int, default=50, max=100))
+    scores.add_option("cut", Numeric( vtype=int, default=50, max=300))
     scores.add_option("nodes", Boolean( default=True))
     scores.add_option("weighting", Text(choices=[  u"0", u"1", u"weight" ], multi=True, default=u"1", help="ponderation"))
     

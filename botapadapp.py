@@ -58,7 +58,7 @@ except:
 # delete before import
 
 # app
-print( " == Botapad %s %s ==" % ("DEBUG" if DEBUG else "", "DELETE" if DELETE else "") )
+print( " == Botapad %s %s ==" % ("DEBUG" if DEBUG else "INFO", "DELETE" if DELETE else "") )
 print( " == Running with gunicorn : %s==" % (RUN_GUNICORN) )
 print( " == engines:%s static:%s padagraph:%s==" % (ENGINES_HOST, STATIC_HOST, PADAGRAPH_HOST) )
 print( " == REDIS STORAGE : %s ==  " % REDIS_STORAGE )
@@ -375,10 +375,21 @@ from reliure.pipeline import Optionable, Composable
 
 @Composable
 def _pad2igraph(gid, url, format="csv"):
-    graph = pad2igraph(gid, url, format, delete=True,debug=DEBUG, store=LOCAL_PADS_STORE)
+    graph = pad2igraph(gid, url, format, delete=True, store=LOCAL_PADS_STORE)
+    if not 'meta' in graph.attributes() : graph['meta'] = {}
+    graph['meta']['gid'] = gid
+    graph['meta']['graph'] = gid
+    graph['properties']=  {
+      "description": "%s imported from %s [%s]" % (gid, url, format) , 
+      "image": "", 
+      "name": gid, 
+      "tags": [
+        "Botapad", format
+      ]
+    }
     graph['meta']['owner'] = None
     graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
-    return graph
+    return prepare_graph(gid, graph)
 
 import traceback
     
@@ -479,7 +490,7 @@ def botimport(repo, padurl, gid, content_type):
     
                 else :
 
-                    builder = _pad2igraph | prepare_graph | compute_pedigree | graph_stats
+                    builder = _pad2igraph | compute_pedigree | graph_stats
                     
                     graph = builder( gid, padurl, reader )
                     graphdb.set_graph(gid, graph)                                        
