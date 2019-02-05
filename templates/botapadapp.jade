@@ -159,6 +159,7 @@ html
                 li
                   | Can't download document at 
                   a(href='{{error.url}}') {{error.url}}
+                li {{error.message}}  
 
               {% elif error.class == "BotapadCsvError" %}
               ul.list

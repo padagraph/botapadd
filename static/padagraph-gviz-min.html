@@ -2040,7 +2040,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             this.create_once(app, graph, options);
         },
 
-        create_once: function create_once(app, graph, vizoptions) {
+        create_once: function create_once(app, graph, options) {
 
             if (app === undefined || graph === undefined) return;
             if (!app || graph == null || !graph.vs) return;
@@ -2087,8 +2087,8 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                 ctrl.graph = graph;
             }
 
-            var options = _.extend({}, Gviz.DEFAULTS, vizoptions);
-            if (!options['el']) options['el'] = "#vz_threejs_main" + Math.round(Math.random() * 10000);
+            options = _.extend({}, Gviz.DEFAULTS, options);
+            if (!options.el) options.el = "#vz_threejs_main" + Math.round(Math.random() * 10000);
 
             options.materials = Materials;
 
@@ -2102,7 +2102,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                 this.appendChild("<div class='gviz-debug'></div>");
             }
 
-            this.options.wnode_scale = function (vtx) {
+            options.wnode_scale = function (vtx) {
                 var v = vtx.get('_size') * 8;
                 return gviz.initial_size + gviz.user_vtx_size + v;
             };
@@ -3120,7 +3120,7 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, semantic) {
         }
     });
 });</script></dom-module><dom-module id="padagraph-gviz-control" assetpath="./"><style>a.link.icon { padding: 4px; }
-a i.icon { margin: 0px; }</style><template><div class="ui segment"><h2 class="header">Visualisation</h2><div class="ui small form"><fieldset><div class="field"><a id="vtx_size_inc" class="link icon"><i class="large zoom icon"></i></a><a id="vtx_size_dec" class="link icon"><i class="large zoom out icon"></i></a><a id="font_size_inc" class="link icon"><i class="large fitted font icon"></i><i class="small fitted add icon"></i></a><a id="font_size_dec" class="link icon"><i class="large fitted font icon"></i><i class="small fitted minus icon"></i></a></div></fieldset></div></div></template><script>"use strict";
+a i.icon { margin: 0px; }</style><template><a id="vtx_size_inc" class="ui item"><i class="large zoom icon"></i></a><a id="vtx_size_dec" class="ui item"><i class="large zoom out icon"></i></a><a id="font_size_inc" class="ui item"><i class="large fitted font icon"></i><i class="small fitted add icon"></i></a><a id="font_size_dec" class="ui item"><i class="large fitted font icon"></i><i class="small fitted minus icon"></i></a></template><script>"use strict";
 
 require(['jquery'], function ($) {
   Polymer({
