@@ -46,7 +46,7 @@ AVAILABLE_FORMATS = ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek')
         
 def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
 
-    print ("format", gid, url, format )
+    print ("pad2igraph", gid, url, format )
     
     if format == 'csv':
         
@@ -207,7 +207,6 @@ def explore_engine(graphdb):
 def expand_subgraph(graph, expand, nodes,length=4, cut=100, weightings=None):
     pz = {}
     uuids = { v['uuid'] : v.index for v in graph.vs }
-    print(uuids)
     pz.update( { uuids[p] : 1./len(nodes) for p in nodes } )
     pz.update( { uuids[p] : 1. for p in expand })
             
