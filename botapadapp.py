@@ -152,7 +152,9 @@ if REDIS_STORAGE:
             return []
 
     graphdb = IGraphDB( graphs=RedisGraphs() )
-        
+    
+    
+
 
 graphdb.open_database()
 
@@ -370,16 +372,18 @@ def import2pdg(repo='igraph', content="html"):
             
 
 
-from botapadapi import pad2igraph, pad2pdg
+from botapadapi import pad2igraph, pad2pdg, starred
+
 from reliure.pipeline import Optionable, Composable
 
 @Composable
 def _pad2igraph(gid, url, format="csv"):
     graph = pad2igraph(gid, url, format, delete=True, store=LOCAL_PADS_STORE)
+    
     if not 'meta' in graph.attributes() : graph['meta'] = {}
     graph['meta']['gid'] = gid
     graph['meta']['graph'] = gid
-    graph['properties']=  {
+    graph['properties'] =  {
       "description": "%s imported from %s [%s]" % (gid, url, format) , 
       "image": "", 
       "name": gid, 
@@ -493,7 +497,7 @@ def botimport(repo, padurl, gid, content_type):
                     builder = _pad2igraph | compute_pedigree | graph_stats
                     
                     graph = builder( gid, padurl, reader )
-                    graphdb.set_graph(gid, graph)                                        
+                    graphdb.set_graph(gid, graph)                           
                                         
                     sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                     
@@ -524,13 +528,15 @@ def botimport(repo, padurl, gid, content_type):
                     response = make_response(pickle.dumps(graph))
                     response.headers["Content-Disposition"] = "attachment; filename=%s.pickle" % gid
                     return response
-                else : 
-                    data = export_graph(subg, id_attribute='uuid')
+                elif content_type in ( "json" , "inline" ):
+                    data = export_graph(subg, attribute_id='uuid')
                     if content_type == "json":
                         return jsonify(data)
-                    else :
+                    elif content_type == "inline":
                         data = json.dumps(data,  ensure_ascii=False)
-
+                else :
+                    data = "%s/xplor/starred/%s.json" % (ENGINES_HOST, gid)
+                         
         except BotapadCsvError as err:
             error = {
                 'class' : err.__class__.__name__,
@@ -627,19 +633,6 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
     return graph
 
         
-#@app.route('/engines', methods=['GET'])
-#def engines():
-    #r = request.path
-    #return jsonify({'routes': {
-            #'layout' : "%s/engines/layout" % ENGINES_HOST,
-            #'clustering' : "%s/engines/clustering" % ENGINES_HOST ,
-        #}})
-
-
-
-
-
-
 
 from pdgapi import graphedit
  
@@ -647,14 +640,27 @@ edit_api = graphedit.graphedit_api("graphs", app, graphdb, login_manager, socket
 app.register_blueprint(edit_api)
 
 from pdglib.graphdb_ig import engines
-from botapadapi import explore_api
+from botapadapi import explore_api, starred
+
 from  pdgapi.explor import layout_api, clustering_api
 api = explore_api(engines, graphdb)
+
+@api.route("/starred/<string:gid>.json", methods=['GET'])
+def g_json_dump(gid):
+    graph = graphdb.get_graph(gid)
+    g = starred(graph, limit=10, prune=True)
+    g = export_graph( g, id_attribute='uuid')
+
+    return jsonify(g)
+
+
 api = layout_api(engines, api)
 api = clustering_api(engines, api)
 
 
 app.register_blueprint(api)
+
+
 
 
 from pdgapi import get_engines_routes

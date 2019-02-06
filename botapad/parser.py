@@ -250,16 +250,17 @@ class Botapad(object):
         
         self.post( self.current, rows )
 
-        self.log( " * Starring %s nodes" % len(list(self.starred)) )
-        self.bot.star_nodes(self.gid, [ self.idx[e] for e in self.starred ])
-        self.starred = set()
-        
         self.log( " * [Parse] %s complete" % path )
         g = self.bot.get_igraph(weight_prop="weight")
         self.log( g.summary() )
-        self.log( self.bot.get_graph(self.gid) , self.imports)
 
-        return path , self.bot.get_graph(self.gid), self.imports
+        self.log( " * Starring %s nodes %s" % (len(list(self.starred)), self.starred ))
+        self.bot.star_nodes(self.gid, [ e for e in self.starred ])
+        self.starred = set()
+        
+        graph = self.bot.get_graph(self.gid)
+        self.log( graph , self.imports)
+        return path , graph, self.imports
 
     def parse_csvrows(self, rows, **kwargs):
         
@@ -273,9 +274,9 @@ class Botapad(object):
         
         self.log( " * [Parse] %s rows  complete" % len(rows) )
         
-        self.log( self.bot.get_graph(self.gid) , self.imports)
-
-        return self.bot.get_graph(self.gid), self.imports
+        g = self.bot.get_graph(self.gid) 
+        self.log( g, self.imports)
+        return g, self.imports
 
             
     def _parse(self, path, rows, **kwargs):
@@ -505,10 +506,13 @@ class Botapad(object):
             
             if len(index_props) == 0 : index_props = [0]
             try :
+                stars = set()
                 for values in rows:
+                    star = False
                     if values[0] and values[0][:1] == "*":
+                        print (">>> STARRING %s" % values[0])
                         values[0] = values[0][1:]
-                        self.starred.add(values[0])
+                        star = True
 
                     values = [ e.value  if e.value and v == "" else v for e,v in zip(props, values) if e.isproj == False ]
                     _names = [ e.name for e in props if e.isproj == False ]
@@ -517,9 +521,13 @@ class Botapad(object):
                         'nodetype': self.nodetypes[label]['uuid'],
                         'properties': dict(zip(_names, values))
                       }
+
+                    key = "".join([ values[i] for i in index_props ])
+
+                    if star:
+                        stars.add(key)
                       
                     if 'label' not in names:
-                        key = " ".join([ values[i] for i in index_props ])
                         postdata['properties']['label'] = key
                     
                     payload.append( postdata)
@@ -528,10 +536,11 @@ class Botapad(object):
                 node = None
                 self.log( "    [POST] @ %s %s [%s] (%s)" % (len(payload), label , ", ".join(names)  ,  ", ".join(["%s" % e for e in index_props]) )) 
 
-                for node, uuid in self.bot.post_nodes(self.gid, iter(payload), key=[names[i] for i in index_props]):
+                for node, vi in self.bot.post_nodes(self.gid, iter(payload), key=[names[i] for i in index_props]):
                     key = "%s" % ("".join([ node['properties'][names[i]] for i in index_props  ]))
-                    self.idx[ key ] = uuid
-                    self.debug(key , uuid)
+                    self.idx[ key ] = vi
+                    if key in stars : self.starred.add(node['uuid'])
+                    self.debug( "%s  %s  %s  %s" % (key , vi, node['uuid'], "   <<<<<<<<< *" if key in stars else "") )
 
             except KeyError as e:
                 print(e)
@@ -587,10 +596,6 @@ class Botapad(object):
                 #key = "%s_%s" % ( tgt, v )
                 key = "%s" % ( v )
                 if key not in self.idx :
-                    # if values[0][:1] == "*":
-                        #values[0] = values[0][1:]
-                        #starred.add(values[0])
-
                     # defaults values
                     _k = [ p.name for p in self.node_headers[tgt] if p.value ]
                     _v = [ p.value for p in self.node_headers[tgt] if p.value  ]

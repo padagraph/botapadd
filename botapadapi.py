@@ -24,6 +24,7 @@ from cello.clustering import export_clustering
 
 from pdgapi.explor import ComplexQuery, AdditiveNodes, NodeExpandQuery, layout_api, clustering_api
 
+
 from botapad.utils import export_graph, prepare_graph   
 from botapad import Botapad, BotapadError, BotapadParseError, BotapadURLError, BotapadCsvError, BotapadPostError
 
@@ -108,7 +109,15 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
 
     else :
         raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
-    
+   
+
+
+def _prune(graph, **kwargs):
+    if graph.vcount() > 1 and graph.ecount() > 1 :
+        delete = [ i for i, v in enumerate(graph.vs) 
+            if len(v.neighbors()) == 0 ]
+        graph.delete_vertices(delete)
+    return graph
     
 
 def _weights(weightings):
@@ -165,26 +174,15 @@ def explore_engine(graphdb):
             s = extract(graph, pzeros=[], weighted=weighted,mode=mode, cut=cut, length=length)
             vs = list(s.keys())
             
-        return graph.subgraph(vs)
+        return _prune(graph.subgraph(vs))
 
-    @Composable
-    def filtering(graph, single_filtered=False, **kwargs):
-        if single_filtered :
-            to_del = []
-            for v in graph.vs:
-                if not len(v.neighbors()):
-                    to_del.add(v.index)
-            graph.vs.delete(to_del)
-        
-        return graph
-        
     from cello.graphs.transform import VtxAttr
     
     searchs = []
     for k,w,l,m,n  in [
               (u"Search", True, 6, ALL ,100 ), ]:
         search = Optionable("GraphSearch")
-        search._func = subgraph
+        search._func = subgraph 
         search.add_option("weighted", Boolean(default=w))
         search.add_option("add_loops", Boolean(default=True, help="add loops on vertices"))
         search.add_option("mode", Numeric(choices=[ OUT, IN,  ALL], default=m, help="edge directions"))
@@ -205,7 +203,22 @@ def explore_engine(graphdb):
     engine.graph.set( *searchs )
     return engine
 
+
+def expand_subgraph(graph, expand, nodes,length=4, cut=100, weightings=None):
+    pz = {}
+    uuids = { v['uuid'] : v.index for v in graph.vs }
+    print(uuids)
+    pz.update( { uuids[p] : 1./len(nodes) for p in nodes } )
+    pz.update( { uuids[p] : 1. for p in expand })
+            
+    weightings = ["1"] if weightings in ([], None) else weightings
+    wneighbors = _weights(weightings)
     
+    vs = pure_prox(graph, pz, length, wneighbors)
+    vs = sortcut(vs, cut)
+    
+    return vs
+
 def expand_prox_engine(graphdb):
     """
     prox with weights and filters on UNodes and UEdges types
@@ -223,24 +236,13 @@ def expand_prox_engine(graphdb):
     engine.scores.setup(in_name="request", out_name="scores")
 
     ## Search
-    def expand(query, length=3, cut=300, nodes=False, weightings=None):
-
+    def expand(query, length=3, cut=300, weightings=None):
         graph = db_graph(graphdb, query)
         gid = query.get("graph")
-        uuids = { v['uuid'] : v.index for v in graph.vs }
-
-        pz = {}
-        qnodes = query.get("nodes", []) if nodes else []
-        qexpand = query.get("expand", [])
-        pz.update( { uuids[p] : 1./len(_nodes) for p in qnodes } )
-        pz.update( { uuids[p] : 1. for p in qexpand })
+        nodes = query.get("nodes", [])
+        expand = query.get("expand", [])
         
-        print( "expand >>> %s" % pz )
-        weightings = ["1"] if weightings in ([], None) else weightings
-        wneighbors = _weights(weightings)
-        
-        vs = pure_prox(graph, pz, length, wneighbors)
-        vs = sortcut(vs, cut)
+        vs = expand_subgraph(graph, expand, nodes, cut=cut, weightings=weightings )
         vs = [ (graph.vs[v[0]]['uuid'], v[1]) for v in vs ]
         return dict(vs)
 
@@ -248,12 +250,37 @@ def expand_prox_engine(graphdb):
     scores._func = Composable(expand)
     scores.add_option("length", Numeric( vtype=int, default=3))
     scores.add_option("cut", Numeric( vtype=int, default=50, max=300))
-    scores.add_option("nodes", Boolean( default=True))
     scores.add_option("weighting", Text(choices=[  u"0", u"1", u"weight" ], multi=True, default=u"1", help="ponderation"))
     
     engine.scores.set(expand)
 
     return engine
+
+
+def starred(graph, limit=200, prune=True):
+        
+        uuids  = graph['starred']
+        vs = []
+        if len(uuids) == 1 :            
+            mode = "prox"
+            vs = expand_subgraph(graph, uuids, [], cut=limit, weightings=None)      
+
+        elif len(uuids) <= 5:
+            mode  = "expand"
+            vs = []
+            for u in uuids:
+                vs = vs + expand_subgraph(graph, [u],[],  cut=limit/len(uuids) if len(uuids) else 0. )
+        
+        else :
+            vs = expand_subgraph(graph, [], [], cut=limit if len(uuids) else 0. )
+        
+        graph = graph.subgraph(dict(vs).keys())
+        
+        if prune :
+            graph = _prune(graph)
+  
+        return graph
+
 
 
 def explore_api(engines, graphdb):
@@ -267,7 +294,7 @@ def explore_api(engines, graphdb):
     view.add_output("graph", export_graph, id_attribute='uuid')
 
     api.register_view(view, url_prefix="explore")
-
+        
     # prox expand returns [(node,score), ...]
         
     view = EngineView(expand_prox_engine(graphdb))

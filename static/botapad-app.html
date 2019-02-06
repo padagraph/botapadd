@@ -56,15 +56,15 @@
           </div>
     
           <div id="labels" class="ui grid">
-            <div class="six wide column">
+            <div class="seven wide column">
               <padagraph-labels-control></padagraph-labels-control>
             </div>
-            <div class="six wide column">
+            <div class="nine wide column">
               <padagraph-node-search actions="add,explore"></padagraph-node-search>
-              <a href="#+10" id="plusdix" class="ui tiny active button"> +10 </a> 
-              <a href="{{graphurl}}" class="ui tiny active refresh button">refresh</a>
-            </div>
-            <div class="four wide column">
+              <a href="#+10" id="global" class="ui tiny active button"> global </a>
+              <a href="#+10" id="plusdix" class="ui tiny active button"> +10 </a>
+               
+              <a href="{{graphurl}}" class="ui tiny active refresh">Actualiser</a>
               <div id="loading"></div>
             </div>
           </div>
@@ -145,7 +145,9 @@
           $('#plusdix').click(()=> {
             Backbone.trigger('engine:expand_prox', { expand: [], weights:[] })
           });
-          
+          $('#global').click(()=> {
+            this.app.engines.explore.play();
+          });
     
         },
         attached() {
@@ -157,7 +159,7 @@
           if (this.started) return;
           this.started = true;  
 		            
-          //options['$el'] = $("#viz");            
+          //options['$el'] = $("#viz");
           var app = new App.Iframe(options);
           app.create_clustering_model();
           
@@ -171,7 +173,7 @@
               app.create_graph_model({
                   'url' : sync,
                   'urlRoot': urlRoot,
-                  'gid': gid,                  
+                  'gid': gid,         
               });
     
               app.models.graph.on('sync', function(){
@@ -221,7 +223,6 @@
                     if (sync && parse.sync == true) reset();
                   }
                 });
-                app.set_routes();
               }
               
               var keb = document.createElement("padagraph-keb")
@@ -239,6 +240,8 @@
               $("#keb .close i.close.icon").click( ()=>{ $("#keb").sidebar('hide') } )
               $("#keb_settings").click( ()=>{ $("#keb").sidebar('show') } )
               self.setupUI();
+              
+              
           };
           
           if( isurl(routes) ) {
@@ -272,6 +275,12 @@
                 }) ;
                 
                 app.listenTo(app.engines.explore, 'play:success', function(response, args, state) {
+                    $("padagraph-collection-filter").each( function(i,e) {
+                       if ( e.graph && e.reset_filters ) e.reset_filters();
+                    });
+                });
+                
+                app.listenTo(app.models.graph, 'add', function(response, args, state) {
                     $("padagraph-collection-filter").each( function(i,e) {
                        if ( e.graph && e.reset_filters ) e.reset_filters();
                     });

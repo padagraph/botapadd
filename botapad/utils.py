@@ -3,6 +3,7 @@
 import igraph
 import datetime
 import requests
+import json
 from collections import Counter
 
 from reliure.pipeline import Optionable, Composable
@@ -11,6 +12,7 @@ from botapad import Botapad
 
 from cello.graphs import pedigree
 
+from six import BytesIO
 
 
 
@@ -44,9 +46,9 @@ def calc2igraph(gid, url, description="", verbose=True, debug=False):
     botapad = Botapad(bot , gid, description, delete=False, verbose=verbose, debug=debug)
     botapad.parse(url, separator='auto', debug=False)
     graph = bot.get_igraph(weight_prop="weight")
-    graph['starred'] = []
-    graph['queries'] = []
     return graph
+    
+
     
 
 @Composable
@@ -151,10 +153,13 @@ def graph_stats(graph, **kwargs):
     
 @Composable
 def prepare_graph(gid, graph):
-
-    if not 'starred' in graph.attributes():
+    attrs = graph.attributes()
+    if not 'starred' in attrs:
         graph['starred'] = []
-    if not 'meta' in graph.attributes():
+    else :
+        graph['starred'] = [ e for e in graph['starred']]
+        
+    if not 'meta' in attrs:
         graph['meta'] = {
             'node_count': graph.vcount(),
             'edge_count': graph.ecount(),
@@ -164,11 +169,11 @@ def prepare_graph(gid, graph):
             'votes': 0
         }
 
-    if 'properties' not in graph.attributes():    
+    if 'properties' not in attrs:    
         graph['properties'] = {}
     
     v_attrs = graph.vs.attribute_names()
-    if 'nodetypes' not in graph.attributes():    
+    if 'nodetypes' not in attrs:    
         graph['nodetypes'] = [{
           "_uniq_key": "_%s_T" % gid,
           "uuid": "_%s_T" % gid,
@@ -217,7 +222,7 @@ def prepare_graph(gid, graph):
     
     
     {"choices": None, "default": None, "encoding": "utf8", "help": "", "multi": False, "type": "Text", "uniq": False, "vtype": "unicode" }
-    if 'edgetypes' not in graph.attributes():    
+    if 'edgetypes' not in attrs:    
         graph['edgetypes'] = [{ 
             'count': graph.ecount(),
             'description': "E",
@@ -284,11 +289,13 @@ def igraph2dict(graph, exclude_gattrs=[], exclude_vattrs=[], exclude_eattrs=[], 
     d['es'] = []
     
     # attributs of the graph
+    if 'starred' in attrs : 
+        d['starred']  = list(attrs.pop('starred'))
+
     if 'nodetypes' in attrs : 
         d['nodetypes']  = attrs.pop('nodetypes')
     if 'edgetypes' in attrs : 
         d['edgetypes']  = attrs.pop('edgetypes')
-    
     if 'properties' in attrs:
         d['properties'] = attrs.pop('properties', {})
 
