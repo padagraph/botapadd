@@ -648,7 +648,7 @@ api = explore_api(engines, graphdb)
 @api.route("/starred/<string:gid>.json", methods=['GET'])
 def g_json_dump(gid):
     graph = graphdb.get_graph(gid)
-    g = starred(graph, limit=10, prune=True)
+    g = starred(graph, limit=100, prune=True)
     g = export_graph( g, id_attribute='uuid')
 
     return jsonify(g)

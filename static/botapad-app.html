@@ -25,7 +25,10 @@
             height:0px;
             padding-right: 4px;
         }
-        
+        #menu .menu {
+            border: 1px solid red;
+            top: -256px !important;
+        }
     </style>
 
     <template>
@@ -38,6 +41,7 @@
             <a id="listbutton" on-click="togglelist" class="link item"><i class="list alternate outline icon"></i>list</a>
             <a id="cardbutton" on-click="togglecard" class="link item active"><i class="id card outline icon"></i>details</a>
           </div>
+          
           <padagraph-model-popup id="gvizpopup" hidden$="{{is_hidden(display_card)}}"></padagraph-model-popup>
           <padagraph-collection mode="node" hidden$="{{is_hidden(display_list)}}"></padagraph-collection>
     
@@ -59,13 +63,15 @@
             <div class="seven wide column">
               <padagraph-labels-control></padagraph-labels-control>
             </div>
-            <div class="nine wide column">
+            <div class="height wide column">
               <padagraph-node-search actions="add,explore"></padagraph-node-search>
               <a href="#+10" id="global" class="ui tiny active button"> global </a>
               <a href="#+10" id="plusdix" class="ui tiny active button"> +10 </a>
                
               <a href="{{graphurl}}" class="ui tiny active refresh">Actualiser</a>
               <div id="loading"></div>
+            </div>            
+            <div class="column">
             </div>
           </div>
         </padagraph-gviz>
@@ -195,9 +201,8 @@
           var graph = app.models.graph;
           var reset = function(){
               if ( parse.data)  {
-
                   app.set_auto_compute(false);
-                  graph.reset(parse.data, {silent:true})
+                  graph.reset(parse.data, {silent:false})
                   app.set_auto_compute(true);
                   app.auto_compute();
               }
@@ -280,7 +285,7 @@
                     });
                 });
                 
-                app.listenTo(app.models.graph, 'add', function(response, args, state) {
+                app.listenTo(app.models.graph, 'reset', function(response, args, state) {
                     $("padagraph-collection-filter").each( function(i,e) {
                        if ( e.graph && e.reset_filters ) e.reset_filters();
                     });

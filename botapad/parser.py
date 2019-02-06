@@ -175,7 +175,7 @@ class Botapad(object):
             pprint( args)
 
 
-    def read(self, path, separator='auto'):
+    def read(self, path, separator='auto', output=None, **kwargs):
         """
         path : file path or url
         """
@@ -189,15 +189,24 @@ class Botapad(object):
                 self.log( " * Downloading %s %s" % (url, separator))
                 r = requests.get(url)
                 content = r.text
+
                 self.log( "   %s, length %s encoding %s  %s\n" % (r, len(content), r.encoding, type(r.text)))
                 
                 # bug BOM ggdoc
                 if content[0:1] == u'\ufeff':
                     content = content[1:]
                 lines = content.split('\n')
+                
+                if output:
+                    with open(output, "a") as myfile:
+                        myfile.write("\n\n! %s \n\n" % path)                
+                        for line in lines:
+                            if len(line) and line[0] != "&":
+                                myfile.write("%s\n" % line)
+
             except Exception as err :
 
-                raise BotapadURLError("Can't download %s" % url, url)
+                raise BotapadURLError("Can't download %s" % url, err)
 
         else:
             self.log( " * Opening %s \n" % path)
@@ -242,11 +251,16 @@ class Botapad(object):
         return rows
 
                     
-    def parse(self, path, debug=False, **kwargs):
+    def parse(self, path, debug=False, output=None, **kwargs):
         self._debug = debug
         
+        if output:
+            with open(output, "w") as myfile:
+                myfile.write("\n! %s \n" % path)                
+        self.output = output
+    
         rows = []
-        rows = self._parse(path, rows, **kwargs)
+        rows = self._parse(path, rows, output=output,  **kwargs)            
         
         self.post( self.current, rows )
 
@@ -330,7 +344,7 @@ class Botapad(object):
                 # circular references
                 if url not in self.imports:
                     self.log("  === Import === '%s'" % url)
-                    rows = self._parse(url, rows)
+                    rows = self._parse(url, rows, **kwargs)
                 else :
                     raise BotapadParseError(self.path, "Same file is imported multiple times  ! ", row )
                     
@@ -711,6 +725,7 @@ def main():
         #parser.add_argument("--start-col" , action='store', help="", type=int, default=0)
     #parser.add_argument("--end-col" , action='store', help="", type=int, default=None)
     
+    parser.add_argument("-o", "--output" , action='store', help="csv output path", default=None)
 
     parser.add_argument("-d", "--debug" , action='store_true', help="", default=False)
     parser.add_argument("-v", "--verbose" , action='store_true', help="", default=False)
@@ -725,7 +740,7 @@ def main():
         bot = Botagraph(args.host, args.key)
         pad = Botapad(bot, args.name, description, delete=args.delete, verbose=verbose, debug=debug )
         pad.log( "VERBOSE", args.verbose, "DEBUG", args.debug )
-        pprint( pad.parse(args.path, separator=args.separator) )
+        pprint( pad.parse(args.path, separator=args.separator, output=args.output) )
 
         pad.log(" * Visit %s/graph/%s" % ( args.host, args.name, ) )
 

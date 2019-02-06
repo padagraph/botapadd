@@ -26,7 +26,7 @@ jade:
 	@echo " * Building flask templates"
 	@echo " ---------------------------\n"
 	cd ./templates && node ../node_modules/jade/bin/jade.js -P *.jade
-	cp webcomponents/botapad-app.html static/
+
 
 rundev: 
 	. venv3/bin/activate; export APP_DEBUG=false; export FLASK_APP=botapadapp.py ;export FLASK_DEBUG=1; flask run 
