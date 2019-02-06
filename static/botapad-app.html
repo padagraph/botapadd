@@ -24,11 +24,7 @@
         #cardmenu i.icon {
             height:0px;
             padding-right: 4px;
-        }
-        #menu .menu {
-            border: 1px solid red;
-            top: -256px !important;
-        }
+        }                
     </style>
 
     <template>
@@ -48,11 +44,17 @@
           <div id="menu" class="ui icon borderless vertical menu">
             <padagraph-gviz-control></padagraph-gviz-control>
             <div class="ui divider"></div>
-            <div style="height:30px" class="ui hidden divider"></div>
+
+            <a class="item" id="btn_rotate"><i class="play icon"></i></a>
+            <a class="item" id="btn_2d3d"><i class="cubes icon"></i><span>2D<span></a>
+
             <div class="ui divider"></div>
+            
             <padagraph-collection-filter mode="node" asitem="asitem" filters="all selected label types"></padagraph-collection-filter>
             <padagraph-collection-filter mode="edge" asitem="asitem" filters="all types"></padagraph-collection-filter>
-            <div class="ui divider">         </div>
+            
+            <div class="ui divider"> </div>
+            
             <padagraph-engine-control engine="layout" asitem="asitem"></padagraph-engine-control>
             <!--padagraph-engine-control( engine="clustering" asitem="asitem")-->
             <!--padagraph-engine-control( engine="explore" asitem="asitem")-->
@@ -65,8 +67,8 @@
             </div>
             <div class="height wide column">
               <padagraph-node-search actions="add,explore"></padagraph-node-search>
-              <a href="#+10" id="global" class="ui tiny active button"> global </a>
-              <a href="#+10" id="plusdix" class="ui tiny active button"> +10 </a>
+              <a href="#+10" id="btn_global" class="ui tiny active button"> global </a>
+              <a href="#+10" id="btn_plusdix" class="ui tiny active button"> +10 </a>
                
               <a href="{{graphurl}}" class="ui tiny active refresh">Actualiser</a>
               <div id="loading"></div>
@@ -148,13 +150,28 @@
               this.app.models.graph.reset({vs:[], es:[]});
             });
            
-          $('#plusdix').click(()=> {
+          $('#btn_plusdix').click(()=> {
             Backbone.trigger('engine:expand_prox', { expand: [], weights:[] })
           });
-          $('#global').click(()=> {
-            this.app.engines.explore.play();
+          $('#btn_global').click(()=> {
+            this.app.trigger('engine:explore', 'Global')
           });
-    
+          $('#btn_rotate').click(()=> {
+              var gviz = this.app.gviz
+              gviz.controls.AUTO_ROTATE = !gviz.controls.AUTO_ROTATE;
+              gviz.request_animation();            
+              var icon = gviz.controls.AUTO_ROTATE ? "pause" : "play";              
+              $('#btn_rotate i')
+                .removeClass("play pause")
+                .addClass(icon)
+          });
+          
+          $('#btn_2d3d').click(()=> {
+              var t = $('#btn_2d3d').text();
+              t = t == "2D" ? "3D" : "2D"
+              this.app.trigger('engine:layout', t + '_Force_directed')
+              $('#btn_2d3d span').text(t)
+          });
         },
         attached() {
            console.log('botapad-app attached')

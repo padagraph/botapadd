@@ -197,8 +197,8 @@ def explore_engine(graphdb):
 
     sglobal = get_graph | ProxSubgraph()
     sglobal.name = "Global"
+    sglobal.change_option_default("cut", 200);
     searchs.append(sglobal)
-
 
     engine.graph.set( *searchs )
     return engine
