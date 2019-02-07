@@ -1090,7 +1090,7 @@ gviz.ThreeViz = Backbone.View.extend({
         controls.dynamicDampingFactor = 0.3;
         controls.minDistance = 50;
         //custom
-        controls.autoRotateSpeed = 0.002;
+        controls.autoRotateSpeed = 0.00045;
         controls.AUTO_ROTATE = this.auto_rotate
 
         // init renderer

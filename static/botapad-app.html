@@ -25,6 +25,11 @@
             height:0px;
             padding-right: 4px;
         }                
+    
+        #btn_2d3d { padding: 7px; }
+        #btn_2d3d span.small { font-size: x-small}
+        #btn_2d3d span.active { font-weight: bold  }
+
     </style>
 
     <template>
@@ -46,7 +51,9 @@
             <div class="ui divider"></div>
 
             <a class="item" id="btn_rotate"><i class="play icon"></i></a>
-            <a class="item" id="btn_2d3d"><i class="cubes icon"></i><span>2D<span></a>
+            <a class="item" id="btn_2d3d"><i class="cubes icon"></i>
+            <span class="active">2D</span><span>/</span><span class='small'>3D</span>
+            </a>
 
             <div class="ui divider"></div>
             
@@ -167,10 +174,11 @@
           });
           
           $('#btn_2d3d').click(()=> {
-              var t = $('#btn_2d3d').text();
-              t = t == "2D" ? "3D" : "2D"
-              this.app.trigger('engine:layout', t + '_Force_directed')
-              $('#btn_2d3d span').text(t)
+              var t = $('#btn_2d3d span.active').text();
+              t = t == "2D" ? "3D" : "2D";
+              this.app.trigger('engine:layout', t + '_Force_directed')  
+              $('#btn_2d3d span').toggleClass('active')
+              $('#btn_2d3d span').toggleClass('small')
           });
         },
         attached() {
@@ -302,7 +310,7 @@
                     });
                 });
                 
-                app.listenTo(app.models.graph, 'reset', function(response, args, state) {
+                app.listenTo(app.models.graph, 'reset', function() {
                     $("padagraph-collection-filter").each( function(i,e) {
                        if ( e.graph && e.reset_filters ) e.reset_filters();
                     });

@@ -2046,14 +2046,6 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
             if (!app || graph == null || !graph.vs) return;
             if (this.gviz) return;
 
-            _.each($("padagraph-engine-control", this), function (el, i, l) {
-                if (el) {
-                    var engine = app.engines[el.engine];
-                    el.app = app;
-                    if (engine.blocks.models.length) el.block = engine.blocks.models[0];
-                }
-            });
-
             var filters = $("padagraph-collection-filter", this);
             if (filters.length) {
                 _(filters).forEach(function (f) {
@@ -2062,11 +2054,19 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
                 });
             }
 
-            //graph.on('reset', ()=>{
-            //_(filters).forEach((f) => {
-            //f.reset_filters()
-            //});
-            //});
+            graph.on('reset', function () {
+                _(filters).forEach(function (f) {
+                    f.reset_filters();
+                });
+            });
+
+            _.each($("padagraph-engine-control"), function (el, i, l) {
+                if (el) {
+                    var engine = app.engines[el.engine];
+                    el.app = app;
+                    if (engine.blocks.models.length) el.block = engine.blocks.models[0];
+                }
+            });
 
             var search = $("padagraph-node-search");
             if (search.length) {
@@ -2114,12 +2114,10 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
 
             app.set_viz(gviz);
 
-            var ctrl = $("padagraph-gviz-control");
-            if (ctrl.length) {
-                ctrl = ctrl[0];
+            _.each($("padagraph-gviz-control"), function (ctrl, i, l) {
                 ctrl.app = app;
                 ctrl.gviz = gviz;
-            }
+            });
 
             this.gviz = gviz;
 
