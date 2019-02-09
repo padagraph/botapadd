@@ -39,7 +39,7 @@ RUN_GUNICORN = os.environ.get('RUN_GUNICORN', None) == "1"
 PATH = "./static/images" # images storage
 
 STATIC_HOST = os.environ.get('STATIC_HOST', "")
-ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5000")
+ENGINES_HOST = os.environ.get('ENGINES_HOST', "http://localhost:5002")
 PADAGRAPH_HOST = os.environ.get('PADAGRAPH_HOST', ENGINES_HOST)
 DELETE = os.environ.get('BOTAPAD_DELETE', "nope").lower() == "true"
 
@@ -455,7 +455,8 @@ def botimport(repo, padurl, gid, content_type):
         
         'auto_rotate': int(args.get("auto_rotate", 0 )),
         'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
-            
+        
+        'layout' : args.get("layout") if args.get("layout", "2D" ) in ("2D","3D") else "2D",
     }
 
 
@@ -643,17 +644,8 @@ from pdglib.graphdb_ig import engines
 from botapadapi import explore_api, starred
 
 from  pdgapi.explor import layout_api, clustering_api
+
 api = explore_api(engines, graphdb)
-
-@api.route("/starred/<string:gid>.json", methods=['GET'])
-def g_json_dump(gid):
-    graph = graphdb.get_graph(gid)
-    g = starred(graph, limit=100, prune=True)
-    g = export_graph( g, id_attribute='uuid')
-
-    return jsonify(g)
-
-
 api = layout_api(engines, api)
 api = clustering_api(engines, api)
 

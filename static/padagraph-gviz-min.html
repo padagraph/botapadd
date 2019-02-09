@@ -630,7 +630,7 @@ require(['backbone', 'jquery', 'pdgconst'], function (Backbone, $, Const) {
 
     explore: function explore() {
       var params = { graph: this.graph, query: this.model.id };
-      Backbone.trigger('engine:explore', params);
+      Backbone.trigger('engine:explore', "Search", params);
     },
 
     edit: function edit() {
@@ -1342,7 +1342,7 @@ require(['backbone', 'pdgconst'], function (Backbone, Const) {
             } else if (action == 'explore') {
                 if (ismodel) {
                     var params = { graph: this.model.graph.id, query: this.model.id };
-                    Backbone.trigger('engine:explore', params);
+                    Backbone.trigger('engine:explore', 'Search', params);
                 }
             } else if (action == 'expand') {
                 var params = { graph: this.model.graph.id, expand: [this.model.id], weights: [] };
@@ -1702,7 +1702,7 @@ require(['backbone', 'cello', 'gviz', 'materials', 'pdgconst'], function (Backbo
     explore: function explore() {
       var graph = this.model.graph;
       var params = { graph: graph.id, query: this.model.id };
-      Backbone.trigger('engine:explore', params);
+      Backbone.trigger('engine:explore', "Search", params);
     },
 
     shortuuid: function shortuuid(model) {

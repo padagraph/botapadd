@@ -147,21 +147,21 @@
     
         // panel tabs
         setupUI(){
-    
+          var app = this.app;  
           // reset query button
           $('#btnreset').click( () => {             
-              this.app.models.clustering.reset({})                
-              this.app.models.userquery.reset();
-              this.app.models.graph.es.set_selected([]);
-              this.app.models.graph.vs.set_selected([]);
-              this.app.models.graph.reset({vs:[], es:[]});
+              app.models.clustering.reset({})                
+              app.models.userquery.reset();
+              app.models.graph.es.set_selected([]);
+              app.models.graph.vs.set_selected([]);
+              app.models.graph.reset({vs:[], es:[]});
             });
            
           $('#btn_plusdix').click(()=> {
             Backbone.trigger('engine:expand_prox', { expand: [], weights:[] })
           });
           $('#btn_global').click(()=> {
-            this.app.trigger('engine:explore', 'Global')
+            app.trigger('engine:explore', 'Global')
           });
           $('#btn_rotate').click(()=> {
               var gviz = this.app.gviz
@@ -176,13 +176,18 @@
           $('#btn_2d3d').click(()=> {
               var t = $('#btn_2d3d span.active').text();
               t = t == "2D" ? "3D" : "2D";
-              this.app.trigger('engine:layout', t + '_Force_directed')  
+              app.trigger('engine:layout', t + '_Force_directed')
               $('#btn_2d3d span').toggleClass('active')
               $('#btn_2d3d span').toggleClass('small')
           });
-        },
-        attached() {
-           console.log('botapad-app attached')
+          if (this.options.layout == "3D")$('#btn_2d3d').click(); // force 3d with option 'layout':'3D'
+      
+          var _window_resized = function(){
+              if (app.gviz) app.gviz.resize_rendering();
+            }                          
+            
+          $(window).on('resize', _window_resized );
+          _window_resized();  
         },
         
         startapp(routes, data, sync, options) {
@@ -339,13 +344,7 @@
                 document.addEventListener("gviz_attached", function(){
                   console.log("gviz_is now attached ")
                 });
-                                
-                var _window_resized = function(){
-                  if (app.gviz) app.gviz.resize_rendering();
-                }                          
-                
-                $(window).on('resize', _window_resized );
-                _window_resized();  
+              
               } 
             });            
           } // routes:

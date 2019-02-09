@@ -952,6 +952,7 @@ gviz.DEFAULTS = {
     debug : false
 };
 
+
 gviz.ThreeViz = Backbone.View.extend({
 
     initialize: function(attributes){
@@ -1455,8 +1456,9 @@ gviz.ThreeViz = Backbone.View.extend({
         if (obj.nodetype)
             material.text_lines = get_text_lines( obj, material );
         
-        if (material.shape == null) material.shape='circle';
-        
+        if (gviz.SHAPES.indexOf(material.shape) == -1 ) 
+            material.shape = 'circle';
+
         material.id = obj.id;
         return material;
     },
@@ -2029,6 +2031,8 @@ gviz.ThreeViz = Backbone.View.extend({
  *
  */
 
+gviz.SHAPES = "circle square losange diamond triangle triangle-top triangle-bottom".split(' ')
+
 gviz.ThreeVizHelpers = {
     PI2: Math.PI * 2,
 
@@ -2135,7 +2139,6 @@ gviz.ThreeVizHelpers = {
             context.scale(scale, scale);
             node._scale *= scale;
 
-            // 
             
             if (material.shape == 'circle') // centered on 0.0
             {

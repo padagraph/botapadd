@@ -143,66 +143,21 @@ def _weights(weightings):
         
     return _w
 
+
+def prox_subgraph(graph, uuids, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, **kwargs ):
     
-def explore_engine(graphdb):
-    """ Prox engine """
-    # setup
-    engine = Engine("graph")
-    engine.graph.setup(in_name="request", out_name="graph")
-
-    ## Search
-    @Composable
-    def get_graph(query, **kwargs):
-        return db_graph(graphdb, query)
+    extract = ProxExtract()
+    vs = []
+    if len(uuids):
+        for u in uuids:
+            s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
+            vs = vs + list(s.keys())
+    else :
+        s = extract(graph, pzeros=[], weighted=weighted,mode=mode, cut=cut, length=length)
+        vs = list(s.keys())
         
-    @Composable
-    def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, **kwargs ):
-
-        graph = db_graph(graphdb, query)
-
-        uuids = { v['uuid'] : v.index for v in graph.vs }
-        pz = [ q for q in query.get('units', []) ]
-        pz = [ uuids[p] for p in pz ]
+    return _prune(graph.subgraph(vs))
         
-        extract = ProxExtract()
-        vs = []
-        if len(pz):
-            for u in pz:
-                s = extract(graph, pzeros=[u], weighted=weighted,mode=mode, cut=cut, length=length)
-                vs = vs + list(s.keys())
-        else :
-            s = extract(graph, pzeros=[], weighted=weighted,mode=mode, cut=cut, length=length)
-            vs = list(s.keys())
-            
-        return _prune(graph.subgraph(vs))
-
-    from cello.graphs.transform import VtxAttr
-    
-    searchs = []
-    for k,w,l,m,n  in [
-              (u"Search", True, 6, ALL ,100 ), ]:
-        search = Optionable("GraphSearch")
-        search._func = subgraph 
-        search.add_option("weighted", Boolean(default=w))
-        search.add_option("add_loops", Boolean(default=True, help="add loops on vertices"))
-        search.add_option("mode", Numeric(choices=[ OUT, IN,  ALL], default=m, help="edge directions"))
-        search.add_option("length", Numeric( vtype=int, min=1, default=l))
-        search.add_option("cut", Numeric( vtype=int, min=2, default=n))
-        
-        search |= VtxAttr(color=[(45, 200, 34), ])
-        search |= VtxAttr(type=1)
-
-        search.name = k
-        searchs.append(search)
-
-    sglobal = get_graph | ProxSubgraph()
-    sglobal.name = "Global"
-    sglobal.change_option_default("cut", 200);
-    searchs.append(sglobal)
-
-    engine.graph.set( *searchs )
-    return engine
-
 
 def expand_subgraph(graph, expand, nodes,length=4, cut=100, weightings=None):
     pz = {}
@@ -280,11 +235,98 @@ def starred(graph, limit=200, prune=True):
   
         return graph
 
+def starred_engine(graphdb):
+    """ Prox engine """
+    # setup
+    engine = Engine("graph")
+    engine.graph.setup(in_name="request", out_name="graph")
+
+    ## Search
+    def subgraph(query, limit=200, prune=False):
+        """
+        :param mode: 
+        """
+        graph = db_graph(graphdb, query)
+        return starred(graph, limit=100, prune=True)
+        
+        
+    graph_search = Optionable("GraphSearch")
+    graph_search._func = Composable(subgraph)
+    graph_search.add_option("limit", Numeric( vtype=int, default=200))
+    graph_search.add_option("prune", Boolean(default=True))
+
+    from cello.graphs.transform import VtxAttr
+    graph_search |= VtxAttr(color=[(45, 200, 34), ])
+    graph_search |= VtxAttr(type=1)
+
+    engine.graph.set(graph_search)
+
+    return engine
+
+    
+def explore_engine(graphdb):
+    """ Prox engine """
+    # setup
+    engine = Engine("graph")
+    engine.graph.setup(in_name="request", out_name="graph")
+
+    ## Search
+    @Composable
+    def get_graph(query, **kwargs):
+        return db_graph(graphdb, query)
+        
+    @Composable
+    def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, **kwargs ):
+
+        graph = db_graph(graphdb, query)
+        
+        idx = { v['uuid'] : v.index for v in graph.vs }
+        uuids = [ q for q in query.get('units', []) ]
+        uuids = [ idx[p] for p in uuids ]
+        
+        return prox_subgraph(graph, uuids, cut=cut, weighted=weighted, length=length, mode=mode, add_loops=add_loops, **kwargs )
+        
+    from cello.graphs.transform import VtxAttr
+    
+    searchs = []
+    for k,w,l,m,n  in [
+              (u"Search", True, 6, ALL ,100 ), ]:
+        search = Optionable("GraphSearch")
+        search._func = subgraph 
+        search.add_option("weighted", Boolean(default=w))
+        search.add_option("add_loops", Boolean(default=True, help="add loops on vertices"))
+        search.add_option("mode", Numeric(choices=[ OUT, IN,  ALL], default=m, help="edge directions"))
+        search.add_option("length", Numeric( vtype=int, min=1, default=l))
+        search.add_option("cut", Numeric( vtype=int, min=2, default=n))
+        
+        search |= VtxAttr(color=[(45, 200, 34), ])
+        search |= VtxAttr(type=1)
+
+        search.name = k
+        searchs.append(search)
+
+    sglobal = get_graph | ProxSubgraph()
+    sglobal.name = "Global"
+    sglobal.change_option_default("cut", 200);
+    
+    searchs.append(sglobal)
+
+    engine.graph.set( *searchs )
+        
+    return engine
 
 
 def explore_api(engines, graphdb):
     #explor_api = explor.explore_api("xplor", graphdb, engines)
     api = ReliureAPI("xplor",expose_route=False)
+
+    # starred 
+    view = EngineView(starred_engine(graphdb))
+    view.set_input_type(ComplexQuery())
+    view.add_output("request", ComplexQuery())
+    view.add_output("graph", export_graph, id_attribute='uuid')
+
+    api.register_view(view, url_prefix="starred")
 
     # prox search returns graph only
     view = EngineView(explore_engine(graphdb))
@@ -308,6 +350,15 @@ def explore_api(engines, graphdb):
     view.add_output("graph", export_graph, id_attribute='uuid'  )
 
     api.register_view(view, url_prefix="additive_nodes")
+
+
+    
+    @api.route("/starred/<string:gid>.json", methods=['GET'])
+    def g_json_dump(gid):
+        graph = graphdb.get_graph(gid)
+        g = starred(graph, limit=100, prune=True)
+        g = export_graph( g, id_attribute='uuid')
+        return jsonify(g)
 
     @api.route("/<string:gid>.json", methods=['GET'])
     def _json_dump(gid):

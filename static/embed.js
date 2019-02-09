@@ -1104,10 +1104,22 @@ App.Base = Backbone.View.extend({
             var explore = Engine({url: routes.explore.url});
             explore.register_input("request", app.models.query);
             
-            app.listenTo( Backbone,"engine:explore", function(params){
-                app.models.query.reset_from_models(params)
+            app.listenTo( Backbone,"engine:explore", function(name, params){
+            
+                 if ( !explore.blocks.length) return;
+
+                console.log('engine:layout', name);
+                var comps = explore.blocks.at(0).components;
+                comps.each( function(e){ e.set('selected', false) } );
+
+                var comp = comps.get(name);
+                if (! comp) comp = comps.at(0);
+                comp.set('selected', true);
+                
+                app.models.query.reset_from_models(params)                
                 explore.play();
             });
+            
             app.listenTo(explore, 'play:success', app.explore_reset);
             
             app.engines.explore = explore;
