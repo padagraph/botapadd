@@ -3,8 +3,8 @@ import os
 import sys
 import json
 import argparse
-from botapi import Botagraph, BotApiError
-from botapad import *
+from botapi import Botagraph,BotaIgraph, BotApiError
+from . import *
 from reliure.types import Text , Numeric
 
 import collections 
@@ -480,7 +480,7 @@ class Botapad(object):
                     elif mode == EDGE2:
                         edge = row[0:3]
                         values = row[3:] if len(row)>1 else []
-                                        
+                             
                     src, direction, tgt = edge
                     
                     if direction not in DIRECTIONS :
@@ -510,7 +510,7 @@ class Botapad(object):
                     
             except Exception as err:
                 print( "Erreur mode : %s \n %s" % (mode, traceback.format_exc()), row )
-                raise BotapadPostError("Error while posting edges ", edges, row)
+                raise BotApiError("Error while posting edges ", edges, row)
         # Vertex
         
         if mode == VERTEX:
@@ -735,14 +735,15 @@ def main():
     verbose = args.verbose
     debug = args.debug
 
-    if args.host and args.key and args.name and args.path:
-        description = "imported from %s . " % args.path
-        bot = Botagraph(args.host, args.key)
-        pad = Botapad(bot, args.name, description, delete=args.delete, verbose=verbose, debug=debug )
-        pad.log( "VERBOSE", args.verbose, "DEBUG", args.debug )
-        pprint( pad.parse(args.path, separator=args.separator, output=args.output) )
+    
+    description = "imported from %s . " % args.path
+    #Bot = BotaIgraph(args.host, args.key)
+    bot = BotaIgraph(directed=True)
+    pad = Botapad(bot, args.name, description, delete=args.delete, verbose=verbose, debug=debug )
+    pad.log( "VERBOSE", args.verbose, "DEBUG", args.debug )
+    pprint( pad.parse(args.path, separator=args.separator, output=args.output) )
 
-        pad.log(" * Visit %s/graph/%s" % ( args.host, args.name, ) )
+    pad.log(" * Visit %s/graph/%s" % ( args.host, args.name, ) )
 
 if __name__ == '__main__':
     sys.exit(main())
