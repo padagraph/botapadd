@@ -290,7 +290,7 @@ def explore_engine(graphdb):
     
     searchs = []
     for k,w,l,m,n  in [
-              (u"Search", True, 6, ALL ,100 ), ]:
+              (u"Search", True, 3, ALL ,100 ), ]:
         search = Optionable("GraphSearch")
         search._func = subgraph 
         search.add_option("weighted", Boolean(default=w))
