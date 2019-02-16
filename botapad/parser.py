@@ -172,7 +172,6 @@ class Botapad(object):
             self._log.write( "DEBUG" )
             self._log.write( json.dumps(args))
             self._log.write( "\n" )
-            pprint( args)
 
 
     def read(self, path, separator='auto', output=None, **kwargs):

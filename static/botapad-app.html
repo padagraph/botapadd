@@ -105,6 +105,7 @@
             data: Object,        
             sync: Object,
             options: Object,        
+            userconfig: Object,     
             graphurl : String
         },
 
@@ -190,7 +191,7 @@
           _window_resized();  
         },
         
-        startapp(routes, data, sync, options) {
+        startapp(routes, data, sync, options, userconfig) {
 			
           if (this.started) return;
           this.started = true;  
@@ -260,6 +261,13 @@
                 });
               }
               
+              if (self.userconfig)
+                for (var e in self.userconfig){
+                    if (e in app.engines)
+                        app.engines[e].set_state(self.userconfig[e])
+                }
+              
+              
               var keb = document.createElement("padagraph-keb")
               var engines = [];
                 for (var k in app.keb){
@@ -297,7 +305,8 @@
                     'layout': app.engines.layout,
                     'clustering': app.engines.clustering,
                   };
-                  
+                
+                
                 
                 
                 $('padagraph-collection')[0].app = app;

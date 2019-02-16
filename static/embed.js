@@ -1105,7 +1105,7 @@ App.Base = Backbone.View.extend({
             explore.register_input("request", app.models.query);
             
             app.listenTo( Backbone,"engine:explore", function(name, params){
-            
+                
                  if ( !explore.blocks.length) return;
 
                 console.log('engine:layout', name);
@@ -1116,7 +1116,8 @@ App.Base = Backbone.View.extend({
                 if (! comp) comp = comps.at(0);
                 comp.set('selected', true);
                 
-                app.models.query.reset_from_models(params)                
+                if (params )
+                    app.models.query.reset_from_models(params)                
                 explore.play();
             });
             

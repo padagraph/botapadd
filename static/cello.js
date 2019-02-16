@@ -702,12 +702,13 @@ Cello.Doc = Backbone.Model.extend({
             var f = function(e){
                 return  e;
             };
-            
-            if(this.otype.vtype === "float") f = parseFloat;
-            if(this.otype.vtype === "int") f = parseInt;
-            if(this.otype.type === "Boolean"){
-                f =  function(e){
-                    return  [1, true, "true", "True", "TRUE", "1", "yes"].indexOf(e) >= 0;
+            if (value && value != ""){
+                if(this.otype.vtype === "float") f = parseFloat;
+                if(this.otype.vtype === "int") f = parseInt;
+                if(this.otype.type === "Boolean"){
+                    f =  function(e){
+                        return  [1, true, "true", "True", "TRUE", "1", "yes"].indexOf(e) >= 0;
+                    }
                 }
             }
             return f(value);
@@ -738,8 +739,7 @@ Cello.Doc = Backbone.Model.extend({
         /** Validate one value
         */
         _validate_one: function(val){
-            //val = this.cast(val)
-            // check enum
+            val = this.cast(val)
             var choices = this.otype.choices;
             if(choices && _.indexOf(choices, val) < 0){
                 throw new Error('invalid option value');
@@ -847,6 +847,7 @@ Cello.Doc = Backbone.Model.extend({
             }
             var drepr = {
                 name: this.name,
+                selected : this.selected
             };
             var listed_options = minimal ? this.changed_options() : this.options.models
             if(listed_options.length > 0){
@@ -860,9 +861,9 @@ Cello.Doc = Backbone.Model.extend({
         
         set_state: function(state){
             var _this = this;
-            _.each(state, function(value, opt_name){
-                _this.set_option(opt_name, value);
-            });
+            for (var key in state){
+                _this.set_option(key, state[key]);
+            }
         },
     });
 
@@ -951,7 +952,7 @@ Cello.Doc = Backbone.Model.extend({
         /** Select a component or unselect it if already selected
          * (and block allow to have no selected component)
          */
-        select: function(optionable){
+        select: function(optionable) {
             //TODO what if the component is not in the block ?
             if(optionable.selected) {
                 if(!this.required){
@@ -1007,8 +1008,8 @@ Cello.Doc = Backbone.Model.extend({
             if(minimal === undefined || minimal == null){
                 minimal = false;
             }
-            var comps = [],
-                selections = this.selected;
+            var comps = [];
+                selections = minimal ? this.selected : this.components.models;
             var default_selected = _.isEqual(_.map(selections, function(comp){return comp.name}), this.selection_default)
             
             for (var j in selections){
@@ -1029,7 +1030,8 @@ Cello.Doc = Backbone.Model.extend({
                 var comp_state = comp_config["options"];
                 var comp = _this.get_component(comp_name);
                 comp.set_state(comp_state);
-                _this.select(comp);
+                if (comp_config.selected)
+                    _this.select(comp);
             });
         },
     });
@@ -1191,7 +1193,7 @@ Cello.Doc = Backbone.Model.extend({
          */
         play: function(kwargs){
             var _this = this;
-            var state = this.get_state();
+            var state = this.get_state(true);
             var inputs = {}
             _.each(this.input_models, function(model, in_name, all){
                 inputs[in_name] = model.export_for_engine();

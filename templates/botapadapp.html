@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
     <style type="text/css">
       body, .pusher .ui.segment {
-          background: #127777;
+      
       }
       
               
@@ -22,30 +22,21 @@
     </style>
   </head>
   <body>
-    <!-- Page Contents-->
-    <div id="keb" style="background:#FAFAFA" class="ui left vertical sidebar"><a name="kebup"></a>
-      <div class="close"><a class="ui link icon"><i class="close icon"></i></a></div>
-      <div id="kebcontent">
-        <padagraph-gviz-control></padagraph-gviz-control>
-      </div>
-      <div class="close"><a href="#kebup" class="ui link icon"><i class="caret up icon"></i></a></div>
-    </div>
     <div class="pusher">
-      <div class="ui vertical center aligned segment">{% if footer %}  
-        <div class="ui text container">
-          <h1 class="ui inverted header">padagraph.io</h1>
-          <h2>Open a pad and a graph will follow </h2>
-        </div>{% endif %}
-        {% if readme %}
+      <div class="ui vertical center aligned segment">
+        <div class="ui text container"></div>
+        <h1 class="ui header"><i class="dore icons"><i class="comment outline icon"></i><i style="left:13px" class="tiny share alternate icon"></i></i>padagraph.io
+          <div class="sub header">"Open your graph and your mind will follow"</div>
+        </h1>{% if readme %}
         <div class="ui left aligned text container">
-          <h4 class="ui inverted horizontal divider">readme</h4>      {% filter markdown %}
+          <h4 class="ui horizontal divider">readme</h4>      {% filter markdown %}
                       {{readme}}
                 {% endfilter %}
         </div>{% elif promote %}
         <h4 class="ui hidden divider"></h4>
         <div class="ui left aligned text container">
-          <h5 class="ui inverted horizontal divider"><i class="icon announcement"></i>    Call for participation !</h5>
-          <div class="ui inverted one statistics">
+          <h5 class="ui horizontal divider"><i class="icon announcement"></i>    Call for participation !</h5>
+          <div class="ui one statistics">
             <div class="statistic">
               <div class="value">   {{promote.count }} </div>
               <div class="label"> datasets </div>
@@ -69,8 +60,8 @@
           </table>
         </div>{% elif stats %}
         <div class="ui left aligned text container">
-          <h4 class="ui inverted horizontal divider">stats</h4>
-          <div class="ui inverted three statistics">
+          <h4 class="ui horizontal divider">stats</h4>
+          <div class="ui three statistics">
             <div class="statistic">
               <div class="value"> {{stats.success }} </div>
               <div class="label"> imported </div>
@@ -83,7 +74,7 @@
         </div>
         <h4 class="ui hidden divider"></h4>
         <div class="ui left aligned container">
-          <h5 class="ui inverted horizontal divider">rows</h5>
+          <h5 class="ui horizontal divider">rows</h5>
           <div class="segment">
             <table class="ui compact single line table">
               <thead>
@@ -301,14 +292,14 @@
             <div class="pusher">
               <div class="ui vertical center aligned segment">
                 <div id="gviz" class="{{ 'nofoot' if not footer else '' }}">
-                  <botapad-app options="{{options}}" routes="{{routes}}" data="{{data}}" sync="{{sync}}" graphurl="{{graphurl}}"></botapad-app>
+                  <botapad-app options="{{options}}" routes="{{routes}}" data="{{data}}" sync="{{sync}}" graphurl="{{graphurl}}" userconfig="{{userconfig}}"></botapad-app>
                 </div>
               </div>
             </div>
           </body>
         </html>{% elif error %}
         <div class="ui text container">
-          <h3 class="ui inverted horizontal divider">Import error </h3>
+          <h3 class="ui horizontal divider">Import error </h3>
           <div class="ui error icon message"><i class="cloud download icon"></i>
             <div class="content">
               <h4>{{error.class}} </h4>{% if error.class == "BotLoginError" %}
@@ -348,8 +339,8 @@
         </div>
         <div class="ui horizontal divider"></div><i class="teal cloud icon"></i>{% else %}
         <div class="ui text container">
-          <h4 class="ui inverted horizontal divider">Import to {{repo}}</h4>
-          <h3 class="ui inverted header">Choose a name and fill the pad url</h3>
+          <h4 class="ui horizontal divider">Import to {{repo}}</h4>
+          <h3 class="ui header">Choose a name and fill the pad url</h3>
           <form method="post" action="/" class="ui form">
             <div class="field">
               <div class="ui huge input">
@@ -360,7 +351,7 @@
               <div class="ui huge input">
                 <input type="text" name="url" placeholder="pad url">
               </div>
-              <h4 class="ui inverted horizontal divider"></h4>
+              <h4 class="ui horizontal divider"></h4>
             </div>
             <div class="field center aligned">
               <input type="checkbox" tabindex="0" name="promote">
@@ -371,30 +362,31 @@
             </div>
           </form>
         </div>{% endif%}
-      </div>{% if footer%}  
-      <div class="ui inverted vertical footer segment">
-        <h4 class="ui inverted horizontal divider"> the bottom  </h4>
+      </div>
+      <div class="ui vertical footer segment">
+        <h4 class="ui horizontal divider"> the bottom  </h4>
         <div class="ui container">
-          <div class="ui stackable inverted equal height grid">
+          <div class="ui stackable equal height grid">
             <div class="three wide column">
-              <h4 class="ui inverted header">About</h4>
-              <div class="ui inverted link list"><a href="#" class="item">You are here</a><a href="#" class="item">Contact Us</a></div>
+              <h4 class="ui header">About</h4>
+              <div class="ui link list"><a href="#" class="item">You are here</a><a href="#" class="item">Contact Us</a></div>
             </div>
             <div class="four wide column">
-              <h4 class="ui inverted header">Services</h4>
-              <div class="ui inverted link list"><a href="/import/igraph" class="active item">Import a pad </a><a href="/import/padagraph" class="active item">Import to padagraph</a><a href="/promote" class="active item">Call for participation</a><a href="/stats" class="active item">Service statistiqs</a></div>
+              <h4 class="ui header">Services</h4>
+              <div class="ui link list"><a href="/import/igraph" class="active item">Import a pad </a><a href="/import/padagraph" class="active item">Import to padagraph</a><a href="/stats" class="active item">Service statistiques</a>
+              </div>
             </div>
             <div class="three wide column">
-              <h4 class="ui inverted header">Next </h4>
-              <div class="ui inverted link list"><a href="https://github.com/padagraph/botapadd" class="active item">Github</a><a href="" class="item">donate</a></div>
+              <h4 class="ui header">Next </h4>
+              <div class="ui link list"><a href="https://github.com/padagraph/botapadd" class="active item">Github</a><a href="" class="item">donate</a></div>
             </div>
             <div class="three wide column">
-              <h4 class="ui inverted header"> </h4>
-              <div class="ui inverted link list"><a href="//padagraph.io" class="active item">padagraph.io @2017</a></div>
+              <h4 class="ui header"> </h4>
+              <div class="ui link list"><a href="//padagraph.io" class="active item">padagraph.io @2017</a></div>
             </div>
           </div>
         </div>
-      </div>{% endif%}
+      </div>
     </div>
   </body>
 </html>

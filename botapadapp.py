@@ -398,6 +398,7 @@ def _pad2igraph(gid, url, format="csv"):
 import traceback
     
 def botimport(repo, padurl, gid, content_type):
+    import urllib.parse
 
     print( " *** botimport ", repo, content_type, gid, padurl )
     
@@ -414,7 +415,16 @@ def botimport(repo, padurl, gid, content_type):
 
     #args
     args = request.args
-     
+    
+    userconfig = {}
+    try :
+        for k in args:
+            if k.startswith("engine."):
+                engine = k.split(".")[1]
+                userconfig[engine] = json.loads(urllib.parse.unquote(args[k]))
+    except Exception as err:
+        pass # pb with config 
+        
     bgcolor = "#" + args.get("bgcolor", "dbdcce" )    
     if content_type == "embed":
         footer = False
@@ -599,7 +609,7 @@ def botimport(repo, padurl, gid, content_type):
         repo=repo, complete=complete, error=error,
         routes=routes, data=data, options=json.dumps(options),
         padurl=padurl, graphurl = graphurl, sync=sync,
-        footer=footer
+        footer=footer, userconfig=json.dumps(userconfig)
         )
 
 

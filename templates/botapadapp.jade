@@ -18,37 +18,29 @@ html
     style(type='text/css').
 
         body, .pusher .ui.segment {
-            background: #127777;
+
         }
 
                 
         
   body
-    // Page Contents
-    #keb.ui.left.vertical.sidebar( style="background:#FAFAFA" )
-      a(name="kebup")
-      .close
-        a.ui.link.icon
-          i.close.icon
-      #kebcontent
-        padagraph-gviz-control
-      
-      .close
-        a.ui.link.icon(href="#kebup")
-          i.caret.up.icon
-    
+   
     .pusher
       .ui.vertical.center.aligned.segment
 
-        {% if footer %}  
         .ui.text.container
-          h1.ui.inverted.header padagraph.io
-          h2 Open a pad and a graph will follow 
-        {% endif %}
-        
+        h1.ui.header
+            i.dore.icons
+                i.comment.outline.icon
+                i.tiny.share.alternate.icon(style={left:'13px'})
+            |padagraph.io
+            .sub.header "Open your graph and your mind will follow"
+         
+         
+         
         {% if readme %}
         .ui.left.aligned.text.container
-          h4.ui.inverted.horizontal.divider
+          h4.ui.horizontal.divider
             | readme
           |       {% filter markdown %}
           |             {{readme}}
@@ -57,10 +49,10 @@ html
         {% elif promote %}
         h4.ui.hidden.divider
         .ui.left.aligned.text.container
-          h5.ui.inverted.horizontal.divider
+          h5.ui.horizontal.divider
             i.icon.announcement
             |     Call for participation !
-          .ui.inverted.one.statistics
+          .ui.one.statistics
             .statistic
               .value    {{promote.count }} 
               .label  datasets 
@@ -82,9 +74,9 @@ html
 
         {% elif stats %}
         .ui.left.aligned.text.container
-          h4.ui.inverted.horizontal.divider
+          h4.ui.horizontal.divider
             | stats
-          .ui.inverted.three.statistics
+          .ui.three.statistics
             .statistic
               .value  {{stats.success }} 
               .label  imported 
@@ -94,7 +86,7 @@ html
             
         h4.ui.hidden.divider
         .ui.left.aligned.container
-          h5.ui.inverted.horizontal.divider
+          h5.ui.horizontal.divider
             | rows
           .segment
            table.ui.compact.single.line.table
@@ -140,7 +132,7 @@ html
         {% elif error %}
 
         .ui.text.container
-          h3.ui.inverted.horizontal.divider Import error 
+          h3.ui.horizontal.divider Import error 
           .ui.error.icon.message
             i.cloud.download.icon
             .content
@@ -204,9 +196,9 @@ html
 
         {% else %}
         .ui.text.container
-          h4.ui.inverted.horizontal.divider
+          h4.ui.horizontal.divider
             | Import to {{repo}}
-          h3.ui.inverted.header Choose a name and fill the pad url
+          h3.ui.header Choose a name and fill the pad url
           form.ui.form(method='post', action='/')
             .field
               .ui.huge.input
@@ -215,7 +207,7 @@ html
               .ui.huge.input
                 input(type='text', name='url', placeholder='pad url')
 
-              h4.ui.inverted.horizontal.divider
+              h4.ui.horizontal.divider
     
             .field.center.aligned
               input(type='checkbox', tabindex='0', name='promote')
@@ -228,36 +220,36 @@ html
  
 
  
-      {% if footer%}  
+    
   
-      .ui.inverted.vertical.footer.segment
-        h4.ui.inverted.horizontal.divider  the bottom  
+      .ui.vertical.footer.segment
+        h4.ui.horizontal.divider  the bottom  
         .ui.container
-          .ui.stackable.inverted.equal.height.grid
+          .ui.stackable.equal.height.grid
 
             .three.wide.column
-              h4.ui.inverted.header About
-              .ui.inverted.link.list
+              h4.ui.header About
+              .ui.link.list
                 a.item(href='#') You are here
                 a.item(href='#') Contact Us
 
             .four.wide.column
-              h4.ui.inverted.header Services
-              .ui.inverted.link.list
+              h4.ui.header Services
+              .ui.link.list
                 a.active.item(href='/import/igraph') Import a pad 
                 a.active.item(href='/import/padagraph') Import to padagraph
-                a.active.item(href='/promote') Call for participation
-                a.active.item(href='/stats') Service statistiqs
+                //- a.active.item(href='/promote') Call for participation
+                a.active.item(href='/stats') Service statistiques
 
             .three.wide.column
-              h4.ui.inverted.header Next 
-              .ui.inverted.link.list
+              h4.ui.header Next 
+              .ui.link.list
                 a.active.item(href='https://github.com/padagraph/botapadd') Github
                 a.item(href='') donate
 
             .three.wide.column
-              h4.ui.inverted.header  
-              .ui.inverted.link.list
+              h4.ui.header  
+              .ui.link.list
                 a.active.item(href='//padagraph.io') padagraph.io @2017
-      {% endif%}
+
  
