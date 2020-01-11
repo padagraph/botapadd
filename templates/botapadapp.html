@@ -341,7 +341,7 @@
         <div class="ui text container">
           <h4 class="ui horizontal divider">Import to {{repo}}</h4>
           <h3 class="ui header">Choose a name and fill the pad url</h3>
-          <form method="post" action="/" class="ui form">
+          <form method="post" action="/post" class="ui form">
             <div class="field">
               <div class="ui huge input">
                 <input type="text" name="gid" placeholder="graph name">
@@ -350,6 +350,9 @@
             <div class="field">
               <div class="ui huge input">
                 <input type="text" name="url" placeholder="pad url">
+              </div>
+                <div class="ui huge input">
+                    <textarea type="text" name="graph_data" placeholder="pad url"></textarea>
               </div>
               <h4 class="ui horizontal divider"></h4>
             </div>

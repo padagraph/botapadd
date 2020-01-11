@@ -314,9 +314,20 @@ def embed():
 
 FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else "" )  for k,v in igraph.Graph._format_mapping.items()]
 
+@app.route('/post', methods=['GET', 'POST'])
+def of_post():
+    print(request.method)
+    print(request)
+    padurl = request.form.get("url")
+    graphurl = "/import?s=%s&gid=graph2&nofoot=1" % (padurl)
+    return botimport('post', padurl, "graph", "embed")
+
+
 
 FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
 FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
+
+
 
 
 def uuid(url):
@@ -345,7 +356,6 @@ def home():
 def import2pdg(repo='igraph', content="html"):
     """
     """
-    
     if repo in ("padagraph", "igraph"):
         content = request.form.get('content_type', content)
         if content in ("html", "embed", "pickle", "json", ):
@@ -372,12 +382,37 @@ def import2pdg(repo='igraph', content="html"):
             
 
 
-from botapadapi import pad2igraph, pad2pdg, starred
+from botapadapi import pad2igraph, pad2pdg, starred, gml2igraph
 
 from reliure.pipeline import Optionable, Composable
 
+
 @Composable
-def _pad2igraph(gid, url, format="csv"):
+def _gml2igraph(gid, content, format="gml"):
+    format = "gml"
+    url = "posted-data"
+    graph = gml2igraph(gid, content)
+
+    if not 'meta' in graph.attributes(): graph['meta'] = {}
+    graph['meta']['gid'] = gid
+    graph['meta']['graph'] = gid
+    graph['properties'] = {
+        "description": "%s imported from %s [%s]" % (gid, url, format),
+        "image": "",
+        "name": gid,
+        "tags": [
+            "Botapad", format
+        ]
+    }
+    graph['meta']['owner'] = None
+    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+    return prepare_graph(gid, graph)
+
+
+@Composable
+def _pad2igraph(gid, url, format="gml"):
+    print(format, url)
+    format = "gml"
     graph = pad2igraph(gid, url, format, delete=True, store=LOCAL_PADS_STORE)
     
     if not 'meta' in graph.attributes() : graph['meta'] = {}
@@ -486,7 +521,15 @@ def botimport(repo, padurl, gid, content_type):
         
         promote = 1 if request.form.get('promote', 0)  else 0    
 
-        try : 
+        try :
+            print(repo)
+            if repo == "post":
+                print("POST: %s"% (request.form.get("graph_data"),))
+                sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+                content = request.form.get("graph_data")
+                builder = _gml2igraph | compute_pedigree | graph_stats
+                graph = builder(gid, content, reader)
+                graphdb.set_graph(gid, graph)
             if repo == "padagraph":
                 pad2pdg(gid, padurl, PADAGRAPH_HOST, KEY, DELETE , debug=app.config['DEBUG'])
                 

@@ -45,6 +45,7 @@ def pad2pdg(gid, url, host, key, delete, debug=False):
 AVAILABLE_FORMATS = ('pickle', 'graphml', 'graphmlz', 'gml', 'pajek')
         
 def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
+    print(url, format)
 
     print ("pad2igraph", gid, url, format )
     
@@ -78,18 +79,21 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
         content = None
         if url[0:4] == 'http':
             try :
-                url = convert_url(path)
+                import requests as rq
+                # url = convert_url(path)
                 if format in ( 'pickle', 'picklez'):
                     raise ValueError('no pickle from HTTP : %s ' % url )
-                print( " === Downloading %s %s\n" % (url, separator))
-                content = requests.get(url).text
+                #print( " === Downloading %s %s\n" % (url, separator))
+                content = rq.get(url).text
+                print(content)
             except :
                 raise BotapadURLError("Can't download %s" % url, url)
 
         else : 
-            try :                 
+            try :
                 print (" === reading  %s/%s.%s" % (store, url, format) )
-                content = open("%s/%s.%s" % (store, url, format) , 'r').read()
+                #content = open("%s/%s.%s" % (store, url, format) , 'r').read()
+                content = open("%s/%s" % (store, url), 'r').read()
             except Exception as err :
                 raise BotapadURLError("Can't open file %s: %s" % (url, err), url)
 
@@ -110,6 +114,15 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
     else :
         raise BotapadError('%s : Unsupported format %s file at %s ' % ( gid, format, url ))
    
+
+def gml2igraph(gid, content):
+    with named_temporary_file(text=False) as tmpf:
+        outf = open(tmpf, "wt")
+        outf.write(content)
+        outf.close()
+        graph = igraph.read(tmpf, format="gml")
+
+    return prepare_graph(gid, graph)
 
 
 def _prune(graph, **kwargs):
