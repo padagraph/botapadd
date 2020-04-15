@@ -390,7 +390,7 @@ def explore_api(engines, graphdb):
         meta = graphdb.get_graph_metadata(gid)
         graph = engine.play({'graph':gid})['graph']
 
-        for k,v in meta.iteritems():
+        for k,v in meta.items():
             graph[k] = v
 
         response = make_response(dumps(graph))

@@ -319,8 +319,19 @@ def of_post():
     print(request.method)
     print(request)
     padurl = request.form.get("url")
-    graphurl = "/import?s=%s&gid=graph2&nofoot=1" % (padurl)
-    return botimport('post', padurl, "graph", "embed")
+    gid = request.form.get("gid")
+    graphurl = "/should_not_be_used"
+    return botimport('post', padurl, gid, "embed")
+
+
+@app.route('/rstudio', methods=['GET'])
+def rstudio():
+    print(request.method)
+    gid = request.args.get("gid")
+    print("gid " + gid)
+    graphurl = "/rstudio?gid=%s" % (gid,)
+    return botimport('rstudio', None, gid, "embed")
+
 
 
 
@@ -435,7 +446,7 @@ import traceback
 def botimport(repo, padurl, gid, content_type):
     import urllib.parse
 
-    print( " *** botimport ", repo, content_type, gid, padurl )
+    print(" *** botimport ", repo, content_type, gid, padurl )
     
     action = "%s?%s" % (repo, request.query_string)
     routes = "%s/engines" % ENGINES_HOST
@@ -523,6 +534,9 @@ def botimport(repo, padurl, gid, content_type):
 
         try :
             print(repo)
+            if repo == "rstudio":
+                sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+                graph = graphdb.get_graph(gid)
             if repo == "post":
                 print("POST: %s"% (request.form.get("graph_data"),))
                 sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
