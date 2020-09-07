@@ -124,6 +124,16 @@ def gml2igraph(gid, content):
 
     return prepare_graph(gid, graph)
 
+def graphml2igraph(gid, content):
+    with named_temporary_file(text=False) as tmpf:
+        outf = open(tmpf, "wt")
+        outf.write(content)
+        outf.close()
+        graph = igraph.read(tmpf, format="graphml")
+
+    return prepare_graph(gid, graph)
+
+
 
 def _prune(graph, **kwargs):
     if graph.vcount() > 1 and graph.ecount() > 1 :

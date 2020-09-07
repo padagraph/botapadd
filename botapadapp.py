@@ -12,7 +12,7 @@ import json
 from functools import wraps
 
 from flask import Flask, Response, make_response, g, current_app, request
-from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify
+from flask import render_template, render_template_string, abort, redirect, url_for,  jsonify, send_file
 
 from botapi import BotApiError, BotLoginError
 
@@ -316,19 +316,28 @@ FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else ""
 
 @app.route('/post', methods=['GET', 'POST'])
 def of_post():
-    print(request.method)
-    print(request)
     padurl = request.form.get("url")
     gid = request.form.get("gid")
     graphurl = "/should_not_be_used"
     return botimport('post', padurl, gid, "embed")
 
 
+@app.route('/graphml', methods=['GET'])
+def get_graphml():
+    gid = request.args.get("gid")
+    g = graphdb.get_graph(gid)
+    import tempfile
+    f = tempfile.TemporaryFile()
+    g.write_graphml(f)
+    f.flush()
+    f.seek(0)
+    #return Response(f, mimetype="application/graphml+xml")
+    return send_file(f, mimetype="application/xml", as_attachment=True, attachment_filename="%s.xml" % (gid))
+
+
 @app.route('/rstudio', methods=['GET'])
 def rstudio():
-    print(request.method)
     gid = request.args.get("gid")
-    print("gid " + gid)
     graphurl = "/rstudio?gid=%s" % (gid,)
     return botimport('rstudio', None, gid, "embed")
 
@@ -393,7 +402,7 @@ def import2pdg(repo='igraph', content="html"):
             
 
 
-from botapadapi import pad2igraph, pad2pdg, starred, gml2igraph
+from botapadapi import pad2igraph, pad2pdg, starred, gml2igraph, graphml2igraph
 
 from reliure.pipeline import Optionable, Composable
 
@@ -419,10 +428,30 @@ def _gml2igraph(gid, content, format="gml"):
     graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
     return prepare_graph(gid, graph)
 
+@Composable
+def _graphml2igraph(gid, content, format="graphml"):
+    format = "graphml"
+    url = "posted-data"
+    graph = graphml2igraph(gid, content)
+    if not 'meta' in graph.attributes(): graph['meta'] = {}
+    graph['meta']['gid'] = gid
+    graph['meta']['graph'] = gid
+    graph['properties'] = {
+        "description": "%s imported from %s [%s]" % (gid, url, format),
+        "image": "",
+        "name": gid,
+        "tags": [
+            "Botapad", format
+        ]
+    }
+    graph['meta']['owner'] = None
+    graph['meta']['date'] = datetime.datetime.now().strftime("%Y-%m-%d %Hh%M")
+    return prepare_graph(gid, graph)
+
+
 
 @Composable
 def _pad2igraph(gid, url, format="gml"):
-    print(format, url)
     format = "gml"
     graph = pad2igraph(gid, url, format, delete=True, store=LOCAL_PADS_STORE)
     
@@ -533,7 +562,6 @@ def botimport(repo, padurl, gid, content_type):
         promote = 1 if request.form.get('promote', 0)  else 0    
 
         try :
-            print(repo)
             if repo == "rstudio":
                 sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                 graph = graphdb.get_graph(gid)
@@ -541,7 +569,8 @@ def botimport(repo, padurl, gid, content_type):
                 print("POST: %s"% (request.form.get("graph_data"),))
                 sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                 content = request.form.get("graph_data")
-                builder = _gml2igraph | compute_pedigree | graph_stats
+                #builder = _gml2igraph | compute_pedigree | graph_stats
+                builder = _graphml2igraph | compute_pedigree | graph_stats
                 graph = builder(gid, content, reader)
                 graphdb.set_graph(gid, graph)
             if repo == "padagraph":

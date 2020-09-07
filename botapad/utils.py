@@ -196,8 +196,11 @@ def prepare_graph(gid, graph):
            
     if 'nodetype' not in v_attrs:
         graph.vs['nodetype'] = [ "_%s_T" % gid for e in graph.vs ]
+    print(v_attrs)
     if 'uuid' not in v_attrs:
-        if 'id' in v_attrs: 
+        if 'name' in v_attrs:
+            graph.vs['uuid'] = [ "%s" % e for e in graph.vs['name'] ]
+        elif 'id' in v_attrs: 
             graph.vs['uuid'] = [ "%s" % int(e) for e in graph.vs['id'] ]
         else :
             graph.vs['uuid'] = [ "%s" % e for e in range(len(graph.vs)) ]
