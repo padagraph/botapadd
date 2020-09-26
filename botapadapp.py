@@ -314,6 +314,17 @@ def embed():
 
 FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else "" )  for k,v in igraph.Graph._format_mapping.items()]
 
+
+
+@app.route('/zenodo/', methods=['GET'])
+def of_zenodo():
+    md = codecs.open('README.md', 'r', encoding='utf8').read()
+    url = request.args.get('url', None)
+    gid = request.args.get('gid', None)
+    print(url,gid)
+    return render_template('botapadapp.html', readme=md )
+
+
 @app.route('/post', methods=['GET', 'POST'])
 def of_post():
     padurl = request.form.get("url")
@@ -452,7 +463,7 @@ def _graphml2igraph(gid, content, format="graphml"):
 
 @Composable
 def _pad2igraph(gid, url, format="gml"):
-    format = "gml"
+    print("grr",format)
     graph = pad2igraph(gid, url, format, delete=True, store=LOCAL_PADS_STORE)
     
     if not 'meta' in graph.attributes() : graph['meta'] = {}
@@ -562,6 +573,10 @@ def botimport(repo, padurl, gid, content_type):
         promote = 1 if request.form.get('promote', 0)  else 0    
 
         try :
+            if repo == "coucou":
+                print("coucou", gid, padurl)
+                sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+                graph = graphdb.get_graph(gid)
             if repo == "rstudio":
                 sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
                 graph = graphdb.get_graph(gid)

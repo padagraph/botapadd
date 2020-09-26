@@ -49,7 +49,7 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
 
     print ("pad2igraph", gid, url, format )
     
-    if format == 'csv':
+    if format == 'csv' or format == "xls":
         
         try : 
             description = "imported from %s" % url
@@ -57,7 +57,7 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
                 url = "%s/%s.%s" % (store, url, format) 
             bot = BotaIgraph(directed=True)
             botapad = Botapad(bot , gid, description, delete=delete, verbose=True, debug=False)
-            botapad.parse(url, separator='auto', debug=debug)
+            botapad.parse(url, separator='auto', debug=debug, format=format)
             graph = bot.get_igraph(weight_prop="weight")
 
             if graph.vcount() == 0 :
