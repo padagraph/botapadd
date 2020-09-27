@@ -316,12 +316,13 @@ FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else ""
 
 
 
-@app.route('/zenodo/', methods=['GET'])
+@app.route('/zenodo/<string:record>/<string:filename>', methods=['GET'])
 def of_zenodo():
     md = codecs.open('README.md', 'r', encoding='utf8').read()
     url = request.args.get('url', None)
     gid = request.args.get('gid', None)
     print(url,gid)
+
     return render_template('botapadapp.html', readme=md )
 
 
