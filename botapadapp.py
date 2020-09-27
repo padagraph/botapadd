@@ -316,14 +316,22 @@ FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else ""
 
 
 
-@app.route('/zenodo/<string:record>/<string:filename>', methods=['GET'])
-def of_zenodo():
-    md = codecs.open('README.md', 'r', encoding='utf8').read()
-    url = request.args.get('url', None)
-    gid = request.args.get('gid', None)
-    print(url,gid)
+@app.route('/zenodo/<string:record>', methods=['GET'])
+def zenodo_menu(record):
+    from zenodo_utils import get_record_items
+    print("zenodo", record)
+    record = get_record_items(record)
+    return render_template('zenodo.html', title=record.title, items=record.item_array() )
 
-    return render_template('botapadapp.html', readme=md )
+@app.route('/zenodo/<string:record>/<string:filename>', methods=['GET'])
+def graph_of_zenodo(record, filename):
+    from zenodo_utils import get_file_url
+    print("zenodo", record)
+    padurl = get_file_url(record, filename)
+    gid = f"{record}-{filename[:-4]}"
+    format = "xls"
+    return botimport("igraph", padurl, gid, "html", format=format)
+
 
 
 @app.route('/post', methods=['GET', 'POST'])
@@ -484,7 +492,7 @@ def _pad2igraph(gid, url, format="gml"):
 
 import traceback
     
-def botimport(repo, padurl, gid, content_type):
+def botimport(repo, padurl, gid, content_type, format="csv"):
     import urllib.parse
 
     print(" *** botimport ", repo, content_type, gid, padurl )
@@ -518,7 +526,7 @@ def botimport(repo, padurl, gid, content_type):
     else : 
         footer = (args.get('footer', 0) == "1") # default false
 
-    reader = args.get("format", "csv")
+    reader = args.get("format", format)
 
     args =  dict(zip(
         request.args.keys(),
