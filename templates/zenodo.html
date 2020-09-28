@@ -16,8 +16,8 @@
       body, .pusher .ui.segment {
 
       }
-
     </style>
+      <script src="/static/zenodo_index.js"></script>
   </head>
   <body>
     <div class="pusher">
@@ -26,28 +26,13 @@
         <h1 class="ui header"><i class="dore icons"><i class="comment outline icon"></i><i style="left:13px" class="tiny share alternate icon"></i></i>padagraph.io
           <div class="sub header">"Open your graph and your mind will follow"</div>
         </h1>
-        <div class="ui left aligned text container">
-          <h4 class="ui horizontal divider">Index of a Zenodo record</h4>
-            <h2>{{ title }}</h2>
-        </div>
-        <h4 class="ui hidden divider"></h4>
-        <div class="ui left aligned text container">
-          <h5 class="ui horizontal divider"><i class="icon announcement"></i> Record Files</h5>
-          <table class="ui compact single line table">
-            <thead>
-              <tr>
-                <th>name</th>
-                <th>link</th>
-              </tr>
-            </thead>
-            <tbody>{% for item in items %}
-              <tr>
-                <td>{{ item.name }}</td>
-                <td><a href="{{ item.url }}" target="_blank">{{ item.url }}</a></td>
-              </tr>{% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <div id="zenodo"/>
+          <script>
+                var app = Elm.Main.init({
+        node: document.getElementById('zenodo'),
+        flags:"{{recordID}}"
+    });
+          </script>
       </div>
     </div>
 <div class="ui vertical footer segment">

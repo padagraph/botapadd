@@ -213,8 +213,6 @@ def graph_url(gid):
 # === app routes ===
 
 
-
-
 @app.route('/image/<string:gid>', methods=['GET', 'POST'])
 def image(gid):
     return redirect( img_url(gid) )
@@ -318,10 +316,11 @@ FORMAT = [ (k, 'import' if  v[0]!= None else "" ,'export' if  v[1]!=None else ""
 
 @app.route('/zenodo/<string:record>', methods=['GET'])
 def zenodo_menu(record):
-    from zenodo_utils import get_record_items
+    #from zenodo_utils import get_record_items
     print("zenodo", record)
-    record = get_record_items(record)
-    return render_template('zenodo.html', title=record.title, items=record.item_array() )
+    #record = get_record_items(record)
+    return render_template('zenodo.html', recordID=record)
+    #, title=record.title, items=record.item_array() )
 
 @app.route('/zenodo/<string:record>/<string:filename>', methods=['GET'])
 def graph_of_zenodo(record, filename):

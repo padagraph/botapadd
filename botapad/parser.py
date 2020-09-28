@@ -253,12 +253,14 @@ class Botapad(object):
         import xlrd
         r = requests.get(path)
         excel_data = xlrd.open_workbook(file_contents=r.content)
-        sheet = excel_data.sheet_by_index(0)
+
+
         rows = []
-        for i in range(sheet.nrows):
-            cells = sheet.row_values(i)
-            if any([x.strip != '' for x in cells]):
-                rows.append(cells)
+        for sheet in excel_data.sheets():
+            for i in range(sheet.nrows):
+                cells = sheet.row_values(i)
+                if any([x.strip != '' for x in cells]):
+                    rows.append(cells)
         return rows
                     
     def parse(self, path, debug=False, output=None, **kwargs):
@@ -313,6 +315,9 @@ class Botapad(object):
         self.imports.add(path)
         self.path = path
         format = kwargs.get("format","csv")
+        if path.endswith("xls"):
+            format = "xls"
+
         if format == "xls":
             csv = self.read_xls(path, **kwargs)
         else:
