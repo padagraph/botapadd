@@ -93,14 +93,15 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
             try :
                 print (" === reading  %s/%s.%s" % (store, url, format) )
                 #content = open("%s/%s.%s" % (store, url, format) , 'r').read()
-                content = open("%s/%s" % (store, url), 'r').read()
+                content = open("%s/%s" % (store, url), 'rb').read()
+                print("plop")
             except Exception as err :
                 raise BotapadURLError("Can't open file %s: %s" % (url, err), url)
 
 
         try :
             with named_temporary_file(text=False) as tmpf: 
-                outf = open(tmpf, "wt") 
+                outf = open(tmpf, "wb")
                 outf.write(content) 
                 outf.close()         
                 graph =  igraph.read(tmpf, format=format) 
