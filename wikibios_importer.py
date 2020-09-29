@@ -101,12 +101,12 @@ def readOne(dir: Path, lang, knownNE):
         x = ElementTree.parse(xml_file)
         attrs = x.getroot().attrib
         page = PageNode(f"P-{lang}-" + attrs['id'], lang, attrs['url'], attrs['title'])
-        #if(lang == "zh" and attrs["id_en"] != "None"):
-            #edges.append(TranslationEdge(page.id, f"P-en-{attrs['id_en']}"))
+        if(lang == "zh" and attrs["id_en"] != "None"):
+            edges.append(TranslationEdge(page.id, f"P-en-{attrs['id_en']}"))
         with open(csv_file, newline='') as f:
             reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE )
             for row in reader:
-                if row['type'] in {"GPE", "ORG", "PERS", "LOC"}:
+                if row['type'] in {"GPE", "ORG", "PERSON","PER", "LOC"}:
                     eid = "E-" + row[f'id_{lang}'] + f"-{row['entity']}"
                     ne = EntityNode(eid, row['entity'], row['type'], lang, row.get('link_zh','None'), row['link_en'], row.get('id_zh',"None"), row['id_en'])
                     if eid not in knownNE:
@@ -150,13 +150,13 @@ if __name__ == "__main__":
     ne = {}
     edges = []
     print("read en")
-    for dir in it.islice(EN_DIR.iterdir(),60000):
+    for dir in it.islice(EN_DIR.iterdir(),300000):
         page, newEdges = readOne(dir, "en", ne)
         if page:
             pages[page.id] = page
             edges.extend(newEdges)
     print("read zh")
-    for dir in it.islice(ZH_DIR.iterdir(),60000):
+    for dir in it.islice(ZH_DIR.iterdir(),300000):
         page, newEdges = readOne(dir, "zh", ne)
         if page:
             pages[page.id] = page
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     bot, ntids, etids = create_graph()
 
     edges.extend(getEntitiesTranslations(ne.values()))
-    valid_nodes = {k for k,v in countDegres(edges).items() if v > 2}
+    valid_nodes = {k for k,v in countDegres(edges).items() if v > 4 or k.startswith("P")}
     print(len(valid_nodes))
     nodes_uuids = {}
     def getNodesIterator():
@@ -209,12 +209,13 @@ if __name__ == "__main__":
         nid = node['properties']['id']
         nodes_uuids[nid] = uuid
     list(bot.post_edges(gid, getEdgesIterator()))
-
+    print("del")
+    del nodes_uuids, valid_nodes, ne, edges, pages
     #print(f"{len(pages)} pages, {len(ne)} entities, {len(edges)} links")
-    g = bot.get_graph(gid)
-    print(g)
+
+    print("build igraph")
     ig = bot.get_igraph(gid)
     import igraph
     import pickle
-
+    print("write pickle")
     ig.write_pickle("pads/wiki.pickle")
