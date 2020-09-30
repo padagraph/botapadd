@@ -5,10 +5,17 @@ from pathlib import Path
 import itertools as it
 from collections import namedtuple, Counter, defaultdict
 
-
+import opencc
 
 from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from reliure.types import Text
+
+
+converter = opencc.OpenCC('s2t.json')
+
+def convert(s: str):
+    return converter.convert(s.rstrip(".,)"))
+
 
 gid = "wikibiographies"
 
@@ -51,6 +58,9 @@ TranslationEdgeType = EdgeType("TranslationEdge", "page --translation--> page", 
 
 ZH_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_zh")
 EN_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_en")
+
+ZH_DIR = Path("/data-ssd/wikipedia/Biographies_12_08_2020_zh")
+EN_DIR = Path("/data-ssd/wikipedia/Biographies_12_08_2020_en")
 
 
 
@@ -100,22 +110,26 @@ def readOne(dir: Path, lang, knownNE):
     if xml_file.exists():
         x = ElementTree.parse(xml_file)
         attrs = x.getroot().attrib
-        page = PageNode(f"P-{lang}-" + attrs['id'], lang, attrs['url'], attrs['title'])
+        page = PageNode(f"P-{lang}-" + attrs['id'], lang, attrs['url'], converter.convert(attrs['title']))
         if(lang == "zh" and attrs["id_en"] != "None"):
             edges.append(TranslationEdge(page.id, f"P-en-{attrs['id_en']}"))
         with open(csv_file, newline='') as f:
             reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE )
-            for row in reader:
-                if row['type'] in {"GPE", "ORG", "PERSON","PER", "LOC"}:
-                    eid = "E-" + row[f'id_{lang}'] + f"-{row['entity']}"
-                    ne = EntityNode(eid, row['entity'], row['type'], lang, row.get('link_zh','None'), row['link_en'], row.get('id_zh',"None"), row['id_en'])
-                    if eid not in knownNE:
-                        knownNE[eid] = ne
-                        if ne.id_zh != "None":
-                            edges.append(RefersEdge(ne.id, f"P-zh-{ne.id_zh}"))
-                        if ne.id_en != "None":
-                            edges.append(RefersEdge(ne.id, f"P-en-{ne.id_en}"))
-                    edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
+            rows = [row for row in reader if row['type'] in {"GPE", "ORG", "PERSON","PER", "LOC"}]
+            linked = {row['entity'] for row in rows if row[f'link_{lang}'] != 'None'}
+            rows = [row for row in rows if row[f'link_{lang}'] != 'None' or row['entity'] not in linked]
+            for row in rows:
+                    entity_trad = convert(row['entity'])
+                    if entity_trad != page.label:
+                        eid = "E-" + row[f'id_{lang}'] + f"-{entity_trad}"
+                        ne = EntityNode(eid, entity_trad, row['type'], lang, row.get('link_zh','None'), row['link_en'], row.get('id_zh',"None"), row['id_en'])
+                        if eid not in knownNE:
+                            knownNE[eid] = ne
+                            if ne.id_zh != "None":
+                                edges.append(RefersEdge(ne.id, f"P-zh-{ne.id_zh}"))
+                            if ne.id_en != "None":
+                                edges.append(RefersEdge(ne.id, f"P-en-{ne.id_en}"))
+                        edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
         return page, edges
     return None, []
 
