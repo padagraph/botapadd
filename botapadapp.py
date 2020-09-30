@@ -614,8 +614,8 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
     
                 else :
 
-                    builder = _pad2igraph | compute_pedigree | graph_stats
-                    
+                    #builder = _pad2igraph | compute_pedigree | graph_stats
+                    builder = _pad2igraph | graph_stats
                     graph = builder( gid, padurl, reader )
                     graphdb.set_graph(gid, graph)                           
                                         

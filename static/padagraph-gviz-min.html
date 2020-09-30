@@ -76,7 +76,7 @@ require(['backbone', 'underscore'], function (Backbone, _) {
 
     handleExplore: function handleExplore() {
       var params = { graph: this.graph, query: this.model.uuid };
-      Backbone.trigger('engine:explore', params);
+      Backbone.trigger('engine:explore', "Search", params);
       this.fire('completion-close');
     }
   });
@@ -3118,7 +3118,7 @@ require(['backbone', 'jquery', 'semantic'], function (Backbone, $, semantic) {
         }
     });
 });</script></dom-module><dom-module id="padagraph-gviz-control" assetpath="./"><style>a.link.icon { padding: 4px; }
-a i.icon { margin: 0px; }</style><template><a id="vtx_size_inc" class="ui item"><i class="large zoom icon"></i></a><a id="vtx_size_dec" class="ui item"><i class="large zoom out icon"></i></a><a id="font_size_inc" class="ui item"><i class="large fitted font icon"></i><i class="small fitted add icon"></i></a><a id="font_size_dec" class="ui item"><i class="large fitted font icon"></i><i class="small fitted minus icon"></i></a></template><script>"use strict";
+a i.icon { margin: 0px; }</style><template><a id="vtx_size_inc" title="{{i18n.vtx_size_inc}}" class="ui item"><i class="large zoom icon"></i></a><a id="vtx_size_dec" title="{{i18n.vtx_size_dec}}" class="ui item"><i class="large zoom out icon"></i></a><a id="font_size_inc" title="{{i18n.font_size_inc}}" class="ui item"><i class="large fitted font icon"></i><i class="small fitted add icon"></i></a><a id="font_size_dec" title="{{i18n.font_size_dec}}" class="ui item"><i class="large fitted font icon"></i><i class="small fitted minus icon"></i></a></template><script>"use strict";
 
 require(['jquery'], function ($) {
   Polymer({
@@ -3127,7 +3127,8 @@ require(['jquery'], function ($) {
     properties: {
       // engine for parameters ?  
       app: Object,
-      gviz: Object
+      gviz: Object,
+      i18n: Object
     },
 
     observers: ["setupUI(app, gviz)"],

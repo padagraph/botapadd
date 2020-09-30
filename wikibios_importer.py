@@ -59,8 +59,8 @@ TranslationEdgeType = EdgeType("TranslationEdge", "page --translation--> page", 
 ZH_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_zh")
 EN_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_en")
 
-ZH_DIR = Path("/data-ssd/wikipedia/Biographies_12_08_2020_zh")
-EN_DIR = Path("/data-ssd/wikipedia/Biographies_12_08_2020_en")
+# ZH_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_zh")
+# EN_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_en")
 
 
 
@@ -164,13 +164,13 @@ if __name__ == "__main__":
     ne = {}
     edges = []
     print("read en")
-    for dir in it.islice(EN_DIR.iterdir(),300000):
+    for dir in it.islice(EN_DIR.iterdir(),3000):
         page, newEdges = readOne(dir, "en", ne)
         if page:
             pages[page.id] = page
             edges.extend(newEdges)
     print("read zh")
-    for dir in it.islice(ZH_DIR.iterdir(),300000):
+    for dir in it.islice(ZH_DIR.iterdir(),3000):
         page, newEdges = readOne(dir, "zh", ne)
         if page:
             pages[page.id] = page
@@ -179,7 +179,8 @@ if __name__ == "__main__":
     bot, ntids, etids = create_graph()
 
     edges.extend(getEntitiesTranslations(ne.values()))
-    valid_nodes = {k for k,v in countDegres(edges).items() if v > 4 or k.startswith("P")}
+    valid_nodes = {k for k,v in countDegres(edges).items() if v > 10 or k.startswith("P")}
+    print(Counter(countDegres(edges).values()))
     print(len(valid_nodes))
     nodes_uuids = {}
     def getNodesIterator():

@@ -1027,7 +1027,7 @@ App.Base = Backbone.View.extend({
                 Backbone.trigger(Const.unselect_nodes);
                 Backbone.trigger( Const.unselect_edges);
                 graph.vs.set_selected(vtx);
-            }
+            }            
         });
 
         app.listenTo(Backbone, Const.select_edge, function(edge, event){
