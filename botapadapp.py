@@ -354,6 +354,15 @@ def get_graphml():
     return send_file(f, mimetype="application/xml", as_attachment=True, attachment_filename="%s.xml" % (gid))
 
 
+
+
+@app.route('/wikibiographies', methods=['GET'])
+def wikibios():
+    gid = "wikibiographies"
+    graphurl = "/rstudio?gid=%s" % (gid,)
+    return botimport('rstudio', None, gid, "embed")
+
+
 @app.route('/rstudio', methods=['GET'])
 def rstudio():
     gid = request.args.get("gid")
