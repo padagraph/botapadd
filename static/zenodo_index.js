@@ -6276,12 +6276,16 @@ var $author$project$Main$fileDecoder = A3(
 		$elm$json$Json$Decode$field,
 		'links',
 		A2($elm$json$Json$Decode$field, 'self', $elm$json$Json$Decode$string)));
+var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $elm$json$Json$Decode$map4 = _Json_map4;
 var $author$project$Main$recordDecoder = A5(
 	$elm$json$Json$Decode$map4,
 	$author$project$Main$Record,
-	A2($elm$json$Json$Decode$field, 'conceptrecid', $elm$json$Json$Decode$string),
+	A2(
+		$elm$json$Json$Decode$map,
+		$elm$core$String$fromInt,
+		A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$int)),
 	A2(
 		$elm$json$Json$Decode$field,
 		'metadata',
@@ -6388,7 +6392,7 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 3:
 				if (model.$ === 1) {
 					var r = model.a;
 					var txt = A2(
@@ -6409,6 +6413,8 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			default:
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$html$Html$div = _VirtualDom_node('div');

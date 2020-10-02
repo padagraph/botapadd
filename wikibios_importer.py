@@ -56,11 +56,11 @@ RefersEdgeType = EdgeType("RefersEdge", "NE --refers--> Page",  {} )
 TranslationEdge = namedtuple("TranslationEdge", "source target")
 TranslationEdgeType = EdgeType("TranslationEdge", "page --translation--> page", {} )
 
-ZH_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_zh")
-EN_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_en")
+# ZH_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_zh")
+# EN_DIR = Path("/home/pierre/Corpora/WikiBiographies/Biographies_12_08_2020_en")
 
-# ZH_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_zh")
-# EN_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_en")
+ZH_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_zh")
+EN_DIR = Path("/data-ssd/Wikipedia/Biographies_12_08_2020_en")
 
 
 
@@ -118,6 +118,7 @@ def readOne(dir: Path, lang, knownNE):
             rows = [row for row in reader if row['type'] in {"GPE", "ORG", "PERSON","PER", "LOC"}]
             linked = {row['entity'] for row in rows if row[f'link_{lang}'] != 'None'}
             rows = [row for row in rows if row[f'link_{lang}'] != 'None' or row['entity'] not in linked]
+            per_doc_entities = set()
             for row in rows:
                     entity_trad = convert(row['entity'])
                     if entity_trad != page.label:
@@ -129,7 +130,9 @@ def readOne(dir: Path, lang, knownNE):
                                 edges.append(RefersEdge(ne.id, f"P-zh-{ne.id_zh}"))
                             if ne.id_en != "None":
                                 edges.append(RefersEdge(ne.id, f"P-en-{ne.id_en}"))
-                        edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
+                        if(eid not in per_doc_entities):
+                            edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
+                            per_doc_entities.add(eid)
         return page, edges
     return None, []
 
@@ -164,13 +167,13 @@ if __name__ == "__main__":
     ne = {}
     edges = []
     print("read en")
-    for dir in it.islice(EN_DIR.iterdir(),3000):
+    for dir in it.islice(EN_DIR.iterdir(),300000):
         page, newEdges = readOne(dir, "en", ne)
         if page:
             pages[page.id] = page
             edges.extend(newEdges)
     print("read zh")
-    for dir in it.islice(ZH_DIR.iterdir(),3000):
+    for dir in it.islice(ZH_DIR.iterdir(),300000):
         page, newEdges = readOne(dir, "zh", ne)
         if page:
             pages[page.id] = page
@@ -179,7 +182,7 @@ if __name__ == "__main__":
     bot, ntids, etids = create_graph()
 
     edges.extend(getEntitiesTranslations(ne.values()))
-    valid_nodes = {k for k,v in countDegres(edges).items() if v > 10 or k.startswith("P")}
+    valid_nodes = {k for k,v in countDegres(edges).items() if (v > 10 and v < 200) or k.startswith("P")}
     print(Counter(countDegres(edges).values()))
     print(len(valid_nodes))
     nodes_uuids = {}
