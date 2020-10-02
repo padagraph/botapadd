@@ -27,7 +27,7 @@ class WikiBioIGDB(IGraphDB):
     def build_prefix_trie(self):
         g = self.get_graph(GID)
         labels_idx = {k: [x[0] for x in v] for k, v in
-                      it.groupby([(n.index, n['properties']['label']) for n in g.vs], key=lambda c: c[1])}
+                      it.groupby(sorted([(n.index, n['properties']['label']) for n in g.vs], key=lambda x:x[1]), key=lambda c: c[1])}
         t = Trie(labels_idx.keys())
         idx = {}
         for k, code in t.iteritems():
@@ -74,5 +74,5 @@ if __name__ == "__main__":
     print("create db")
     gdb = WikiBioIGDB(graphs={})
     print("created")
-    print(gdb.fast_complete("wikibios", "John"))
+    print(gdb.fast_complete("wikibios", "周恩來",0,100))
 
