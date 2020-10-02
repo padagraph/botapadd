@@ -104,10 +104,10 @@ try :
 except : import pickle
 from pdgapi.explor import EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
+from wikibios_utils import WikiBioIGDB
 
-
-graphdb = IGraphDB( graphs={} )
-
+#graphdb = IGraphDB( graphs={} )
+graphdb = WikiBioIGDB(graphs={})
 
 if REDIS_STORAGE:
     import redis
@@ -151,8 +151,8 @@ if REDIS_STORAGE:
         def keys(self):
             return []
 
-    graphdb = IGraphDB( graphs=RedisGraphs() )
-    
+    # graphdb = IGraphDB( graphs=RedisGraphs() )
+    graphdb = WikiBioIGDB(graphs=RedisGraphs())
     
 
 
@@ -614,8 +614,8 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
     
                 else :
 
-                    #builder = _pad2igraph | compute_pedigree | graph_stats
-                    builder = _pad2igraph | graph_stats
+                    builder = _pad2igraph | compute_pedigree | graph_stats
+
                     graph = builder( gid, padurl, reader )
                     graphdb.set_graph(gid, graph)                           
                                         
