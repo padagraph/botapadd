@@ -121,18 +121,17 @@ def readOne(dir: Path, lang, knownNE):
             per_doc_entities = set()
             for row in rows:
                     entity_trad = convert(row['entity'])
-                    if entity_trad != page.label:
-                        eid = "E-" + row[f'id_{lang}'] + f"-{entity_trad}"
-                        ne = EntityNode(eid, entity_trad, row['type'], lang, row.get('link_zh','None'), row['link_en'], row.get('id_zh',"None"), row['id_en'])
-                        if eid not in knownNE:
-                            knownNE[eid] = ne
-                            if ne.id_zh != "None":
-                                edges.append(RefersEdge(ne.id, f"P-zh-{ne.id_zh}"))
-                            if ne.id_en != "None":
-                                edges.append(RefersEdge(ne.id, f"P-en-{ne.id_en}"))
-                        if(eid not in per_doc_entities):
-                            edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
-                            per_doc_entities.add(eid)
+                    eid = "E-" + row[f'id_{lang}'] + f"-{entity_trad}"
+                    ne = EntityNode(eid, entity_trad, row['type'], lang, row.get('link_zh','None'), row['link_en'], row.get('id_zh',"None"), row['id_en'])
+                    if eid not in knownNE:
+                        knownNE[eid] = ne
+                        if ne.id_zh != "None":
+                            edges.append(RefersEdge(ne.id, f"P-zh-{ne.id_zh}"))
+                        if ne.id_en != "None":
+                            edges.append(RefersEdge(ne.id, f"P-en-{ne.id_en}"))
+                    if(eid not in per_doc_entities):
+                        edges.append(MentionEdge(page.id, ne.id, row['start_pos'], row['end_pos']))
+                        per_doc_entities.add(eid)
         return page, edges
     return None, []
 
