@@ -5,6 +5,16 @@ import igraph as ig
 import itertools as it
 from botapad.utils import export_graph, prepare_graph, compute_pedigree, graph_stats
 from reliure.pipeline import Optionable, Composable
+import pysolr
+import csv
+import opencc
+
+converter = opencc.OpenCC('s2t.json')
+
+
+def convert_and_clean(s: str):
+    return converter.convert(s.rstrip(".,)"))
+
 
 GID = "wikibiographies"
 
@@ -69,10 +79,48 @@ class WikiBioIGDB(IGraphDB):
         m = m[start:size]
         return m
 
+def read_NE(id, lang="en", path="/home/pierre/Corpora/WikiBiographies"):
+    with open(f"{path}/Biographies_12_08_2020_{lang}/{id}/{id}.csv", newline='') as f:
+        reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE)
+        for ne in reader:
+            if ne['type'] in ["ORG", "PERSON", "GPE","ORGANIZATION", "LOCATION", "PER"]:
+                yield {
+                    'text': convert_and_clean(ne['entity']),
+                    'id_en': ne['id_en'],
+                    'id_zh': ne['id_zh']
+                }
+
+
+
+
+def query_wikibios_en(q: str):
+    solr = pysolr.Solr('http://localhost:8983/solr/wikibio-en', always_commit=True, timeout=10)
+    solr.ping()
+    q_s = pysolr.sanitize(f"wke_title:({q})^4 wke_content:{q}")
+    results = solr.search(q_s, **{'rows':50})
+    return [{'title': r['wke_title'][0],
+             'id': r['id'],
+             'snippet': r['wke_content'][0][:400],
+             'entities': list([x for x in read_NE(r['id'], 'en')])
+             } for r in results ]
+
+
+def query_wikibios_zh(q: str):
+    solr = pysolr.Solr('http://localhost:8983/solr/wikibio-zh', always_commit=True, timeout=10)
+    solr.ping()
+    terms = " ".join([f'"{w}"' for w in  q.split()])
+    q_s = pysolr.sanitize(f"wkz_title:({terms})^4 wkz_content:{terms}")
+    results = solr.search(q_s, **{'rows':50})
+    return [{'title': convert_and_clean(r['wkz_title'][0]),
+             'id': r['id'],
+             'snippet': converter.convert(r['wkz_content'][0][:400]),
+             'entities': list([x for x in read_NE(r['id'], 'zh')])
+             } for r in results ]
+
 
 if __name__ == "__main__":
-    print("create db")
-    gdb = WikiBioIGDB(graphs={})
-    print("created")
-    print(gdb.fast_complete("wikibios", "周恩來",0,100))
-
+    # print("create db")
+    # gdb = WikiBioIGDB(graphs={})
+    # print("created")
+    # print(gdb.fast_complete("wikibios", "周恩來",0,100))
+    print({'results':[page for page in query_wikibios_en("Hanoi Communist France")]})
