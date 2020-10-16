@@ -1,3 +1,4 @@
+from typing import List
 from pdglib.graphdb_ig import IGraphDB
 import re
 from marisa_trie import Trie
@@ -9,7 +10,7 @@ import pysolr
 import csv
 import opencc
 
-converter = opencc.OpenCC('s2t.json')
+converter = opencc.OpenCC('s2t')
 
 
 def convert_and_clean(s: str):
@@ -100,9 +101,28 @@ def query_wikibios_en(q: str):
     results = solr.search(q_s, **{'rows':50})
     return [{'title': r['wke_title'][0],
              'id': r['id'],
+             'en_id': r.get('wk_en_id',"None"),
+             'zh_id': r.get('wk_zh_id',"None"),
              'snippet': r['wke_content'][0][:400],
              'entities': list([x for x in read_NE(r['id'], 'en')])
              } for r in results ]
+
+def get_wikibios_byid_en(ids: List[str]):
+    solr = pysolr.Solr('http://localhost:8983/solr/wikibio-en', always_commit=True, timeout=10)
+    solr.ping()
+    results = []
+    for id in ids:
+        q_s = pysolr.sanitize(f"id:{id}")
+        for r in solr.search(q_s, **{'rows':1}):
+            results.append({'title': r['wke_title'][0],
+                             'id': r['id'],
+                             'en_id': r.get('wk_en_id',"None"),
+                             'zh_id': r.get('wk_zh_id',"None"),
+                             'snippet': r['wke_content'][0][:400],
+                             'entities': list([x for x in read_NE(r['id'], 'en')])
+                             })
+    return results
+
 
 
 def query_wikibios_zh(q: str):
@@ -113,9 +133,28 @@ def query_wikibios_zh(q: str):
     results = solr.search(q_s, **{'rows':50})
     return [{'title': convert_and_clean(r['wkz_title'][0]),
              'id': r['id'],
+             'en_id': r.get('wk_en_id', "None"),
+             'zh_id': r.get('wk_zh_id', "None"),
              'snippet': converter.convert(r['wkz_content'][0][:400]),
              'entities': list([x for x in read_NE(r['id'], 'zh')])
              } for r in results ]
+
+def get_wikibios_byid_zh(ids: List[str]):
+    solr = pysolr.Solr('http://localhost:8983/solr/wikibio-zh', always_commit=True, timeout=10)
+    solr.ping()
+    results = []
+    for id in ids:
+        q_s = pysolr.sanitize(f"id:{id}")
+        for r in solr.search(q_s, **{'rows':1}):
+            results.append({'title': convert_and_clean(r['wkz_title'][0]),
+                 'id': r['id'],
+                 'en_id': r.get('wk_en_id', "None"),
+                 'zh_id': r.get('wk_zh_id', "None"),
+                 'snippet': converter.convert(r['wkz_content'][0][:400]),
+                 'entities': list([x for x in read_NE(r['id'], 'zh')])
+                 })
+    return results
+
 
 
 if __name__ == "__main__":
@@ -123,4 +162,5 @@ if __name__ == "__main__":
     # gdb = WikiBioIGDB(graphs={})
     # print("created")
     # print(gdb.fast_complete("wikibios", "周恩來",0,100))
-    print({'results':[page for page in query_wikibios_en("Hanoi Communist France")]})
+    #print({'results':[page for page in query_wikibios_en("Hanoi Communist France")]})
+    print(get_wikibios_byid_zh(["3409863", "3409863"]))

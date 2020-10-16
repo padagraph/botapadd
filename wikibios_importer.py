@@ -11,7 +11,7 @@ from botapi import BotApiError, Botagraph,  BotaIgraph, BotLoginError
 from reliure.types import Text
 
 
-converter = opencc.OpenCC('s2t.json')
+converter = opencc.OpenCC('s2t')
 
 def convert(s: str):
     return converter.convert(s.rstrip(".,)"))

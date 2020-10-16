@@ -784,11 +784,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.R.C === region.X.C)
+	if (region.S.E === region.X.E)
 	{
-		return 'on line ' + region.R.C;
+		return 'on line ' + region.S.E;
 	}
-	return 'on lines ' + region.R.C + ' through ' + region.X.C;
+	return 'on lines ' + region.S.E + ' through ' + region.X.E;
 }
 
 
@@ -1857,9 +1857,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aG,
+		impl.aH,
+		impl.a1,
 		impl.aY,
-		impl.aT,
 		function() { return function() {} }
 	);
 });
@@ -2659,9 +2659,9 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		k: func(record.k),
-		S: record.S,
-		P: record.P
+		l: func(record.l),
+		T: record.T,
+		Q: record.Q
 	}
 });
 
@@ -2929,11 +2929,11 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.k;
-		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.S;
+		var message = !tag ? value : tag < 3 ? value.a : value.l;
+		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.T;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
-			(tag == 2 ? value.b : tag == 3 && value.P) && event.preventDefault(),
+			(tag == 2 ? value.b : tag == 3 && value.Q) && event.preventDefault(),
 			eventNode
 		);
 		var tagger;
@@ -3883,11 +3883,11 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aG,
+		impl.aH,
+		impl.a1,
 		impl.aY,
-		impl.aT,
 		function(sendToApp, initialModel) {
-			var view = impl.a_;
+			var view = impl.a3;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -3919,12 +3919,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.aG,
+		impl.aH,
+		impl.a1,
 		impl.aY,
-		impl.aT,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.Q && impl.Q(sendToApp)
-			var view = impl.a_;
+			var divertHrefToApp = impl.R && impl.R(sendToApp)
+			var view = impl.a3;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -3932,12 +3932,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.ax);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.av);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.aW) && (_VirtualDom_doc.title = title = doc.aW);
+				(title !== doc.a$) && (_VirtualDom_doc.title = title = doc.a$);
 			});
 		}
 	);
@@ -3993,12 +3993,12 @@ function _Browser_makeAnimator(model, draw)
 
 function _Browser_application(impl)
 {
-	var onUrlChange = impl.aK;
-	var onUrlRequest = impl.aL;
+	var onUrlChange = impl.aO;
+	var onUrlRequest = impl.aP;
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		Q: function(sendToApp)
+		R: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -4014,9 +4014,9 @@ function _Browser_application(impl)
 					var next = $elm$url$Url$fromString(href).a;
 					sendToApp(onUrlRequest(
 						(next
-							&& curr.aj === next.aj
+							&& curr.ai === next.ai
 							&& curr._ === next._
-							&& curr.ag.a === next.ag.a
+							&& curr.af.a === next.af.a
 						)
 							? $elm$browser$Browser$Internal(next)
 							: $elm$browser$Browser$External(href)
@@ -4024,13 +4024,13 @@ function _Browser_application(impl)
 				}
 			});
 		},
-		aG: function(flags)
+		aH: function(flags)
 		{
-			return A3(impl.aG, flags, _Browser_getUrl(), key);
+			return A3(impl.aH, flags, _Browser_getUrl(), key);
 		},
-		a_: impl.a_,
-		aY: impl.aY,
-		aT: impl.aT
+		a3: impl.a3,
+		a1: impl.a1,
+		aY: impl.aY
 	});
 }
 
@@ -4096,17 +4096,17 @@ var _Browser_decodeEvent = F2(function(decoder, event)
 function _Browser_visibilityInfo()
 {
 	return (typeof _VirtualDom_doc.hidden !== 'undefined')
-		? { aE: 'hidden', ay: 'visibilitychange' }
+		? { aE: 'hidden', ax: 'visibilitychange' }
 		:
 	(typeof _VirtualDom_doc.mozHidden !== 'undefined')
-		? { aE: 'mozHidden', ay: 'mozvisibilitychange' }
+		? { aE: 'mozHidden', ax: 'mozvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.msHidden !== 'undefined')
-		? { aE: 'msHidden', ay: 'msvisibilitychange' }
+		? { aE: 'msHidden', ax: 'msvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.webkitHidden !== 'undefined')
-		? { aE: 'webkitHidden', ay: 'webkitvisibilitychange' }
-		: { aE: 'hidden', ay: 'visibilitychange' };
+		? { aE: 'webkitHidden', ax: 'webkitvisibilitychange' }
+		: { aE: 'hidden', ax: 'visibilitychange' };
 }
 
 
@@ -4187,12 +4187,12 @@ var _Browser_call = F2(function(functionName, id)
 function _Browser_getViewport()
 {
 	return {
-		ao: _Browser_getScene(),
-		as: {
+		an: _Browser_getScene(),
+		ar: {
 			K: _Browser_window.pageXOffset,
 			L: _Browser_window.pageYOffset,
-			z: _Browser_doc.documentElement.clientWidth,
-			t: _Browser_doc.documentElement.clientHeight
+			B: _Browser_doc.documentElement.clientWidth,
+			w: _Browser_doc.documentElement.clientHeight
 		}
 	};
 }
@@ -4202,8 +4202,8 @@ function _Browser_getScene()
 	var body = _Browser_doc.body;
 	var elem = _Browser_doc.documentElement;
 	return {
-		z: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
-		t: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
+		B: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
+		w: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
 
@@ -4226,15 +4226,15 @@ function _Browser_getViewportOf(id)
 	return _Browser_withNode(id, function(node)
 	{
 		return {
-			ao: {
-				z: node.scrollWidth,
-				t: node.scrollHeight
+			an: {
+				B: node.scrollWidth,
+				w: node.scrollHeight
 			},
-			as: {
+			ar: {
 				K: node.scrollLeft,
 				L: node.scrollTop,
-				z: node.clientWidth,
-				t: node.clientHeight
+				B: node.clientWidth,
+				w: node.clientHeight
 			}
 		};
 	});
@@ -4264,18 +4264,18 @@ function _Browser_getElement(id)
 		var x = _Browser_window.pageXOffset;
 		var y = _Browser_window.pageYOffset;
 		return {
-			ao: _Browser_getScene(),
-			as: {
+			an: _Browser_getScene(),
+			ar: {
 				K: x,
 				L: y,
-				z: _Browser_doc.documentElement.clientWidth,
-				t: _Browser_doc.documentElement.clientHeight
+				B: _Browser_doc.documentElement.clientWidth,
+				w: _Browser_doc.documentElement.clientHeight
 			},
-			az: {
+			ay: {
 				K: x + rect.left,
 				L: y + rect.top,
-				z: rect.width,
-				t: rect.height
+				B: rect.width,
+				w: rect.height
 			}
 		};
 	});
@@ -4327,18 +4327,18 @@ var _Http_toTask = F3(function(router, toTask, request)
 		xhr.addEventListener('error', function() { done($elm$http$Http$NetworkError_); });
 		xhr.addEventListener('timeout', function() { done($elm$http$Http$Timeout_); });
 		xhr.addEventListener('load', function() { done(_Http_toResponse(request.aB.b, xhr)); });
-		$elm$core$Maybe$isJust(request.aX) && _Http_track(router, xhr, request.aX.a);
+		$elm$core$Maybe$isJust(request.a0) && _Http_track(router, xhr, request.a0.a);
 
 		try {
-			xhr.open(request.aI, request.aZ, true);
+			xhr.open(request.aK, request.a2, true);
 		} catch (e) {
-			return done($elm$http$Http$BadUrl_(request.aZ));
+			return done($elm$http$Http$BadUrl_(request.a2));
 		}
 
 		_Http_configureRequest(xhr, request);
 
-		request.ax.a && xhr.setRequestHeader('Content-Type', request.ax.a);
-		xhr.send(request.ax.b);
+		request.av.a && xhr.setRequestHeader('Content-Type', request.av.a);
+		xhr.send(request.av.b);
 
 		return function() { xhr.c = true; xhr.abort(); };
 	});
@@ -4353,9 +4353,9 @@ function _Http_configureRequest(xhr, request)
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
-	xhr.timeout = request.aV.a || 0;
+	xhr.timeout = request.a_.a || 0;
 	xhr.responseType = request.aB.d;
-	xhr.withCredentials = request.av;
+	xhr.withCredentials = request.at;
 }
 
 
@@ -4376,9 +4376,9 @@ function _Http_toResponse(toBody, xhr)
 function _Http_toMetadata(xhr)
 {
 	return {
-		aZ: xhr.responseURL,
-		aR: xhr.status,
-		aS: xhr.statusText,
+		a2: xhr.responseURL,
+		aV: xhr.status,
+		aW: xhr.statusText,
 		aD: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
@@ -4474,18 +4474,119 @@ function _Http_track(router, xhr, tracker)
 	xhr.upload.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Sending({
-			aP: event.loaded,
-			ap: event.total
+			aT: event.loaded,
+			ao: event.total
 		}))));
 	});
 	xhr.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Receiving({
-			aN: event.loaded,
-			ap: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
+			aR: event.loaded,
+			ao: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $elm$core$Basics$EQ = 1;
+}
+
+// CREATE
+
+var _Regex_never = /.^/;
+
+var _Regex_fromStringWith = F2(function(options, string)
+{
+	var flags = 'g';
+	if (options.aL) { flags += 'm'; }
+	if (options.aw) { flags += 'i'; }
+
+	try
+	{
+		return $elm$core$Maybe$Just(new RegExp(string, flags));
+	}
+	catch(error)
+	{
+		return $elm$core$Maybe$Nothing;
+	}
+});
+
+
+// USE
+
+var _Regex_contains = F2(function(re, string)
+{
+	return string.match(re) !== null;
+});
+
+
+var _Regex_findAtMost = F3(function(n, re, str)
+{
+	var out = [];
+	var number = 0;
+	var string = str;
+	var lastIndex = re.lastIndex;
+	var prevLastIndex = -1;
+	var result;
+	while (number++ < n && (result = re.exec(string)))
+	{
+		if (prevLastIndex == re.lastIndex) break;
+		var i = result.length - 1;
+		var subs = new Array(i);
+		while (i > 0)
+		{
+			var submatch = result[i];
+			subs[--i] = submatch
+				? $elm$core$Maybe$Just(submatch)
+				: $elm$core$Maybe$Nothing;
+		}
+		out.push(A4($elm$regex$Regex$Match, result[0], result.index, number, _List_fromArray(subs)));
+		prevLastIndex = re.lastIndex;
+	}
+	re.lastIndex = lastIndex;
+	return _List_fromArray(out);
+});
+
+
+var _Regex_replaceAtMost = F4(function(n, re, replacer, string)
+{
+	var count = 0;
+	function jsReplacer(match)
+	{
+		if (count++ >= n)
+		{
+			return match;
+		}
+		var i = arguments.length - 3;
+		var submatches = new Array(i);
+		while (i > 0)
+		{
+			var submatch = arguments[i];
+			submatches[--i] = submatch
+				? $elm$core$Maybe$Just(submatch)
+				: $elm$core$Maybe$Nothing;
+		}
+		return replacer(A4($elm$regex$Regex$Match, match, arguments[arguments.length - 2], count, _List_fromArray(submatches)));
+	}
+	return string.replace(re, jsReplacer);
+});
+
+var _Regex_splitAtMost = F3(function(n, re, str)
+{
+	var string = str;
+	var out = [];
+	var start = re.lastIndex;
+	var restoreLastIndex = re.lastIndex;
+	while (n--)
+	{
+		var result = re.exec(string);
+		if (!result) break;
+		out.push(string.slice(start, result.index));
+		start = re.lastIndex;
+	}
+	out.push(string.slice(start));
+	re.lastIndex = restoreLastIndex;
+	return _List_fromArray(out);
+});
+
+var _Regex_infinity = Infinity;
+var $elm$core$Basics$EQ = 1;
 var $elm$core$Basics$GT = 2;
 var $elm$core$Basics$LT = 0;
 var $elm$core$List$cons = _List_cons;
@@ -4989,7 +5090,7 @@ var $elm$url$Url$Http = 0;
 var $elm$url$Url$Https = 1;
 var $elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
-		return {Z: fragment, _: host, ae: path, ag: port_, aj: protocol, D: query};
+		return {Z: fragment, _: host, ad: path, af: port_, ai: protocol, F: query};
 	});
 var $elm$core$String$contains = _String_contains;
 var $elm$core$String$length = _String_length;
@@ -5274,7 +5375,7 @@ var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$init = function (calcId) {
 	return _Utils_Tuple2(
-		{J: false, B: calcId, u: 0, D: '', E: _List_Nil, q: 0},
+		{u: false, D: calcId, p: 0, F: '', i: _List_Nil, s: 0},
 		$elm$core$Platform$Cmd$none);
 };
 var $elm$json$Json$Decode$string = _Json_decodeString;
@@ -5285,10 +5386,31 @@ var $author$project$Main$subscriptions = function (model) {
 };
 var $author$project$Main$Calc = 1;
 var $author$project$Main$Chinese = 1;
+var $author$project$Main$GotExtendedResults = function (a) {
+	return {$: 9, a: a};
+};
 var $author$project$Main$GotResults = function (a) {
 	return {$: 8, a: a};
 };
 var $author$project$Main$Graph = 2;
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (!_v0.$) {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
 var $elm$core$Basics$not = _Basics_not;
 var $author$project$Main$PuttedCalc = function (a) {
 	return {$: 6, a: a};
@@ -5884,7 +6006,7 @@ var $elm$http$Http$resolve = F2(
 			case 3:
 				var metadata = response.a;
 				return $elm$core$Result$Err(
-					$elm$http$Http$BadStatus(metadata.aR));
+					$elm$http$Http$BadStatus(metadata.aV));
 			default:
 				var body = response.b;
 				return A2(
@@ -5907,7 +6029,7 @@ var $elm$http$Http$Request = function (a) {
 };
 var $elm$http$Http$State = F2(
 	function (reqs, subs) {
-		return {al: reqs, aq: subs};
+		return {ak: reqs, ap: subs};
 	});
 var $elm$http$Http$init = $elm$core$Task$succeed(
 	A2($elm$http$Http$State, $elm$core$Dict$empty, _List_Nil));
@@ -5951,7 +6073,7 @@ var $elm$http$Http$updateReqs = F3(
 					return A2(
 						$elm$core$Task$andThen,
 						function (pid) {
-							var _v4 = req.aX;
+							var _v4 = req.a0;
 							if (_v4.$ === 1) {
 								return A3($elm$http$Http$updateReqs, router, otherCmds, reqs);
 							} else {
@@ -5981,25 +6103,7 @@ var $elm$http$Http$onEffects = F4(
 				return $elm$core$Task$succeed(
 					A2($elm$http$Http$State, reqs, subs));
 			},
-			A3($elm$http$Http$updateReqs, router, cmds, state.al));
-	});
-var $elm$core$List$maybeCons = F3(
-	function (f, mx, xs) {
-		var _v0 = f(mx);
-		if (!_v0.$) {
-			var x = _v0.a;
-			return A2($elm$core$List$cons, x, xs);
-		} else {
-			return xs;
-		}
-	});
-var $elm$core$List$filterMap = F2(
-	function (f, xs) {
-		return A3(
-			$elm$core$List$foldr,
-			$elm$core$List$maybeCons(f),
-			_List_Nil,
-			xs);
+			A3($elm$http$Http$updateReqs, router, cmds, state.ak));
 	});
 var $elm$http$Http$maybeSend = F4(
 	function (router, desiredTracker, progress, _v0) {
@@ -6024,7 +6128,7 @@ var $elm$http$Http$onSelfMsg = F3(
 				A2(
 					$elm$core$List$filterMap,
 					A3($elm$http$Http$maybeSend, router, tracker, progress),
-					state.aq)));
+					state.ap)));
 	});
 var $elm$http$Http$Cancel = function (a) {
 	return {$: 0, a: a};
@@ -6038,14 +6142,14 @@ var $elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return $elm$http$Http$Request(
 				{
+					at: r.at,
 					av: r.av,
-					ax: r.ax,
 					aB: A2(_Http_mapExpect, func, r.aB),
 					aD: r.aD,
-					aI: r.aI,
-					aV: r.aV,
-					aX: r.aX,
-					aZ: r.aZ
+					aK: r.aK,
+					a_: r.a_,
+					a0: r.a0,
+					a2: r.a2
 				});
 		}
 	});
@@ -6068,17 +6172,17 @@ var $elm$http$Http$subscription = _Platform_leaf('Http');
 var $elm$http$Http$request = function (r) {
 	return $elm$http$Http$command(
 		$elm$http$Http$Request(
-			{av: false, ax: r.ax, aB: r.aB, aD: r.aD, aI: r.aI, aV: r.aV, aX: r.aX, aZ: r.aZ}));
+			{at: false, av: r.av, aB: r.aB, aD: r.aD, aK: r.aK, a_: r.a_, a0: r.a0, a2: r.a2}));
 };
 var $author$project$Wikibio$docURL = function (doc) {
-	return 'https://' + (doc.ab + ('.wikipedia.org/w/index.php?curid=' + doc.M));
+	return 'https://' + (doc.N + ('.wikipedia.org/w/index.php?curid=' + doc.M));
 };
 var $author$project$Wikibio$entityID = function (e) {
 	return A2(
 		$elm$core$String$join,
 		'-',
 		_List_fromArray(
-			[e.au, e.W, e.aU]));
+			[e.a5, e.az, e.aZ]));
 };
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
@@ -6116,8 +6220,28 @@ var $elm$core$Tuple$second = function (_v0) {
 	var y = _v0.b;
 	return y;
 };
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var $author$project$Wikibio$documentToRow = F2(
 	function (validIDs, doc) {
+		var translation = function () {
+			var _v0 = doc.N;
+			switch (_v0) {
+				case 'en':
+					return doc.a5;
+				case 'zh':
+					return doc.az;
+				default:
+					return $elm$core$Maybe$Nothing;
+			}
+		}();
 		var escape = function (s) {
 			return '\"' + (A3($elm$core$String$replace, '\"', '\"\"', s) + '\"');
 		};
@@ -6128,7 +6252,7 @@ var $author$project$Wikibio$documentToRow = F2(
 				A2(
 					$elm$core$List$map,
 					function (e) {
-						return e.aU;
+						return e.aZ;
 					},
 					A2(
 						$elm$core$List$filter,
@@ -6145,9 +6269,10 @@ var $author$project$Wikibio$documentToRow = F2(
 			_List_fromArray(
 				[
 					doc.M,
-					escape(doc.aH),
+					escape(doc.aI),
 					$author$project$Wikibio$docURL(doc),
 					entities,
+					A2($elm$core$Maybe$withDefault, '', translation),
 					'square'
 				]));
 	});
@@ -6208,15 +6333,6 @@ var $elm$core$Set$insert = F2(
 var $elm$core$Set$fromList = function (list) {
 	return A3($elm$core$List$foldl, $elm$core$Set$insert, $elm$core$Set$empty, list);
 };
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Wikibio$validateEntitiesID = function (documents) {
 	var l = A3(
 		$elm$core$List$foldl,
@@ -6244,7 +6360,7 @@ var $author$project$Wikibio$validateEntitiesID = function (documents) {
 						return A2(
 							$elm$core$List$filter,
 							function (e) {
-								return $elm$core$String$length(e.aU) > 1;
+								return $elm$core$String$length(e.aZ) > 1;
 							},
 							es);
 					},
@@ -6268,7 +6384,7 @@ var $author$project$Wikibio$resultsToCSV = function (documents) {
 	var validIDs = $author$project$Wikibio$validateEntitiesID(documents);
 	var rows = A2(
 		$elm$core$List$cons,
-		'@Page: #id, label, url ,%+ entities, shape',
+		'@Page: #id, label, url ,%+ entities, % translation , shape',
 		A2(
 			$elm$core$List$map,
 			$author$project$Wikibio$documentToRow(validIDs),
@@ -6277,16 +6393,16 @@ var $author$project$Wikibio$resultsToCSV = function (documents) {
 };
 var $elm$http$Http$stringBody = _Http_pair;
 var $author$project$Main$putCalc = function (model) {
-	var csv = $author$project$Wikibio$resultsToCSV(model.E);
+	var csv = $author$project$Wikibio$resultsToCSV(model.i);
 	return $elm$http$Http$request(
 		{
-			ax: A2($elm$http$Http$stringBody, 'application/csv;charset=utf-8', csv),
+			av: A2($elm$http$Http$stringBody, 'application/csv;charset=utf-8', csv),
 			aB: $elm$http$Http$expectWhatever($author$project$Main$PuttedCalc),
 			aD: _List_Nil,
-			aI: 'PUT',
-			aV: $elm$core$Maybe$Nothing,
-			aX: $elm$core$Maybe$Nothing,
-			aZ: 'https://calc.padagraph.io/_/' + model.B
+			aK: 'PUT',
+			a_: $elm$core$Maybe$Nothing,
+			a0: $elm$core$Maybe$Nothing,
+			a2: 'https://calc.padagraph.io/_/' + model.D
 		});
 };
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
@@ -6311,14 +6427,28 @@ var $elm$http$Http$expectJson = F2(
 						A2($elm$json$Json$Decode$decodeString, decoder, string));
 				}));
 	});
-var $elm$http$Http$emptyBody = _Http_emptyBody;
-var $elm$http$Http$get = function (r) {
-	return $elm$http$Http$request(
-		{ax: $elm$http$Http$emptyBody, aB: r.aB, aD: _List_Nil, aI: 'GET', aV: $elm$core$Maybe$Nothing, aX: $elm$core$Maybe$Nothing, aZ: r.aZ});
+var $elm$http$Http$jsonBody = function (value) {
+	return A2(
+		_Http_pair,
+		'application/json',
+		A2($elm$json$Json$Encode$encode, 0, value));
 };
-var $author$project$Wikibio$Document = F5(
-	function (id, lang, label, snippet, entities) {
-		return {aA: entities, M: id, aH: label, ab: lang, aQ: snippet};
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(0),
+				entries));
+	});
+var $elm$http$Http$post = function (r) {
+	return $elm$http$Http$request(
+		{av: r.av, aB: r.aB, aD: _List_Nil, aK: 'POST', a_: $elm$core$Maybe$Nothing, a0: $elm$core$Maybe$Nothing, a2: r.a2});
+};
+var $author$project$Wikibio$Document = F7(
+	function (id, lang, label, snippet, entities, en_id, zh_id) {
+		return {az: en_id, aA: entities, M: id, aI: label, N: lang, aU: snippet, a5: zh_id};
 	});
 var $elm$core$List$sortWith = _List_sortWith;
 var $author$project$Wikibio$countEntities = function (data) {
@@ -6358,32 +6488,74 @@ var $author$project$Wikibio$countEntities = function (data) {
 };
 var $author$project$Wikibio$Entity = F3(
 	function (text, zh_id, en_id) {
-		return {W: en_id, aU: text, au: zh_id};
+		return {az: en_id, aZ: text, a5: zh_id};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$regex$Regex$Match = F4(
+	function (match, index, number, submatches) {
+		return {aG: index, aJ: match, aN: number, aX: submatches};
+	});
+var $elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
+var $elm$regex$Regex$fromString = function (string) {
+	return A2(
+		$elm$regex$Regex$fromStringWith,
+		{aw: false, aL: false},
+		string);
+};
 var $elm$json$Json$Decode$map3 = _Json_map3;
-var $author$project$Wikibio$entityDecoder = A4(
-	$elm$json$Json$Decode$map3,
-	$author$project$Wikibio$Entity,
-	A2($elm$json$Json$Decode$field, 'text', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'id_zh', $elm$json$Json$Decode$string),
-	A2($elm$json$Json$Decode$field, 'id_en', $elm$json$Json$Decode$string));
+var $elm$regex$Regex$never = _Regex_never;
+var $elm$regex$Regex$replace = _Regex_replaceAtMost(_Regex_infinity);
+var $author$project$Wikibio$entityDecoder = function () {
+	var pattern = A2(
+		$elm$core$Maybe$withDefault,
+		$elm$regex$Regex$never,
+		$elm$regex$Regex$fromString('\\[[0-9]+\\]'));
+	var clean = function (txt) {
+		return A3(
+			$elm$regex$Regex$replace,
+			pattern,
+			function (_v0) {
+				return '';
+			},
+			txt);
+	};
+	return A4(
+		$elm$json$Json$Decode$map3,
+		$author$project$Wikibio$Entity,
+		A2(
+			$elm$json$Json$Decode$map,
+			clean,
+			A2($elm$json$Json$Decode$field, 'text', $elm$json$Json$Decode$string)),
+		A2($elm$json$Json$Decode$field, 'id_zh', $elm$json$Json$Decode$string),
+		A2($elm$json$Json$Decode$field, 'id_en', $elm$json$Json$Decode$string));
+}();
 var $elm$json$Json$Decode$list = _Json_decodeList;
-var $elm$json$Json$Decode$map5 = _Json_map5;
+var $elm$json$Json$Decode$map7 = _Json_map7;
 var $author$project$Wikibio$documentDecoder = function (lang) {
 	var x = A2(
 		$elm$json$Json$Decode$field,
 		'entities',
 		$elm$json$Json$Decode$list($author$project$Wikibio$entityDecoder));
 	var y = A2($elm$json$Json$Decode$map, $author$project$Wikibio$countEntities, x);
-	return A6(
-		$elm$json$Json$Decode$map5,
+	var convertToMaybe = function (s) {
+		return (s === 'None') ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(s);
+	};
+	return A8(
+		$elm$json$Json$Decode$map7,
 		$author$project$Wikibio$Document,
 		A2($elm$json$Json$Decode$field, 'id', $elm$json$Json$Decode$string),
 		$elm$json$Json$Decode$succeed(lang),
 		A2($elm$json$Json$Decode$field, 'title', $elm$json$Json$Decode$string),
 		A2($elm$json$Json$Decode$field, 'snippet', $elm$json$Json$Decode$string),
-		y);
+		y,
+		A2(
+			$elm$json$Json$Decode$map,
+			convertToMaybe,
+			A2($elm$json$Json$Decode$field, 'en_id', $elm$json$Json$Decode$string)),
+		A2(
+			$elm$json$Json$Decode$map,
+			convertToMaybe,
+			A2($elm$json$Json$Decode$field, 'zh_id', $elm$json$Json$Decode$string)));
 };
 var $author$project$Wikibio$documentListDecoder = function (lang) {
 	return $elm$json$Json$Decode$list(
@@ -6395,7 +6567,30 @@ var $author$project$Wikibio$resultSetDecoder = function (lang) {
 		'results',
 		$author$project$Wikibio$documentListDecoder(lang));
 };
-var $author$project$Wikibio$runQuery = F3(
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Wikibio$runFetchIdsQuery = F3(
+	function (lang, ids, message) {
+		return $elm$http$Http$post(
+			{
+				av: $elm$http$Http$jsonBody(
+					A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$string, ids)),
+				aB: A2(
+					$elm$http$Http$expectJson,
+					message,
+					$author$project$Wikibio$resultSetDecoder(lang)),
+				a2: A2(
+					$elm$core$String$join,
+					'/',
+					_List_fromArray(
+						['/wikibioapi/byid', lang]))
+			});
+	});
+var $elm$http$Http$emptyBody = _Http_emptyBody;
+var $elm$http$Http$get = function (r) {
+	return $elm$http$Http$request(
+		{av: $elm$http$Http$emptyBody, aB: r.aB, aD: _List_Nil, aK: 'GET', a_: $elm$core$Maybe$Nothing, a0: $elm$core$Maybe$Nothing, a2: r.a2});
+};
+var $author$project$Wikibio$runSearchQuery = F3(
 	function (lang, query, message) {
 		return $elm$http$Http$get(
 			{
@@ -6403,11 +6598,11 @@ var $author$project$Wikibio$runQuery = F3(
 					$elm$http$Http$expectJson,
 					message,
 					$author$project$Wikibio$resultSetDecoder(lang)),
-				aZ: A2(
+				a2: A2(
 					$elm$core$String$join,
 					'/',
 					_List_fromArray(
-						['http://localhost:5002/wikibioapi', lang, query]))
+						['/wikibioapi', lang, query]))
 			});
 	});
 var $author$project$Main$update = F2(
@@ -6418,13 +6613,13 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{D: s}),
+						{F: s}),
 					$elm$core$Platform$Cmd$none);
 			case 1:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{J: !model.J}),
+						{u: !model.u}),
 					$elm$core$Platform$Cmd$none);
 			case 2:
 				var l = msg.a;
@@ -6432,9 +6627,53 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{u: lang}),
+						{p: lang}),
 					$elm$core$Platform$Cmd$none);
 			case 8:
+				var outcome = msg.a;
+				if (outcome.$ === 1) {
+					var s = outcome.a;
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				} else {
+					var r = outcome.a;
+					var nextCmd = function () {
+						if (!model.u) {
+							return $elm$core$Platform$Cmd$none;
+						} else {
+							var _v2 = function () {
+								var _v3 = model.p;
+								if (!_v3) {
+									return _Utils_Tuple2(
+										'zh',
+										A2(
+											$elm$core$List$filterMap,
+											function (d) {
+												return d.a5;
+											},
+											model.i));
+								} else {
+									return _Utils_Tuple2(
+										'en',
+										A2(
+											$elm$core$List$filterMap,
+											function (d) {
+												return d.az;
+											},
+											model.i));
+								}
+							}();
+							var targetLang = _v2.a;
+							var ids = _v2.b;
+							return A3($author$project$Wikibio$runFetchIdsQuery, targetLang, ids, $author$project$Main$GotExtendedResults);
+						}
+					}();
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{i: r}),
+						nextCmd);
+				}
+			case 9:
 				var outcome = msg.a;
 				if (outcome.$ === 1) {
 					var s = outcome.a;
@@ -6444,14 +6683,16 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{E: r}),
+							{
+								i: _Utils_ap(model.i, r)
+							}),
 						$elm$core$Platform$Cmd$none);
 				}
 			case 3:
 				var q = msg.a;
 				var lang = function () {
-					var _v2 = model.u;
-					if (!_v2) {
+					var _v5 = model.p;
+					if (!_v5) {
 						return 'en';
 					} else {
 						return 'zh';
@@ -6459,18 +6700,18 @@ var $author$project$Main$update = F2(
 				}();
 				return _Utils_Tuple2(
 					model,
-					A3($author$project$Wikibio$runQuery, lang, q, $author$project$Main$GotResults));
+					A3($author$project$Wikibio$runSearchQuery, lang, q, $author$project$Main$GotResults));
 			case 4:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{q: 0}),
+						{s: 0}),
 					$elm$core$Platform$Cmd$none);
 			case 5:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{q: 1}),
+						{s: 1}),
 					$author$project$Main$putCalc(model));
 			case 6:
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6478,11 +6719,10 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{q: 2}),
+						{s: 2}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -6507,7 +6747,7 @@ var $author$project$Main$entitiesView = function (doc) {
 				]),
 			_List_fromArray(
 				[
-					$elm$html$Html$text(e.aU)
+					$elm$html$Html$text(e.aZ)
 				]));
 	};
 	return A2($elm$core$List$map, convertOne, doc.aA);
@@ -6554,7 +6794,7 @@ var $author$project$Main$docView = function (doc) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(doc.aH)
+								$elm$html$Html$text(doc.aI)
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -6564,7 +6804,7 @@ var $author$project$Main$docView = function (doc) {
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text(doc.aQ)
+								$elm$html$Html$text(doc.aU)
 							])),
 						A2(
 						$elm$html$Html$div,
@@ -6583,7 +6823,7 @@ var $author$project$Main$resultsView = function (model) {
 			[
 				$elm$html$Html$Attributes$class('ui large feed')
 			]),
-		A2($elm$core$List$map, $author$project$Main$docView, model.E));
+		A2($elm$core$List$map, $author$project$Main$docView, model.i));
 };
 var $author$project$Main$RunQuery = function (a) {
 	return {$: 3, a: a};
@@ -6614,6 +6854,15 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
 };
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$html$Html$Events$alwaysStop = function (x) {
@@ -6648,8 +6897,8 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
-var $author$project$Main$viewCheckbox = F2(
-	function (label, toMsg) {
+var $author$project$Main$viewCheckbox = F3(
+	function (label, isChecked, toMsg) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -6663,6 +6912,7 @@ var $author$project$Main$viewCheckbox = F2(
 					_List_fromArray(
 						[
 							$elm$html$Html$Attributes$type_('checkbox'),
+							$elm$html$Html$Attributes$checked(isChecked),
 							$elm$html$Html$Events$onInput(toMsg)
 						]),
 					_List_Nil),
@@ -6675,15 +6925,6 @@ var $author$project$Main$viewCheckbox = F2(
 						]))
 				]));
 	});
-var $elm$json$Json$Encode$bool = _Json_wrap;
-var $elm$html$Html$Attributes$boolProperty = F2(
-	function (key, bool) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$bool(bool));
-	});
-var $elm$html$Html$Attributes$checked = $elm$html$Html$Attributes$boolProperty('checked');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
 var $author$project$Main$viewLanguageRadioButton = F4(
 	function (label, v, isChecked, toMsg) {
@@ -6764,21 +7005,21 @@ var $author$project$Main$searchView = function (model) {
 							]),
 						_List_fromArray(
 							[
-								A4($author$project$Main$viewTextInput, 'prompt', 'search query', model.D, $author$project$Main$SetQuery),
+								A4($author$project$Main$viewTextInput, 'prompt', 'search query', model.F, $author$project$Main$SetQuery),
 								A2(
 								$elm$html$Html$i,
 								_List_fromArray(
 									[
 										$elm$html$Html$Attributes$class('inverted circular search link icon'),
 										$elm$html$Html$Events$onClick(
-										$author$project$Main$RunQuery(model.D))
+										$author$project$Main$RunQuery(model.F))
 									]),
 								_List_Nil)
 							]))
 					])),
-				A2($author$project$Main$viewCheckbox, 'expand to the other language', $author$project$Main$ToggleBilingual),
-				A4($author$project$Main$viewLanguageRadioButton, 'English', 'en', !model.u, $author$project$Main$ToggleLanguage),
-				A4($author$project$Main$viewLanguageRadioButton, 'Chinese', 'zh', model.u === 1, $author$project$Main$ToggleLanguage)
+				A3($author$project$Main$viewCheckbox, 'expand to the other language', model.u, $author$project$Main$ToggleBilingual),
+				A4($author$project$Main$viewLanguageRadioButton, 'English', 'en', !model.p, $author$project$Main$ToggleLanguage),
+				A4($author$project$Main$viewLanguageRadioButton, 'Chinese', 'zh', model.p === 1, $author$project$Main$ToggleLanguage)
 			]));
 };
 var $elm$html$Html$Attributes$src = function (url) {
@@ -6790,7 +7031,7 @@ var $elm$html$Html$Attributes$src = function (url) {
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $author$project$Main$mainView = function (model) {
-	var _v0 = model.q;
+	var _v0 = model.s;
 	switch (_v0) {
 		case 0:
 			return A2(
@@ -6806,7 +7047,7 @@ var $author$project$Main$mainView = function (model) {
 				$elm$html$Html$iframe,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$src('https://calc.padagraph.io/' + model.B),
+						$elm$html$Html$Attributes$src('https://calc.padagraph.io/' + model.D),
 						$elm$html$Html$Attributes$name('calc'),
 						A2($elm$html$Html$Attributes$style, 'width', '100%'),
 						A2($elm$html$Html$Attributes$style, 'height', '900px')
@@ -6817,7 +7058,7 @@ var $author$project$Main$mainView = function (model) {
 				$elm$html$Html$iframe,
 				_List_fromArray(
 					[
-						$elm$html$Html$Attributes$src('https://pdg.enpchina.eu/import?s=https://calc.padagraph.io/' + model.B),
+						$elm$html$Html$Attributes$src('https://pdg.enpchina.eu/import?s=https://calc.padagraph.io/' + model.D),
 						$elm$html$Html$Attributes$name('graph'),
 						A2($elm$html$Html$Attributes$style, 'width', '100%'),
 						A2($elm$html$Html$Attributes$style, 'height', '900px')
@@ -6831,7 +7072,7 @@ var $author$project$Main$ShowSearch = {$: 4};
 var $elm$html$Html$a = _VirtualDom_node('a');
 var $author$project$Main$stepsView = function (model) {
 	var _v0 = function () {
-		var _v1 = model.q;
+		var _v1 = model.s;
 		switch (_v1) {
 			case 0:
 				return _Utils_Tuple3('active step', 'step', 'step');
@@ -7012,5 +7253,5 @@ var $author$project$Main$view = function (model) {
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
-	{aG: $author$project$Main$init, aT: $author$project$Main$subscriptions, aY: $author$project$Main$update, a_: $author$project$Main$view});
+	{aH: $author$project$Main$init, aY: $author$project$Main$subscriptions, a1: $author$project$Main$update, a3: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$string)(0)}});}(this));

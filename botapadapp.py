@@ -104,7 +104,7 @@ try :
 except : import pickle
 from pdgapi.explor import EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
-from wikibios_utils import WikiBioIGDB, query_wikibios_en, query_wikibios_zh
+from wikibios_utils import WikiBioIGDB, query_wikibios_en, query_wikibios_zh, get_wikibios_byid_en, get_wikibios_byid_zh
 
 #graphdb = IGraphDB( graphs={} )
 graphdb = WikiBioIGDB(graphs={})
@@ -377,6 +377,19 @@ def wikibioapi(lang, q):
     else:
         r = []
     return jsonify({'results':[page for page in r]})
+
+@app.route('/wikibioapi/byid/<string:lang>', methods=['POST'])
+def wikibioapi_byid(lang):
+    ids = request.json#()#.form.get('ids', [])
+    if lang == "en":
+        r = get_wikibios_byid_en(ids)
+    elif lang == "zh":
+        r = get_wikibios_byid_zh(ids)
+    else:
+        r = []
+    return jsonify({'results':[page for page in r]})
+
+
 
 
 @app.route('/rstudio', methods=['GET'])
