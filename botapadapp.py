@@ -376,7 +376,7 @@ def wikibioapi(lang, q):
         r = query_wikibios_zh(q)
     else:
         r = []
-    return jsonify({'results':[page for page in r]})
+    return jsonify(r)
 
 @app.route('/wikibioapi/byid/<string:lang>', methods=['POST'])
 def wikibioapi_byid(lang):
@@ -387,7 +387,7 @@ def wikibioapi_byid(lang):
         r = get_wikibios_byid_zh(ids)
     else:
         r = []
-    return jsonify({'results':[page for page in r]})
+    return jsonify({'hits': len(r), 'results':[page for page in r]})
 
 
 

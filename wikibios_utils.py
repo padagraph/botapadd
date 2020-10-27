@@ -79,8 +79,8 @@ class WikiBioIGDB(IGraphDB):
         t = len(m)
         m = m[start:size]
         return m
-
-def read_NE(id, lang="en", path="/data/Wikibios"):
+# /data/Wikibios
+def read_NE(id, lang="en", path="/home/pierre/Corpora/WikiBiographies"):
     with open(f"{path}/Biographies_12_08_2020_{lang}/{id}/{id}.csv", newline='') as f:
         reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE)
         for ne in reader:
@@ -99,13 +99,16 @@ def query_wikibios_en(q: str):
     solr.ping()
     q_s = pysolr.sanitize(f"wke_title:({q})^4 wke_content:{q}")
     results = solr.search(q_s, **{'rows':50})
-    return [{'title': r['wke_title'][0],
+    print(results.hits)
+    return {'hits': results.hits,
+            'results': [{'title': r['wke_title'][0],
              'id': r['id'],
              'en_id': r.get('wk_en_id',"None"),
              'zh_id': r.get('wk_zh_id',"None"),
              'snippet': r['wke_content'][0][:400],
              'entities': list([x for x in read_NE(r['id'], 'en')])
              } for r in results ]
+        }
 
 def get_wikibios_byid_en(ids: List[str]):
     solr = pysolr.Solr('http://localhost:8983/solr/wikibio-en', always_commit=True, timeout=10)
@@ -131,14 +134,15 @@ def query_wikibios_zh(q: str):
     terms = " ".join([f'"{w}"' for w in  q.split()])
     q_s = pysolr.sanitize(f"wkz_title:({terms})^4 wkz_content:{terms}")
     results = solr.search(q_s, **{'rows':50})
-    return [{'title': convert_and_clean(r['wkz_title']),
+    return {'hits': results.hits,
+            'results': [{'title': convert_and_clean(r['wkz_title']),
              'id': r['id'],
              'en_id': r.get('wk_en_id', "None"),
              'zh_id': r.get('wk_zh_id', "None"),
              'snippet': converter.convert(r['wkz_content'][:400]),
              'entities': list([x for x in read_NE(r['id'], 'zh')])
              } for r in results ]
-
+            }
 def get_wikibios_byid_zh(ids: List[str]):
     solr = pysolr.Solr('http://localhost:8983/solr/wikibio-zh', always_commit=True, timeout=10)
     solr.ping()
