@@ -2659,7 +2659,7 @@ var _VirtualDom_mapEventTuple = F2(function(func, tuple)
 var _VirtualDom_mapEventRecord = F2(function(func, record)
 {
 	return {
-		l: func(record.l),
+		m: func(record.m),
 		W: record.W,
 		T: record.T
 	}
@@ -2929,7 +2929,7 @@ function _VirtualDom_makeCallback(eventNode, initialHandler)
 		// 3 = Custom
 
 		var value = result.a;
-		var message = !tag ? value : tag < 3 ? value.a : value.l;
+		var message = !tag ? value : tag < 3 ? value.a : value.m;
 		var stopPropagation = tag == 1 ? value.b : tag == 3 && value.W;
 		var currentEventNode = (
 			stopPropagation && event.stopPropagation(),
@@ -5380,7 +5380,7 @@ var $author$project$Main$init = function (calcId) {
 			G: calcId,
 			r: 0,
 			I: '',
-			n: _List_Nil,
+			j: _Utils_Tuple2(_List_Nil, _List_Nil),
 			g: {p: true, u: false},
 			v: 0
 		},
@@ -6237,8 +6237,8 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Wikibio$documentToRow = F2(
-	function (validIDs, doc) {
+var $author$project$Wikibio$documentToRow = F3(
+	function (validIDs, addTranslations, doc) {
 		var translation = function () {
 			var _v0 = doc.Q;
 			switch (_v0) {
@@ -6284,6 +6284,13 @@ var $author$project$Wikibio$documentToRow = F2(
 					'square'
 				]));
 	});
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -6389,19 +6396,25 @@ var $author$project$Wikibio$validateEntitiesID = function (documents) {
 				l)));
 };
 var $author$project$Wikibio$resultsToCSV = function (documents) {
-	var validIDs = $author$project$Wikibio$validateEntitiesID(documents);
+	var _v0 = documents;
+	var docsSrc = _v0.a;
+	var docsTgt = _v0.b;
+	var addTranslations = $elm$core$List$isEmpty(docsTgt);
+	var translationsHeader = addTranslations ? ', translation' : ', %+ translation';
+	var allDocs = _Utils_ap(docsSrc, docsTgt);
+	var validIDs = $author$project$Wikibio$validateEntitiesID(allDocs);
 	var rows = A2(
 		$elm$core$List$cons,
-		'@Page: #id, label, url ,%+ entities, %+ translation , shape',
+		'@Page: #id, label, url ,%+ entities' + (translationsHeader + ', shape'),
 		A2(
 			$elm$core$List$map,
-			$author$project$Wikibio$documentToRow(validIDs),
-			documents));
+			A2($author$project$Wikibio$documentToRow, validIDs, addTranslations),
+			allDocs));
 	return A2($elm$core$String$join, '\n', rows);
 };
 var $elm$http$Http$stringBody = _Http_pair;
 var $author$project$Main$putCalc = function (model) {
-	var csv = $author$project$Wikibio$resultsToCSV(model.n);
+	var csv = $author$project$Wikibio$resultsToCSV(model.j);
 	return $elm$http$Http$request(
 		{
 			ay: A2($elm$http$Http$stringBody, 'application/csv;charset=utf-8', csv),
@@ -6685,7 +6698,10 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{n: r, g: nextStatus}),
+							{
+								j: _Utils_Tuple2(r, _List_Nil),
+								g: nextStatus
+							}),
 						nextCmd);
 				}
 			case 9:
@@ -6699,12 +6715,14 @@ var $author$project$Main$update = F2(
 							{g: newStatus}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					var r = outcome.a;
+					var r2 = outcome.a;
+					var _v6 = model.j;
+					var r1 = _v6.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{
-								n: _Utils_ap(model.n, r),
+								j: _Utils_Tuple2(r1, r2),
 								g: newStatus
 							}),
 						$elm$core$Platform$Cmd$none);
@@ -6716,8 +6734,8 @@ var $author$project$Main$update = F2(
 					oldStatus,
 					{u: true});
 				var lang = function () {
-					var _v6 = model.r;
-					if (!_v6) {
+					var _v7 = model.r;
+					if (!_v7) {
 						return 'en';
 					} else {
 						return 'zh';
@@ -6854,9 +6872,43 @@ var $author$project$Main$resultsView = function (model) {
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('ui large feed')
+					$elm$html$Html$Attributes$class('ui two column grid')
 				]),
-			A2($elm$core$List$map, $author$project$Main$docView, model.n));
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('column')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('ui large feed')
+								]),
+							A2($elm$core$List$map, $author$project$Main$docView, model.j.a))
+						])),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('column')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$div,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('ui large feed')
+								]),
+							A2($elm$core$List$map, $author$project$Main$docView, model.j.b))
+						]))
+				]));
 	} else {
 		return A2(
 			$elm$html$Html$div,
@@ -7112,16 +7164,9 @@ var $author$project$Main$ShowCalc = {$: 5};
 var $author$project$Main$ShowGraph = {$: 7};
 var $author$project$Main$ShowSearch = {$: 4};
 var $elm$html$Html$a = _VirtualDom_node('a');
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
 var $author$project$Main$stepsView = function (model) {
 	var graphDisabled = model.g.p ? 'disabled ' : '';
-	var calcDisabled = $elm$core$List$isEmpty(model.n) ? 'disabled ' : '';
+	var calcDisabled = $elm$core$List$isEmpty(model.j.a) ? 'disabled ' : '';
 	var _v0 = function () {
 		var _v1 = model.v;
 		switch (_v1) {

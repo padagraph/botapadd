@@ -80,7 +80,7 @@ class WikiBioIGDB(IGraphDB):
         m = m[start:size]
         return m
 
-def read_NE(id, lang="en", path="/home/pierre/Corpora/WikiBiographies"):
+def read_NE(id, lang="en", path="/data/Wikibios"):
     with open(f"{path}/Biographies_12_08_2020_{lang}/{id}/{id}.csv", newline='') as f:
         reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE)
         for ne in reader:
