@@ -131,11 +131,11 @@ def query_wikibios_zh(q: str):
     terms = " ".join([f'"{w}"' for w in  q.split()])
     q_s = pysolr.sanitize(f"wkz_title:({terms})^4 wkz_content:{terms}")
     results = solr.search(q_s, **{'rows':50})
-    return [{'title': convert_and_clean(r['wkz_title'][0]),
+    return [{'title': convert_and_clean(r['wkz_title']),
              'id': r['id'],
              'en_id': r.get('wk_en_id', "None"),
              'zh_id': r.get('wk_zh_id', "None"),
-             'snippet': converter.convert(r['wkz_content'][0][:400]),
+             'snippet': converter.convert(r['wkz_content'][:400]),
              'entities': list([x for x in read_NE(r['id'], 'zh')])
              } for r in results ]
 
@@ -146,11 +146,11 @@ def get_wikibios_byid_zh(ids: List[str]):
     for id in ids:
         q_s = pysolr.sanitize(f"id:{id}")
         for r in solr.search(q_s, **{'rows':1}):
-            results.append({'title': convert_and_clean(r['wkz_title'][0]),
+            results.append({'title': convert_and_clean(r['wkz_title']),
                  'id': r['id'],
                  'en_id': r.get('wk_en_id', "None"),
                  'zh_id': r.get('wk_zh_id', "None"),
-                 'snippet': converter.convert(r['wkz_content'][0][:400]),
+                 'snippet': converter.convert(r['wkz_content'][:400]),
                  'entities': list([x for x in read_NE(r['id'], 'zh')])
                  })
     return results
@@ -163,4 +163,4 @@ if __name__ == "__main__":
     # print("created")
     # print(gdb.fast_complete("wikibios", "周恩來",0,100))
     #print({'results':[page for page in query_wikibios_en("Hanoi Communist France")]})
-    print(get_wikibios_byid_zh(["3409863", "3409863"]))
+    print(get_wikibios_byid_zh(["2736", "3409863"]))
