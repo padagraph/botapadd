@@ -105,6 +105,7 @@ def query_wikibios_en(q: str):
              'id': r['id'],
              'en_id': r.get('wk_en_id',"None"),
              'zh_id': r.get('wk_zh_id',"None"),
+             'img': r.get('wk_img'),
              'snippet': r['wke_content'][0][:400],
              'entities': list([x for x in read_NE(r['id'], 'en')])
              } for r in results ]
@@ -121,6 +122,7 @@ def get_wikibios_byid_en(ids: List[str]):
                              'id': r['id'],
                              'en_id': r.get('wk_en_id',"None"),
                              'zh_id': r.get('wk_zh_id',"None"),
+                             'img': r.get('wk_img'),
                              'snippet': r['wke_content'][0][:400],
                              'entities': list([x for x in read_NE(r['id'], 'en')])
                              })
@@ -139,6 +141,7 @@ def query_wikibios_zh(q: str):
              'id': r['id'],
              'en_id': r.get('wk_en_id', "None"),
              'zh_id': r.get('wk_zh_id', "None"),
+             'img': r.get('wk_img'),
              'snippet': converter.convert(r['wkz_content'][:400]),
              'entities': list([x for x in read_NE(r['id'], 'zh')])
              } for r in results ]
@@ -154,6 +157,7 @@ def get_wikibios_byid_zh(ids: List[str]):
                  'id': r['id'],
                  'en_id': r.get('wk_en_id', "None"),
                  'zh_id': r.get('wk_zh_id', "None"),
+                 'img': r.get('wk_img'),
                  'snippet': converter.convert(r['wkz_content'][:400]),
                  'entities': list([x for x in read_NE(r['id'], 'zh')])
                  })
