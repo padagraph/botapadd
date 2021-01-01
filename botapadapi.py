@@ -137,9 +137,9 @@ def graphml2igraph(gid, content):
 
 
 def _prune(graph, **kwargs):
-    if graph.vcount() > 1 and graph.ecount() > 1 :
+    if graph.vcount() > 1 and graph.ecount() > 1:
         delete = [ i for i, v in enumerate(graph.vs) 
-            if len(v.neighbors()) == 0 ]
+            if len(v.neighbors()) < 1]
         graph.delete_vertices(delete)
     return graph
     
@@ -309,7 +309,41 @@ def explore_engine(graphdb):
         uuids = [ idx[p] for p in uuids ]
         
         return prox_subgraph(graph, uuids, cut=cut, weighted=weighted, length=length, mode=mode, add_loops=add_loops, **kwargs )
-        
+
+    @Composable
+    def silene_subgraph(query, cut=100, **kwargs):
+
+
+        graph = db_graph(graphdb, query)
+
+        def successors(acc):
+            prev_len = len(acc)
+            nexts = {b for a in acc for b in a.successors()}
+            acc = nexts.union(acc)
+            if len(acc) == prev_len:
+                return acc
+            else:
+                return successors(acc)
+
+        def predecessors(acc):
+            prev_len = len(acc)
+            nexts = {b for a in acc for b in a.predecessors()}
+            acc = nexts.union(acc)
+            if len(acc) == prev_len:
+                return acc
+            else:
+                return predecessors(acc)
+
+        print(query)
+        idx = {v['uuid']: v.index for v in graph.vs}
+        uuids = [q for q in query.get('units', [])]
+        start_node = graph.vs[idx[uuids[0]]]
+        nodes = predecessors({start_node,}).union(successors({start_node,}))
+        print(nodes)
+        sub = graph.subgraph([n.index for n in nodes])
+        return sub
+
+
     from cello.graphs.transform import VtxAttr
     
     searchs = []
@@ -328,6 +362,14 @@ def explore_engine(graphdb):
 
         search.name = k
         searchs.append(search)
+
+    silene_search = Optionable('SileneSearch')
+    silene_search._func = silene_subgraph
+    silene_search.add_option("coucou", Boolean(default=False))
+    silene_search |= VtxAttr(color=[(45, 200, 34), ])
+    silene_search |= VtxAttr(type=1)
+    silene_search.name = "Silene"
+    searchs.append(silene_search)
 
     sglobal = get_graph | ProxSubgraph()
     sglobal.name = "Global"

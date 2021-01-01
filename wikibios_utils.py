@@ -26,7 +26,14 @@ class WikiBioIGDB(IGraphDB):
         super().__init__(graphs, conf)
         self.load_wikibios()
         self.build_prefix_trie()
+        self.load_silene()
 
+    # todo: create SileneGDB
+    def load_silene(self):
+        g = ig.load("./pads/silene.pickle")
+        builder = Composable(prepare_graph) | graph_stats
+        graph = builder("Silene", g)
+        self.set_graph("Silene", graph)
 
     def load_wikibios(self):
         padurl = "pads/wiki.pickle"
