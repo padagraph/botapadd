@@ -68,5 +68,5 @@ def destroy_neo4j(gdb: GraphDatabase):
             session.run(d)
 
 if __name__ == "__main__":
-    #main("/tmp/silene.csv")
-    igraph_to_neo4j()
+    main("/tmp/silene.csv")
+    #igraph_to_neo4j()

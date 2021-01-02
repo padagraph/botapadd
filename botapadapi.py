@@ -142,7 +142,14 @@ def _prune(graph, **kwargs):
             if len(v.neighbors()) < 1]
         graph.delete_vertices(delete)
     return graph
-    
+
+def _silene_prune(graph, **kwargs):
+    if graph.vcount() > 1 and graph.ecount() > 1:
+        delete = [ i for i, v in enumerate(graph.vs)
+            if len(v.neighbors()) < 2]
+        graph.delete_vertices(delete)
+    return graph
+
 
 def _weights(weightings):
 
@@ -316,32 +323,30 @@ def explore_engine(graphdb):
 
         graph = db_graph(graphdb, query)
 
-        def successors(acc):
+        def successors(acc, step=0):
             prev_len = len(acc)
             nexts = {b for a in acc for b in a.successors()}
             acc = nexts.union(acc)
-            if len(acc) == prev_len:
+            if step > 2 or len(acc) == prev_len:
                 return acc
             else:
-                return successors(acc)
+                return successors(acc, step+1)
 
-        def predecessors(acc):
+        def predecessors(acc, step=0):
             prev_len = len(acc)
             nexts = {b for a in acc for b in a.predecessors()}
             acc = nexts.union(acc)
-            if len(acc) == prev_len:
+            if step > 2 or len(acc) == prev_len:
                 return acc
             else:
-                return predecessors(acc)
+                return predecessors(acc, step + 1)
 
-        print(query)
         idx = {v['uuid']: v.index for v in graph.vs}
         uuids = [q for q in query.get('units', [])]
         start_node = graph.vs[idx[uuids[0]]]
         nodes = predecessors({start_node,}).union(successors({start_node,}))
-        print(nodes)
         sub = graph.subgraph([n.index for n in nodes])
-        return sub
+        return _silene_prune(sub)
 
 
     from cello.graphs.transform import VtxAttr
