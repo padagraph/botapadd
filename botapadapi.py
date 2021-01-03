@@ -318,42 +318,40 @@ def explore_engine(graphdb):
         return prox_subgraph(graph, uuids, cut=cut, weighted=weighted, length=length, mode=mode, add_loops=add_loops, **kwargs )
 
     @Composable
-    def silene_subgraph(query, cut=100, **kwargs):
-
+    def silene_subgraph(query, cut=100, Sinogram='one', Pruning=False, **kwargs):
+        import redis
+        import redisgraph
+        print(query)
+        print(Pruning)
+        print(Sinogram)
 
         graph = db_graph(graphdb, query)
-
-        def successors(acc, step=0):
-            prev_len = len(acc)
-            nexts = {b for a in acc for b in a.successors()}
-            acc = nexts.union(acc)
-            if step > 2 or len(acc) == prev_len:
-                return acc
-            else:
-                return successors(acc, step+1)
-
-        def predecessors(acc, step=0):
-            prev_len = len(acc)
-            nexts = {b for a in acc for b in a.predecessors()}
-            acc = nexts.union(acc)
-            if step > 2 or len(acc) == prev_len:
-                return acc
-            else:
-                return predecessors(acc, step + 1)
-
         idx = {v['uuid']: v.index for v in graph.vs}
-        uuids = [q for q in query.get('units', [])]
-        start_node = graph.vs[idx[uuids[0]]]
-        nodes = predecessors({start_node,}).union(successors({start_node,}))
-        sub = graph.subgraph([n.index for n in nodes])
-        return _silene_prune(sub)
+
+        r = redis.Redis(host="localhost", port=6379)
+        gdb = redisgraph.Graph("silene", r)
+        result = gdb.query(f"""
+            MATCH (s:Sinogram {{label:'{Sinogram}'}})
+            MATCH p = () -[*..2]-> (s) -[*..3]-> (:Wordform)
+            UNWIND nodes(p) as n
+            WITH DISTINCT n
+            RETURN n.uuid
+            """)
+        #print(result.pretty_print())
+        uuids = [r[0] for r in result.result_set]
+        r.close()
+        sub = graph.subgraph([idx[n] for n in uuids])
+        if Pruning:
+            return _silene_prune(sub)
+        else:
+            return sub
 
 
     from cello.graphs.transform import VtxAttr
     
     searchs = []
-    for k,w,l,m,n  in [
-              (u"Search", True, 3, ALL ,100 ), ]:
+    for k, w, l, m, n in [
+              (u"Search", True, 3, ALL, 100), ]:
         search = Optionable("GraphSearch")
         search._func = subgraph 
         search.add_option("weighted", Boolean(default=w))
@@ -370,7 +368,8 @@ def explore_engine(graphdb):
 
     silene_search = Optionable('SileneSearch')
     silene_search._func = silene_subgraph
-    silene_search.add_option("coucou", Boolean(default=False))
+    silene_search.add_option("Sinogram", Text())
+    silene_search.add_option("Pruning", Boolean(default=False))
     silene_search |= VtxAttr(color=[(45, 200, 34), ])
     silene_search |= VtxAttr(type=1)
     silene_search.name = "Silene"
