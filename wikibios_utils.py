@@ -69,11 +69,21 @@ class WikiBioIGDB(IGraphDB):
                     return result
         return result[start:start+size]
 
+    def complete_silene(self, query, start=0, size=100):
+        node_type = "_Silene_Sinogram"# if len(query) == 1 else "_Silene_Wordform"
+        m = []
+        g = self.get_graph("Silene")
+        for v in g.vs:
+            if v['nodetype'] == node_type and v['properties']['label'].startswith(query):
+                m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
+        return sorted(m, key=lambda x: x['label'])[start:start+size]
 
     def complete_label(self, gid, what, prefix, start=0, size=100):
         print("wg",what,prefix)
         if(gid == GID):
             return self.fast_complete(gid, prefix, start, size)
+        if(gid == 'Silene'):
+            return self.complete_silene(prefix, start, size)
         g = self.get_graph(gid)
         m = []
         for v in g.vs:

@@ -324,14 +324,14 @@ def explore_engine(graphdb):
         print(query)
         print(Pruning)
         print(Sinogram)
-
+        uuid = query['units'][0]
         graph = db_graph(graphdb, query)
         idx = {v['uuid']: v.index for v in graph.vs}
 
         r = redis.Redis(host="localhost", port=6379)
         gdb = redisgraph.Graph("silene", r)
         result = gdb.query(f"""
-            MATCH (s:Sinogram {{label:'{Sinogram}'}})
+            MATCH (s:Sinogram {{uuid:'{uuid}'}})
             MATCH p = () -[*..2]-> (s) -[*..3]-> (:Wordform)
             UNWIND nodes(p) as n
             WITH DISTINCT n
@@ -341,14 +341,14 @@ def explore_engine(graphdb):
         uuids = [r[0] for r in result.result_set]
         r.close()
         sub = graph.subgraph([idx[n] for n in uuids])
-        if Pruning:
+        if Pruning or len(uuids) > 400:
             return _silene_prune(sub)
         else:
             return sub
 
 
     from cello.graphs.transform import VtxAttr
-    
+
     searchs = []
     for k, w, l, m, n in [
               (u"Search", True, 3, ALL, 100), ]:
@@ -375,11 +375,11 @@ def explore_engine(graphdb):
     silene_search.name = "Silene"
     searchs.append(silene_search)
 
-    sglobal = get_graph | ProxSubgraph()
-    sglobal.name = "Global"
-    sglobal.change_option_default("cut", 200);
-    
-    searchs.append(sglobal)
+    # sglobal = get_graph | ProxSubgraph()
+    # sglobal.name = "Global"
+    # sglobal.change_option_default("cut", 200);
+    #
+    # searchs.append(sglobal)
 
     engine.graph.set( *searchs )
         

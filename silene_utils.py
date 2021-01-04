@@ -72,7 +72,7 @@ def destroy_neo4j(gdb: GraphDatabase):
             session.run(d)
 
 def import_redis():
-    r = redis.Redis(host="localhost", port=6379)
+    r = redis.Redis(host="192.168.1.73", port=6379)
     redis_graph = Graph("silene", r)
     ig = igraph.load("pads/silene.pickle")
 
@@ -112,8 +112,8 @@ def test_redis():
     r = redis.Redis(host="localhost", port=6379)
     gdb = Graph("silene", r)
     result = gdb.query("""
-    MATCH (s:Sinogram {label:'講'})
-    MATCH p = () -[*..3]-> (s) -[*..3]-> (:Wordform)
+    MATCH p = () -[*..2]-> (:Sinogram) -[*..2]-> (:Wordform)
+    WITH p LIMIT 1
     UNWIND nodes(p) as n
     WITH DISTINCT n
     RETURN n.uuid
@@ -125,6 +125,6 @@ def test_redis():
 if __name__ == "__main__":
     #main("/tmp/silene.csv")
     #igraph_to_neo4j()
-    #import_redis()
+    # import_redis()
     test_redis()
 
