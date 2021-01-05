@@ -116,7 +116,7 @@ def test_redis():
     WITH p LIMIT 1
     UNWIND nodes(p) as n
     WITH DISTINCT n
-    RETURN n.uuid
+    RETURN n
     """)
     print(result.pretty_print())
     print([r[0] for r in result.result_set])
