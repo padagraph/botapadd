@@ -8,13 +8,13 @@ from botapad.utils import export_graph, prepare_graph, compute_pedigree, graph_s
 from reliure.pipeline import Optionable, Composable
 import pysolr
 import csv
-import opencc
+#import opencc
 
-converter = opencc.OpenCC('s2t')
+#converter = opencc.OpenCC('s2t')
 
 
-def convert_and_clean(s: str):
-    return converter.convert(s.rstrip(".,)"))
+#def convert_and_clean(s: str):
+#    return converter.convert(s.rstrip(".,)"))
 
 
 GID = "wikibiographies"
@@ -24,8 +24,8 @@ class WikiBioIGDB(IGraphDB):
 
     def __init__(self, graphs=None, conf=None):
         super().__init__(graphs, conf)
-        self.load_wikibios()
-        self.build_prefix_trie()
+        #self.load_wikibios()
+        #self.build_prefix_trie()
         self.load_silene()
 
     # todo: create SileneGDB
@@ -70,11 +70,11 @@ class WikiBioIGDB(IGraphDB):
         return result[start:start+size]
 
     def complete_silene(self, query, start=0, size=100):
-        node_type = "_Silene_Sinogram"# if len(query) == 1 else "_Silene_Wordform"
+        node_type = "_Silene_Sinogram" if len(query) == 1 else "_Silene_Wordform"
         m = []
         g = self.get_graph("Silene")
         for v in g.vs:
-            if v['nodetype'] == node_type and v['properties']['label'].startswith(query):
+            if v['nodetype'] == node_type and v['properties']['label'] == query: #.startswith(query):
                 m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
         return sorted(m, key=lambda x: x['label'])[start:start+size]
 

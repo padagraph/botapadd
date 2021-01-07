@@ -345,6 +345,12 @@ def explore_engine(graphdb):
             UNWIND nodes(p) as n
             WITH DISTINCT n
             RETURN n.uuid
+            UNION
+            MATCH (s:Wordform {{uuid:'{uuid}'}})
+            MATCH p = (s) <-[*..10]- ()
+            UNWIND nodes(p) as n
+            WITH DISTINCT n
+            RETURN n.uuid
             """
         print(q)
         result = gdb.query(q)
