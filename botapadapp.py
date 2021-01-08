@@ -399,6 +399,10 @@ def rstudio():
     return botimport('rstudio', None, gid, "embed")
 
 
+@app.route('/', methods=['GET'])
+def silene_root():
+    gid = "Silene"
+    return botimport('rstudio', None, gid, "embed")
 
 
 FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
@@ -411,7 +415,7 @@ def uuid(url):
     now = datetime.datetime.now().ctime()
     return hex( hash(url) + hash(now) )[2:]
 
-@app.route('/', methods=['GET', 'POST'])
+#@app.route('/', methods=['GET', 'POST'])
 @app.route('/import', methods=['GET','POST'])
 def home():
     url = request.form.get('url', None)
@@ -584,8 +588,8 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
         'background_color' : bgcolor,
 
         # todo check where used
-        'initial_size' : 4,
-        'vtx_size' : args.get("vertex_size", 2 ),
+        'initial_size' : 8,
+        'vtx_size' : args.get("vertex_size", 4 ),
 
         'user_font_size': float(args.get("font_size", 1) ), # [-5, 5]
         'user_vtx_size' : float(args.get("vtx_size" , 1) ), # float > 0
@@ -596,7 +600,7 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
         'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
         
         'auto_rotate': int(args.get("auto_rotate", 0 )),
-        'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
+        'adaptive_zoom': int(args.get("adaptive_zoom", 0 )),
         
         'layout' : args.get("layout") if args.get("layout", "2D" ) in ("2D","3D") else "2D",
     }
@@ -750,7 +754,7 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
     if error:
         return render_template("botapadapp.html", error=error)
     
-
+    data=None
     return render_template('graph.html',
         static_host=STATIC_HOST, color=bgcolor,
         repo=repo, complete=complete, error=error,

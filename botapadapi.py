@@ -94,7 +94,6 @@ def pad2igraph(gid, url, format, delete=False, store="/pads/", debug=True):
                 print (" === reading  %s/%s.%s" % (store, url, format) )
                 #content = open("%s/%s.%s" % (store, url, format) , 'r').read()
                 content = open("%s/%s" % (store, url), 'rb').read()
-                print("plop")
             except Exception as err :
                 raise BotapadURLError("Can't open file %s: %s" % (url, err), url)
 
@@ -352,9 +351,7 @@ def explore_engine(graphdb):
             WITH DISTINCT n
             RETURN n.uuid
             """
-        print(q)
         result = gdb.query(q)
-        print(result.pretty_print())
         uuids = [r[0] for r in result.result_set]
         r.close()
         sub = graph.subgraph([idx[n] for n in uuids])
@@ -460,7 +457,7 @@ def explore_api(engines, graphdb):
     def _pickle_dump(gid):
         return stargraph_dump(gid, pickle.dumps, 'pickle')
 
-    def stargraph_dump(gid, dumps, content_type):
+    def  stargraph_dump(gid, dumps, content_type):
         """ returns igraph pickled/jsonified starred graph  """
 
         engine = explore_engine(graphdb)
