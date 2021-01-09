@@ -72,7 +72,7 @@ def destroy_neo4j(gdb: GraphDatabase):
             session.run(d)
 
 def import_redis():
-    r = redis.Redis(host="192.168.1.73", port=6379)
+    r = redis.Redis(host="localhost", port=6379)
     redis_graph = Graph("silene", r)
     ig = igraph.load("pads/silene.pickle")
 
@@ -123,8 +123,8 @@ def test_redis():
     r.close()
 
 if __name__ == "__main__":
-    #main("/tmp/silene.csv")
+    main("/tmp/silene.csv")
     #igraph_to_neo4j()
-    # import_redis()
-    test_redis()
+    import_redis()
+    #test_redis()
 

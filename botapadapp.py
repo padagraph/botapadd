@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 import os
 import sys
@@ -403,6 +403,21 @@ def rstudio():
 def silene_root():
     gid = "Silene"
     return botimport('rstudio', None, gid, "embed")
+
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+font = ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSerifCJK-Medium.ttc", size=32)
+@app.route('/image/sinogram/<string:sino>')
+def sino_image(sino):
+    img = Image.new('RGB', (32, 32), color=(255, 255, 255))
+    d = ImageDraw.Draw(img)
+    d.text((0, 0), sino, anchor="lt", font=font, fill=(0, 0, 0))
+    buf = BytesIO()
+    img.save(buf, "PNG")
+    img.save("/tmp/test.png", "PNG")
+    buf.seek(0)
+    return send_file(buf, "image/png")
+
 
 
 FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
