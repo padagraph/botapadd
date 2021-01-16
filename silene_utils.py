@@ -123,7 +123,7 @@ def test_redis():
     r.close()
 
 if __name__ == "__main__":
-    main("/tmp/silene.csv")
+    #main("/tmp/silene.csv")
     #igraph_to_neo4j()
     import_redis()
     #test_redis()

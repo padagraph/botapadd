@@ -339,10 +339,10 @@ def explore_engine(graphdb):
         gdb = redisgraph.Graph("silene", r)
         q = f"""
             MATCH (s:Sinogram {{uuid:'{uuid}'}})
-            MATCH p = () -[*..2]-> (s) -[*..2]-> (r:Reading) --> (:Wordform)
+            MATCH p = () -[*..2]-> (s) -[*..2]-> (r:Reading) --> (:Wordform) 
             WHERE r.lang IN [{", ".join(langs)}]
             UNWIND nodes(p) as n
-            WITH DISTINCT n
+           WITH DISTINCT n
             RETURN n.uuid
             UNION
             MATCH (s:Wordform {{uuid:'{uuid}'}})
@@ -355,7 +355,7 @@ def explore_engine(graphdb):
         uuids = [r[0] for r in result.result_set]
         r.close()
         sub = graph.subgraph([idx[n] for n in uuids])
-        if Pruning or len(uuids) > 400:
+        if Pruning or len(uuids) > 500:
             return _silene_prune(sub)
         else:
             return sub

@@ -27,6 +27,7 @@ class WikiBioIGDB(IGraphDB):
         #self.load_wikibios()
         #self.build_prefix_trie()
         self.load_silene()
+        self.load_boorman()
 
     # todo: create SileneGDB
     def load_silene(self):
@@ -34,6 +35,12 @@ class WikiBioIGDB(IGraphDB):
         builder = Composable(prepare_graph) | graph_stats
         graph = builder("Silene", g)
         self.set_graph("Silene", graph)
+
+    def load_boorman(self):
+        g = ig.load("./pads/boorman.pickle")
+        builder = Composable(prepare_graph) | graph_stats
+        graph = builder("Boorman", g)
+        self.set_graph("Boorman", graph)
 
     def load_wikibios(self):
         padurl = "pads/wiki.pickle"
@@ -45,7 +52,7 @@ class WikiBioIGDB(IGraphDB):
     def build_prefix_trie(self):
         g = self.get_graph(GID)
         labels_idx = {k: [x[0] for x in v] for k, v in
-                      it.groupby(sorted([(n.index, n['properties']['label']) for n in g.vs], key=lambda x:x[1]), key=lambda c: c[1])}
+                      it.groupby(sorted([(n.index, n['properties']['label']) for n in g.vs], key=lambda x: x[1]), key=lambda c: c[1])}
         t = Trie(labels_idx.keys())
         idx = {}
         for k, code in t.iteritems():
@@ -74,7 +81,7 @@ class WikiBioIGDB(IGraphDB):
         m = []
         g = self.get_graph("Silene")
         for v in g.vs:
-            if v['nodetype'] == node_type and (v['properties']['label'] == query or v['properties']['text'] == query): #.startswith(query):
+            if v['nodetype'] == node_type and v['properties']['label'] == query: #.startswith(query):
                 m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
         return sorted(m, key=lambda x: x['label'])[start:start+size]
 
