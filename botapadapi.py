@@ -339,7 +339,7 @@ def explore_engine(graphdb):
         gdb = redisgraph.Graph("silene", r)
         q = f"""
             MATCH (s:Sinogram {{uuid:'{uuid}'}})
-            MATCH p = () -[*..2]-> (s) -[*..2]-> (r:Reading) --> (:Wordform)
+            MATCH p = () -[*..3]-> (s) -[*..5]-> (r:Reading) --> (:Wordform)
             WHERE r.lang IN [{", ".join(langs)}]
             UNWIND nodes(p) as n
             WITH DISTINCT n

@@ -74,8 +74,8 @@ class WikiBioIGDB(IGraphDB):
         m = []
         g = self.get_graph("Silene")
         for v in g.vs:
-            if v['nodetype'] == node_type and (v['properties']['label'] == query or v['properties']['text'] == query): #.startswith(query):
-                m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
+            if v['nodetype'] == node_type and v['properties']['search'] == query:
+                m.append({"label": v['properties']['search'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
         return sorted(m, key=lambda x: x['label'])[start:start+size]
 
     def complete_label(self, gid, what, prefix, start=0, size=100):

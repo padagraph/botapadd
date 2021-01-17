@@ -75,8 +75,8 @@ require(['backbone', 'underscore'], function (Backbone, _) {
     },
 
     handleExplore: function handleExplore() {
-      var params = { graph: this.graph, query: this.model.uuid, Sinogram: this.model.uuid };
-      Backbone.trigger('engine:explore', "Silene", params);
+      var params = { graph: this.graph, query: this.model.uuid };
+      Backbone.trigger('engine:explore', "Search", params);
       this.fire('completion-close');
     }
   });
