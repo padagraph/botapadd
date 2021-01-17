@@ -1,6 +1,9 @@
 from typing import Dict, List
 import requests
 
+from botapad.parser import Botapad
+from botapi.botapi import BotaIgraph
+
 API_FILES = "https://zenodo.org/api/records"
 
 class Record:
@@ -28,6 +31,16 @@ def get_file_url(record_id, filename) -> str:
     return r.items[filename]
 
 
+def create_pickle():
+    bot = BotaIgraph(directed=True)
+    pad = Botapad(bot,  "Zenodo", "Zenodo", delete=False, verbose=True, debug=True)
+    pad.parse("https://calc.padagraph.io/test-zenodo-composition")
+    ig = bot.get_igraph("Zenodo")
+    ig.write_pickle("pads/zenodo.pickle")
+
+
 if __name__ == "__main__":
     print(get_record_items("3708448"))
+    create_pickle()
+
 
