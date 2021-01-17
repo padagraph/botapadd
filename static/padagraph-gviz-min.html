@@ -76,7 +76,7 @@ require(['backbone', 'underscore'], function (Backbone, _) {
 
     handleExplore: function handleExplore() {
       var params = { graph: this.graph, query: this.model.uuid };
-      Backbone.trigger('engine:explore', "Search", params);
+      Backbone.trigger('engine:explore', "Silene", params);
       this.fire('completion-close');
     }
   });
