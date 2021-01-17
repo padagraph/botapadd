@@ -137,15 +137,19 @@ def graphml2igraph(gid, content):
 
 def _prune(graph, **kwargs):
     if graph.vcount() > 1 and graph.ecount() > 1:
-        delete = [ i for i, v in enumerate(graph.vs) 
-            if len(v.neighbors()) < 1]
+        delete = [
+            i for i, v in enumerate(graph.vs)
+            if len(v.neighbors()) < 1
+        ]
         graph.delete_vertices(delete)
     return graph
 
 def _silene_prune(graph, **kwargs):
     if graph.vcount() > 1 and graph.ecount() > 1:
-        delete = [ i for i, v in enumerate(graph.vs)
-            if len(v.neighbors()) < 2]
+        delete = [
+            i for i, v in enumerate(graph.vs)
+            if len(v.neighbors()) < 2
+        ]
         graph.delete_vertices(delete)
     return graph
 
