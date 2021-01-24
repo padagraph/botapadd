@@ -8,13 +8,13 @@ from botapad.utils import export_graph, prepare_graph, compute_pedigree, graph_s
 from reliure.pipeline import Optionable, Composable
 import pysolr
 import csv
-#import opencc
+import opencc
 
-#converter = opencc.OpenCC('s2t')
+converter = opencc.OpenCC('s2t')
 
 
-#def convert_and_clean(s: str):
-#    return converter.convert(s.rstrip(".,)"))
+def convert_and_clean(s: str):
+    return converter.convert(s.rstrip(".,)"))
 
 
 GID = "wikibiographies"
@@ -120,12 +120,13 @@ class WikiBioIGDB(IGraphDB):
         t = len(m)
         m = m[start:size]
         return m
-# /data/Wikibios
-def read_NE(id, lang="en", path="/home/pierre/Corpora/WikiBiographies"):
+
+
+def read_NE(id, lang="en", path="/data/Wikibios"):
     with open(f"{path}/Biographies_12_08_2020_{lang}/{id}/{id}.csv", newline='') as f:
         reader = csv.DictReader(f, delimiter=';', quoting=csv.QUOTE_NONE)
         for ne in reader:
-            if ne['type'] in ["ORG", "PERSON", "GPE","ORGANIZATION", "LOCATION", "PER"]:
+            if ne['type'] in ["ORG", "PERSON", "GPE", "ORGANIZATION", "LOCATION", "PER"]:
                 yield {
                     'text': convert_and_clean(ne['entity']),
                     'id_en': ne['id_en'],
