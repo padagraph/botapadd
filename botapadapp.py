@@ -400,47 +400,12 @@ def rstudio():
 
 
 @app.route('/', methods=['GET'])
-def silene_root():
+def boorman_root():
     gid = "Boorman"
     return botimport('rstudio', None, gid, "embed")
 
-from PIL import Image, ImageDraw, ImageFont
-from io import BytesIO
-zh_font = ImageFont.truetype("/usr/share/fonts/opentype/noto/NotoSerifCJK-Medium.ttc", size=32)
-@app.route('/image/sinogram/<string:sino>')
-def sino_image(sino):
-    img = Image.new('RGB', (40, 40), color=(255, 255, 255))
-    d = ImageDraw.Draw(img)
-    d.text((4, 4), sino, anchor="lt", font=zh_font, fill=(0, 0, 0))
-    buf = BytesIO()
-    img.save(buf, "PNG")
-    buf.seek(0)
-    return send_file(buf, "image/png")
-
-latin_font = ImageFont.truetype("/usr/share/fonts/truetype/ttf-bitstream-vera/Vera.ttf", size=18)
-@app.route('/image/latin/<string:text>')
-def latin_image(text):
-    mapping = {
-        'mdn': 'M',
-        'nan': 'T',
-        'yue': 'C',
-        'kor': 'K',
-        'jpn': 'J',
-    }
-    (width, height) = latin_font.getsize(mapping[text])
-    img = Image.new('RGB', (width + 4, height + 4), color=(255, 255, 255))
-    d = ImageDraw.Draw(img)
-    d.text((3, 3), mapping[text], anchor="lt", font=latin_font, fill=(0, 0, 0))
-    buf = BytesIO()
-    img.save(buf, "PNG")
-    buf.seek(0)
-    return send_file(buf, "image/png")
-
-
 FORMAT_IMPORT = ('graphml', 'graphmlz', 'csv')
 FORMAT_EXPORT = ('graphml', 'graphmlz', 'picklez', 'pickle', 'csv', 'json')
-
-
 
 
 def uuid(url):
