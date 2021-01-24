@@ -314,52 +314,8 @@ def explore_engine(graphdb):
         uuids = [ q for q in query.get('units', []) ]
         uuids = [ idx[p] for p in uuids ]
         
-        return prox_subgraph(graph, uuids, cut=cut, weighted=weighted, length=length, mode=mode, add_loops=add_loops, **kwargs )
-
-    @Composable
-    def silene_subgraph(query, cut=100, Pruning=False, mdn=True, jpn=True, kor=True, nan=True, yue=True, **kwargs):
-        import redis
-        import redisgraph
-        uuid = query['units'][0]
-        graph = db_graph(graphdb, query)
-        idx = {v['uuid']: v.index for v in graph.vs}
-        langs = []
-        if mdn:
-            langs.append("'mdn'")
-        if jpn:
-            langs.append("'jpn'")
-        if kor:
-            langs.append("'kor'")
-        if nan:
-            langs.append("'nan'")
-        if yue:
-            langs.append("'yue'")
-
-        r = redis.Redis(host="localhost", port=6379)
-        gdb = redisgraph.Graph("silene", r)
-        q = f"""
-            MATCH (s:Sinogram {{uuid:'{uuid}'}})
-            MATCH p = () -[*..2]-> (s) -[*..2]-> (r:Reading) --> (:Wordform) 
-            WHERE r.lang IN [{", ".join(langs)}]
-            UNWIND nodes(p) as n
-           WITH DISTINCT n
-            RETURN n.uuid
-            UNION
-            MATCH (s:Wordform {{uuid:'{uuid}'}})
-            MATCH p = (s) <-[*..10]- ()
-            UNWIND nodes(p) as n
-            WITH DISTINCT n
-            RETURN n.uuid
-            """
-        result = gdb.query(q)
-        uuids = [r[0] for r in result.result_set]
-        r.close()
-        sub = graph.subgraph([idx[n] for n in uuids])
-        if Pruning or len(uuids) > 500:
-            return _silene_prune(sub)
-        else:
-            return sub
-
+        subg = prox_subgraph(graph, uuids, cut=cut, weighted=weighted, length=length, mode=mode, add_loops=add_loops, **kwargs )
+        return _silene_prune(subg)
 
     from cello.graphs.transform import VtxAttr
 
@@ -379,19 +335,6 @@ def explore_engine(graphdb):
 
         search.name = k
         searchs.append(search)
-
-    silene_search = Optionable('SileneSearch')
-    silene_search._func = silene_subgraph
-    silene_search.add_option("Pruning", Boolean(default=False))
-    silene_search.add_option("mdn", Boolean(default=True))
-    silene_search.add_option("jpn", Boolean(default=True))
-    silene_search.add_option("kor", Boolean(default=True))
-    silene_search.add_option("nan", Boolean(default=True))
-    silene_search.add_option("yue", Boolean(default=True))
-    silene_search |= VtxAttr(color=[(45, 200, 34), ])
-    silene_search |= VtxAttr(type=1)
-    silene_search.name = "Silene"
-    searchs.append(silene_search)
 
     # sglobal = get_graph | ProxSubgraph()
     # sglobal.name = "Global"

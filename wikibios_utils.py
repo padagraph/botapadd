@@ -26,7 +26,7 @@ class WikiBioIGDB(IGraphDB):
         super().__init__(graphs, conf)
         #self.load_wikibios()
         #self.build_prefix_trie()
-        self.load_silene()
+        #self.load_silene()
         self.load_boorman()
 
     # todo: create SileneGDB
@@ -85,8 +85,25 @@ class WikiBioIGDB(IGraphDB):
                 m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
         return sorted(m, key=lambda x: x['label'])[start:start+size]
 
+    def complete_boorman(self, query, start=0, size=100):
+        node_type = "_Boorman_Entry"
+        g = self.get_graph("Boorman")
+        m = []
+        query = query.lower()
+        for v in g.vs:
+            if v['nodetype'] == node_type and (
+                    v['properties']['name'].startswith(query) \
+                    or v['properties']['pinyin'].lower().startswith(query) \
+                    or v['properties']['wade'].lower().startswith(query)
+            ):
+                m.append({"label":v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
+            elif v['properties']['label'].lower().startswith(query):
+                m.append({"label": v['properties']['label'], "nodetype": v['nodetype'], 'uuid': v['uuid']})
+        return sorted(m, key=lambda x: (x['nodetype'], x['label']))[start:start+size]
+
     def complete_label(self, gid, what, prefix, start=0, size=100):
-        print("wg",what,prefix)
+        if(gid == "Boorman"):
+            return self.complete_boorman(prefix, start, size)
         if(gid == GID):
             return self.fast_complete(gid, prefix, start, size)
         if(gid == 'Silene'):
