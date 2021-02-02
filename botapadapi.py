@@ -359,10 +359,10 @@ def explore_engine(graphdb):
         uuids = [r[0] for r in result.result_set]
         r.close()
         sub = graph.subgraph([idx[n] for n in uuids])
-        if Pruning or len(uuids) > 400:
-            return _silene_prune(sub)
+        if Pruning or len(uuids) > 500:
+            return prox_subgraph(_silene_prune(sub), [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
         else:
-            return sub
+            return b #prox_subgraph(sub, [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
 
 
     from cello.graphs.transform import VtxAttr
