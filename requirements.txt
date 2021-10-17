@@ -21,3 +21,4 @@ https://github.com/padagraph/pdglib/archive/master.zip
 python-igraph
 numpy
 scipy
+marisa_trie

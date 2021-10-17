@@ -29,7 +29,7 @@ jade:
 
 
 rundev: 
-	. venv3/bin/activate; export APP_DEBUG=false; export FLASK_APP=botapadapp.py ;export FLASK_DEBUG=1; flask run --port 5002
+	. venv3/bin/activate; export APP_DEBUG=false; export FLASK_APP=botapadapp.py ;export FLASK_DEBUG=1; flask run --host 0.0.0.0 --port 5002
 
 
 docker-build:
