@@ -70,10 +70,10 @@ app.config['DEBUG'] = DEBUG
 socketio = None
 
 # Flask-Login
-from flask_login import LoginManager, current_user, login_user, login_required
+# from flask_login import LoginManager, current_user, login_user, login_required
    
-login_manager = LoginManager()
-login_manager.init_app(app)
+# login_manager = LoginManager()
+# login_manager.init_app(app)
 
 from flask_cors import CORS
 CORS(app)
@@ -106,8 +106,8 @@ from pdgapi.explor import EdgeList
 from pdglib.graphdb_ig import IGraphDB, engines
 from wikibios_utils import WikiBioIGDB, query_wikibios_en, query_wikibios_zh, get_wikibios_byid_en, get_wikibios_byid_zh
 
-#graphdb = IGraphDB( graphs={} )
-graphdb = WikiBioIGDB(graphs={})
+graphdb = IGraphDB( graphs={} )
+# graphdb = WikiBioIGDB(graphs={})
 
 if REDIS_STORAGE:
     import redis
@@ -528,7 +528,102 @@ def _pad2igraph(gid, url, format="gml"):
     return prepare_graph(gid, graph)
 
 import traceback
+
+
+@app.route('/simple', methods=['GET'])
+def simple():
+    return simple_import("pad", "silene")
+
+def simple_import(repo, gid):
+    routes = "%s/engines" % ENGINES_HOST
+    graph = gid
+    data = None    
+    complete = False
+    error = None
+    options = ""
+    graphurl = ""
+    sync=""
+
+    #args
+    args = request.args
     
+    userconfig = {}
+    try :
+        for k in args:
+            if k.startswith("engine."):
+                engine = k.split(".")[1]
+                userconfig[engine] = json.loads(urllib.parse.unquote(args[k]))
+    except Exception as err:
+        pass # pb with config 
+        
+    bgcolor = "#" + args.get("bgcolor", "dbdcce" )    
+
+    reader = args.get("format", "pickle")
+
+    args =  dict(zip(
+        request.args.keys(),
+        request.args.values()
+    ))
+    args['s'] = gid
+
+    graphurl = u"?%s" % "&".join([ "%s=%s" % (k,args.get(k)) for k in args])
+    options = {
+        #
+        'wait' : 4,
+        #template
+        'zoom'  : args.get("zoom", 1200 ),
+        'buttons': 0, # removes play/vote buttons
+        'labels' : 1 if not args.get("no-labels", None ) else 0,  # removes graph name/attributes 
+        # gviz
+        'el': "#viz",
+        'background_color' : bgcolor,
+
+        # todo check where used
+        'initial_size' : 4,
+        'vtx_size' : args.get("vertex_size", 2 ),
+
+        'user_font_size': float(args.get("font_size", 1) ), # [-5, 5]
+        'user_vtx_size' : float(args.get("vtx_size" , 1) ), # float > 0
+        
+        'show_text'  : 0 if args.get("no_text"  , None ) else 1, # removes vertex text 
+        'show_nodes' : 0 if args.get("no_nodes" , None ) else 1, # removes vertex only 
+        'show_edges' : 0 if args.get("no_edges" , None ) else 1, # removes edges 
+        'show_images': 0 if args.get("no_images", None ) else 1, # removes vertex images
+        
+        'auto_rotate': int(args.get("auto_rotate", 0 )),
+        'adaptive_zoom': int(args.get("adaptive_zoom", 1 )),
+        
+        'layout' : args.get("layout") if args.get("layout", "2D" ) in ("2D","3D") else "2D",
+    }
+    builder = _pad2igraph | compute_pedigree | graph_stats
+    padurl= gid + ".pickle"
+    graph = builder( gid, padurl, reader )
+    graphdb.set_graph(gid, graph)                           
+    sync = "%s/graphs/g/%s" % (ENGINES_HOST, gid)
+    #data = "%s/xplor/starred/%s.json" % (ENGINES_HOST, gid)
+    data = "%s/import/igraph.pickle?s=%s" % (ENGINES_HOST, padurl)
+    today = datetime.datetime.now()
+    db = get_db()
+    db.execute ("""
+            insert into imports (imported_on, gid, padurl, status, help )
+            values (?, ?, ?, ?, ? )
+            """ , ( today, gid, padurl, 1 if complete else 0 , 0 ) )
+    db.commit()
+    return render_template('graph.html',
+        static_host=STATIC_HOST, color=bgcolor,
+        # repo=repo, complete=complete, error=error,
+        routes=routes, data=data, options=json.dumps(options),
+        padurl=padurl, 
+        graphurl = graphurl, 
+        sync=sync,
+        #footer=footer, 
+        userconfig=json.dumps(userconfig)
+
+        )
+
+
+
+
 def botimport(repo, padurl, gid, content_type, format="csv"):
     import urllib.parse
 
@@ -539,7 +634,7 @@ def botimport(repo, padurl, gid, content_type, format="csv"):
     
     graph = None
     data = None    
-    complete = False
+    complete = True
     error = None
     options = ""
     graphurl = ""
@@ -793,7 +888,6 @@ def egde_list_subgraph(node_list, edge_list, weights, directed=False ):
         
 
 from pdgapi import graphedit
- 
 edit_api = graphedit.graphedit_api("graphs", app, graphdb, login_manager, socketio )
 app.register_blueprint(edit_api)
 
