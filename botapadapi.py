@@ -301,7 +301,6 @@ def explore_engine(graphdb):
         
     @Composable
     def subgraph(query, cut=100, weighted=True, length=7, mode=ALL, add_loops=False, **kwargs ):
-
         graph = db_graph(graphdb, query)
         
         idx = { v['uuid'] : v.index for v in graph.vs }
@@ -353,7 +352,7 @@ def explore_api(engines, graphdb):
     api.register_view(view, url_prefix="starred")
 
     # prox search returns graph only
-    view = EngineView(explore_engine(graphdb))
+    view = EngineView(engines.explore_engine(graphdb))
     view.set_input_type(ComplexQuery())
     view.add_output("request", ComplexQuery())
     view.add_output("graph", export_graph, id_attribute='uuid')
