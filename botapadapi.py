@@ -352,7 +352,8 @@ def explore_api(engines, graphdb):
     api.register_view(view, url_prefix="starred")
 
     # prox search returns graph only
-    view = EngineView(engines.explore_engine(graphdb))
+    # view = EngineView(engines.explore_engine(graphdb))
+    view = EngineView(explore_engine(graphdb))
     view.set_input_type(ComplexQuery())
     view.add_output("request", ComplexQuery())
     view.add_output("graph", export_graph, id_attribute='uuid')

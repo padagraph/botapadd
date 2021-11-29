@@ -57,7 +57,8 @@ conf = {path[5:-7]:path for path in glob("pads/*.pickle")}
 
 from graphdb_tmuse import TMuseGDB
 
-graphdb = TMuseGDB() # conf=conf)
+#graphdb = TMuseGDB() # conf=conf)
+graphdb = IGraphDB(conf=conf)
 #{
 #    'silene':'pads/silene.pickle', 
 #    'cilin':'pads/cilin.pickle', 
@@ -154,8 +155,8 @@ def simple_view(gid):
 
 
 
-# from pdglib.graphdb_ig import engines
-import engines_tmuse as engines
+from pdglib.graphdb_ig import engines
+#import engines_tmuse as engines
 from botapadapi import explore_api, starred
 
 from  pdgapi.explor import layout_api, clustering_api

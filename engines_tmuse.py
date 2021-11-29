@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from typing import Dict
 
 from reliure.pipeline import Optionable, Composable
 from reliure.types import Text, Numeric, Boolean
@@ -83,17 +84,20 @@ def expand_subgraph(graphdb, gid, uuids, limit=10):
         'filter_edges': None
     }
 
-    print(gid)
-    print(uuids)
     p = graphdb.proxemie(gid, uuids, **kwargs)
-    print(p)
     # todo: construire un objet igraph quivabien
-    return graph.subgraph(vs)
+    nodes_uuids =  [n[0] for n in p]
+    subgraph_nodes = graphdb.get_nodes(gid, nodes_uuids)
+    subgraph_edges = graphdb.get_edge_list(gid, nodes_uuids)
+    print(subgraph_nodes)
+    print(subgraph_edges)
+
+    return to_graph({n['uuid']:n for n in subgraph_nodes}, subgraph_edges)
 
 
-def to_graph(nodes, edge_list, weights=None):
+def to_graph(nodes: Dict[str,Dict], edge_list, weights=None):
     """ Build a graph from a n4j edge list
-    :param edge_list: edle list [( src_uuid, edge_properties, tgt_uuid )
+    :param edge_list: edle list [( src_uuid, edge_type, edge_properties, tgt_uuid )
     """
     directed = True
 
@@ -104,7 +108,7 @@ def to_graph(nodes, edge_list, weights=None):
     es_uuids = []
     edges = []
 
-    for uuid in nodes:
+    for uuid in nodes.keys():
         i_s = vs_idx.get(uuid, -1)
         if i_s < 0:
             i_s = len(vs_uuids)
@@ -113,9 +117,9 @@ def to_graph(nodes, edge_list, weights=None):
 
     for edge in edge_list:
 
-        src = edge['source']
-        tgt = edge['target']
-        euuid = edge['uuid']
+        src = edge[0]
+        tgt = edge[3]
+        euuid = edge[2]['uuid']
 
         # TODO:: raise ERROR
         assert src in nodes
@@ -144,12 +148,12 @@ def to_graph(nodes, edge_list, weights=None):
 
     for vertex in graph.vs:
         d = nodes.get(vertex['uuid'], {})
-        for k, v in d.iteritems():
+        for k, v in d.items():
             vertex[k] = v
 
-    edges = {e['uuid']: e for e in edge_list}
+    edges = {e[2]['uuid']: e[2] for e in edge_list}
     for edge in graph.es:
-        for k, v in edges[edge['uuid']].iteritems():
+        for k, v in edges[edge['uuid']].items():
             edge[k] = v
 
     return graph

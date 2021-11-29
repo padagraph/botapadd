@@ -149,10 +149,14 @@ class TMuseGDB(iGraphDB):
     def get_nodes(self, graphname, nids):
         query = """
         MATCH (n) WHERE n.uuid IN $nids
-        RETURN properties(n) 
+        RETURN n 
         """
         query_result = self.get_graph(graphname).query(query, params={'nids':nids})
-        return [record[0] for record in query_result.result_set]
+
+        return [{
+            'uuid': record[0].properties['uuid'],
+            'nodetype': record[0].label,
+            'properties':record[0].properties} for record in query_result.result_set]
 
     def find_nodes(self, gid, nodetype_name, start=0, size=100, **properties):
         pass
@@ -204,8 +208,27 @@ class TMuseGDB(iGraphDB):
     def get_edges(self, graph_name, edges_uuids):
         pass
 
+
+    def edge_to_pdgdict(self, src:str, edge:rg.Edge, tgt:str) -> Dict:
+        return {
+            'uuid':edge.properties['uuid'],
+            'edgetype': edge.relation,
+            'weight': edge.properties.get('weight', 1),
+            'properties': edge.properties,
+            'source': src,
+            'target': tgt
+        }
+
     def get_edge_list(self, graph_name, nodes_uuids):
-        pass
+        g = self.get_graph(graph_name)
+        query = """
+        MATCH (n1) -[e]-> (n2)
+        WHERE n1.uuid IN $uuids AND n2.uuid IN $uuids
+        RETURN DISTINCT n1.uuid, e, n2.uuid
+        """
+        query_result = g.query(query, params={'uuids':nodes_uuids})
+        edges = [(row[0], row[1].relation, self.edge_to_pdgdict(row[0],row[1], row[2]), row[2]) for row in query_result.result_set]
+        return edges
 
     def proxemie(self, graph_name, p0, weights=None, filter_edges=None, filter_nodes=None, limit=50, n_step=3):
         g = self.get_graph(graph_name)
@@ -228,10 +251,6 @@ class TMuseGDB(iGraphDB):
         for _ in range(n_step):
             active_nodes = one_step(active_nodes)
         return list(sorted(active_nodes.items(), key=lambda x:x[1], reverse=True))[:int(limit)]
-
-
-
-        pass
 
 
 
