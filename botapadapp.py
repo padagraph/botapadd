@@ -72,8 +72,9 @@ socketio = None
 # Flask-Login
 from flask_login import LoginManager, current_user, login_user, login_required
    
-login_manager = LoginManager()
-login_manager.init_app(app)
+#login_manager = LoginManager()
+login_manager = None
+#login_manager.init_app(app)
 
 from flask_cors import CORS
 CORS(app)

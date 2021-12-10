@@ -362,7 +362,7 @@ def explore_engine(graphdb):
         if Pruning or len(uuids) > 500:
             return prox_subgraph(_silene_prune(sub), [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
         else:
-            return b #prox_subgraph(sub, [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
+            return sub #prox_subgraph(sub, [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
 
 
     from cello.graphs.transform import VtxAttr
@@ -396,6 +396,34 @@ def explore_engine(graphdb):
     silene_search |= VtxAttr(type=1)
     silene_search.name = "Silene"
     searchs.append(silene_search)
+
+    @Composable
+    def cypher_subgraph(query, cut=100, request="", **kwargs):
+        import redis
+        import redisgraph
+        graph = db_graph(graphdb, query)
+        idx = {v['uuid']: v.index for v in graph.vs}
+        r = redis.Redis(host="localhost", port=6379)
+        gdb = redisgraph.Graph("silene", r)
+        q = request
+        result = gdb.query(q)
+        uuids = [r[0] for r in result.result_set]
+        r.close()
+        sub = graph.subgraph([idx[n] for n in uuids])
+        if len(uuids) > 500:
+            return prox_subgraph(_silene_prune(sub), [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
+        else:
+            return sub #prox_subgraph(sub, [], cut=500, weighted=False, length=2, mode=2, add_loops=True)
+
+
+    cypher_search = Optionable('CypherSearch')
+    cypher_search._func = cypher_subgraph
+    cypher_search.add_option("request", Text(default=""))
+    cypher_search |= VtxAttr(color=[(45,200,34)])
+    cypher_search |= VtxAttr(type=1)
+    cypher_search.name = "Cypher"
+    searchs.append(cypher_search)
+
 
     # sglobal = get_graph | ProxSubgraph()
     # sglobal.name = "Global"
