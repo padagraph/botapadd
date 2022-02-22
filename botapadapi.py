@@ -382,7 +382,7 @@ def explore_engine(graphdb):
         search |= VtxAttr(type=1)
 
         search.name = k
-        searchs.append(search)
+        # searchs.append(search)
 
     silene_search = Optionable('SileneSearch')
     silene_search._func = silene_subgraph
@@ -405,7 +405,11 @@ def explore_engine(graphdb):
         idx = {v['uuid']: v.index for v in graph.vs}
         r = redis.Redis(host="localhost", port=6379)
         gdb = redisgraph.Graph("silene", r)
-        q = request
+        q = f"""
+            MATCH p = {request}
+            UNWIND nodes(p) as n
+            RETURN n.uuid
+            """
         result = gdb.query(q)
         uuids = [r[0] for r in result.result_set]
         r.close()
